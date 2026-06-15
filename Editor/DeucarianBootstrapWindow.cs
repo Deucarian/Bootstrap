@@ -231,6 +231,8 @@ namespace Deucarian.Bootstrap.Editor
                 return;
             }
 
+            EnsureActiveSetupHasResolvablePlan();
+
             string status = _setupActive
                 ? GetResumeStatus()
                 : "Loading Deucarian package catalog...";
@@ -243,6 +245,21 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             BeginCatalogLoad(status);
+        }
+
+        private void EnsureActiveSetupHasResolvablePlan()
+        {
+            if (!_setupActive ||
+                _installMode == BootstrapInstallMode.ScopedRegistry ||
+                !_catalogLoaded ||
+                _installPlan.Count > 0)
+            {
+                return;
+            }
+
+            _catalogLoaded = false;
+            _registrySource = string.Empty;
+            _catalogNotice = string.Empty;
         }
 
         private void OnGUI()
@@ -272,6 +289,7 @@ namespace Deucarian.Bootstrap.Editor
 
             if (_setupActive && _installPlan.Count == 0)
             {
+                EnsureActiveSetupHasResolvablePlan();
                 RefreshScopedRegistryStatus();
                 HandleDelayedEnable();
             }
@@ -1070,6 +1088,8 @@ namespace Deucarian.Bootstrap.Editor
 
         private void BeginCatalogLoad(string status)
         {
+            EnsureActiveSetupHasResolvablePlan();
+
             if (_catalogRequest != null || _catalogLoaded)
             {
                 return;
@@ -1256,6 +1276,8 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             _packageListRetryQueued = false;
+
+            EnsureActiveSetupHasResolvablePlan();
 
             if (!_catalogLoaded)
             {
