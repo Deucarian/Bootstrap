@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEditor.PackageManager;
 
 namespace Deucarian.Bootstrap.Editor.Tests
@@ -27,6 +28,41 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.False(manifest.Contains("com.deucarian.editor"));
             Assert.False(manifest.Contains("com.deucarian.package-installer"));
             Assert.False(manifest.Contains("com.deucarian.logging"));
+        }
+
+        [Test]
+        public void BootstrapLogoPlaceholderExistsInPackage()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            string logoPath = Path.Combine(
+                packageInfo.resolvedPath,
+                DeucarianBootstrapPackageConstants.LogoAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
+
+            Assert.True(File.Exists(logoPath), logoPath);
+        }
+
+        [Test]
+        public void BootstrapLinksAndLogoStayPackageLocal()
+        {
+            StringAssert.StartsWith(
+                "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
+                DeucarianBootstrapPackageConstants.LogoAssetPath);
+            StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.GitHubUrl);
+            StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.DocumentationUrl);
+        }
+
+        [Test]
+        public void BootstrapWindowOpenCreatesSetupHubWindow()
+        {
+            DeucarianBootstrapWindow.Open();
+            DeucarianBootstrapWindow window = Resources.FindObjectsOfTypeAll<DeucarianBootstrapWindow>().FirstOrDefault();
+
+            Assert.NotNull(window);
+            Assert.AreEqual("Deucarian Bootstrap", window.titleContent.text);
+            Assert.GreaterOrEqual(window.minSize.x, 720f);
+            Assert.GreaterOrEqual(window.minSize.y, 540f);
+
+            window.Close();
         }
 
         [Test]
