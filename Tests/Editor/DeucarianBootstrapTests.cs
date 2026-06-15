@@ -57,7 +57,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
         {
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, 760f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 860f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 960f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 740f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
