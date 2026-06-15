@@ -262,6 +262,21 @@ namespace Deucarian.Bootstrap.Editor
             EditorGUILayout.EndScrollView();
         }
 
+        private void Update()
+        {
+            if (_catalogRequest != null || _listRequest != null || _addRequest != null || _packageListRetryQueued)
+            {
+                UpdateRequests();
+                return;
+            }
+
+            if (_setupActive && _installPlan.Count == 0)
+            {
+                RefreshScopedRegistryStatus();
+                HandleDelayedEnable();
+            }
+        }
+
         private void DrawHero()
         {
             using (new EditorGUILayout.HorizontalScope(_heroStyle, GUILayout.MinHeight(112f)))
