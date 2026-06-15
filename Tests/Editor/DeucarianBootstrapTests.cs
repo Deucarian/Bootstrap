@@ -30,13 +30,61 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void SetupInstallsEditorBeforePackageInstaller()
+        public void SetupResolvesDependencyFirstPlanFromBundledFallback()
         {
-            BootstrapPackageStep[] steps = DeucarianBootstrapWindow.Steps.ToArray();
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
 
-            Assert.AreEqual(2, steps.Length);
+            Assert.AreEqual(3, steps.Length);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.EditorPackageId, steps[0].PackageId);
-            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerPackageId, steps[1].PackageId);
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.LoggingPackageId, steps[1].PackageId);
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerPackageId, steps[2].PackageId);
+        }
+
+        [Test]
+        public void PlannerDetectsMissingDependencies()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":1,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"stableUrl\":\"https://example.com/installer.git\",\"dependencies\":[\"com.deucarian.missing\"]}]}");
+
+            BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
+                catalog,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+
+            Assert.False(result.Success);
+            StringAssert.Contains("Missing dependency com.deucarian.missing", result.ErrorMessage);
+        }
+
+        [Test]
+        public void PlannerDetectsCircularDependencies()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":1,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"stableUrl\":\"https://example.com/installer.git\",\"dependencies\":[\"com.deucarian.logging\"]},{\"id\":\"com.deucarian.logging\",\"displayName\":\"Logging\",\"stableUrl\":\"https://example.com/logging.git\",\"dependencies\":[\"com.deucarian.package-installer\"]}]}");
+
+            BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
+                catalog,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+
+            Assert.False(result.Success);
+            StringAssert.Contains("Circular dependency detected", result.ErrorMessage);
+        }
+
+        private static BootstrapPackageCatalog ParseCatalog(string json)
+        {
+            Assert.True(BootstrapCatalogParser.TryParse(json, out BootstrapPackageCatalog catalog, out string errorMessage), errorMessage);
+            return catalog;
+        }
+
+        private static BootstrapPackageStep[] BuildPlanFromFallbackCatalog()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            string fallbackPath = Path.Combine(packageInfo.resolvedPath, DeucarianBootstrapPackageConstants.FallbackCatalogRelativePath);
+            BootstrapPackageCatalog catalog = ParseCatalog(File.ReadAllText(fallbackPath));
+            BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
+                catalog,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+
+            Assert.True(result.Success, result.ErrorMessage);
+            return result.Steps.ToArray();
         }
     }
 }
