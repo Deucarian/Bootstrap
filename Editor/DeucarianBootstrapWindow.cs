@@ -1354,7 +1354,7 @@ namespace Deucarian.Bootstrap.Editor
         {
             if (_installPlan.Count == 0)
             {
-                InterruptSetup("Setup plan is not available.", "Bootstrap could not resolve an install plan to continue.");
+                ReloadInstallPlanForContinuation();
                 return;
             }
 
@@ -1399,6 +1399,17 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             StartInstall(_installPlan[_stepIndex]);
+        }
+
+        private void ReloadInstallPlanForContinuation()
+        {
+            DisposeCatalogRequest();
+            _catalogLoaded = false;
+            _installPlan.Clear();
+            _status = "Continuing setup. Reloading package catalog...";
+            _error = string.Empty;
+            SaveState();
+            BeginCatalogLoad(_status);
         }
 
         internal static int FindNextMissingStepIndex(IReadOnlyList<BootstrapPackageStep> installPlan, ISet<string> installedPackageIds)
