@@ -1,0 +1,16 @@
+{
+  "name": "Deucarian.Bootstrap.Editor",
+  "rootNamespace": "Deucarian.Bootstrap.Editor",
+  "references": [],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

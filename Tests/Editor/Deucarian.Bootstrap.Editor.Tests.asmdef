@@ -1,0 +1,21 @@
+{
+  "name": "Deucarian.Bootstrap.Editor.Tests",
+  "rootNamespace": "Deucarian.Bootstrap.Editor.Tests",
+  "references": [
+    "Deucarian.Bootstrap.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
