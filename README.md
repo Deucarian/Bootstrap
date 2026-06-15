@@ -46,4 +46,16 @@ Bootstrap does not auto-install packages on editor startup. The user must explic
 
 ## Versioning
 
-Current package version: `0.1.1`.
+Current package version: `0.1.2`.
+
+## Bootstrap Logo Placeholder
+
+The setup hub uses a local placeholder logo at:
+
+```text
+Editor/Assets/DeucarianBootstrapLogo.png
+```
+
+Replace this PNG with the final Deucarian mark when it is ready. Keep the file name and `.meta` file if possible so existing package references stay stable. If the asset moves later, update `DeucarianBootstrapPackageConstants.LogoAssetRelativePath` and `LogoAssetPath`.
+
+This logo is intentionally package-local while Bootstrap remains self-contained. Shared editor icons currently live in `com.deucarian.editor` as `Editor/DeucarianEditorIcons.cs`, which resolves Unity built-in icons and generates fallback textures in code. Bootstrap mirrors the clear package-local naming style now so the asset can move into a future shared Deucarian Editor asset location without creating a second long-term icon system.
