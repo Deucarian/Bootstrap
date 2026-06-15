@@ -128,11 +128,6 @@ namespace Deucarian.Bootstrap.Editor
         [InitializeOnLoadMethod]
         private static void ScheduleActiveSetupResume()
         {
-            if (!SessionState.GetBool(ActiveKey, false))
-            {
-                return;
-            }
-
             EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
             EditorApplication.delayCall += ResumeActiveSetupAfterReload;
         }
@@ -141,31 +136,63 @@ namespace Deucarian.Bootstrap.Editor
         {
             EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
 
-            if (!SessionState.GetBool(ActiveKey, false))
+            bool sessionSetupActive = SessionState.GetBool(ActiveKey, false);
+            DeucarianBootstrapWindow window = FindExistingWindow();
+
+            if (!sessionSetupActive && (window == null || !window._setupActive))
             {
                 return;
             }
 
-            DeucarianBootstrapWindow window = GetWindow<DeucarianBootstrapWindow>();
+            if (window == null)
+            {
+                window = GetWindow<DeucarianBootstrapWindow>();
+            }
+
             window.titleContent = new GUIContent("Deucarian Bootstrap");
             window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             window.Show();
-            window.ResumeActiveSetupWindow();
+            window.ResumeActiveSetupWindow(sessionSetupActive);
+        }
+
+        private static DeucarianBootstrapWindow FindExistingWindow()
+        {
+            DeucarianBootstrapWindow[] windows = Resources.FindObjectsOfTypeAll<DeucarianBootstrapWindow>();
+            return windows != null ? windows.FirstOrDefault() : null;
         }
 
         private void OnEnable()
         {
             titleContent = new GUIContent("Deucarian Bootstrap");
             minSize = new Vector2(MinWindowWidth, MinWindowHeight);
-            LoadState();
+            RestoreStateForEnable();
             RefreshScopedRegistryStatus();
             EditorApplication.delayCall -= HandleDelayedEnable;
             EditorApplication.delayCall += HandleDelayedEnable;
         }
 
-        private void ResumeActiveSetupWindow()
+        private void RestoreStateForEnable()
         {
-            LoadState();
+            if (SessionState.GetBool(ActiveKey, false) || !_setupActive)
+            {
+                LoadState();
+                return;
+            }
+
+            SaveState();
+        }
+
+        private void ResumeActiveSetupWindow(bool preferSessionState)
+        {
+            if (preferSessionState)
+            {
+                LoadState();
+            }
+            else if (_setupActive)
+            {
+                SaveState();
+            }
+
             RefreshScopedRegistryStatus();
             HandleDelayedEnable();
             Repaint();
