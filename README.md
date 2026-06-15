@@ -20,7 +20,10 @@ Then open:
 Tools/Deucarian/Bootstrap/Open Bootstrapper
 ```
 
-Click the setup button. Bootstrap loads the Deucarian package catalog, resolves the dependency graph for `com.deucarian.package-installer`, shows the planned install order, and installs the plan sequentially.
+Click the setup button. Bootstrap can run in two setup modes:
+
+- Git fallback mode loads the Deucarian package catalog, resolves the dependency graph for `com.deucarian.package-installer`, shows the planned install order, and installs the plan sequentially from Git URLs.
+- Scoped registry mode configures the Unity scoped registry for `com.deucarian`, installs `com.deucarian.package-installer` by package name from npmjs, and lets Unity resolve its declared dependencies.
 
 Bootstrap uses the remote Deucarian Package Registry catalog when available:
 
@@ -38,15 +41,29 @@ With the current catalog, Bootstrap installs:
 
 After setup completes, use Package Installer as the normal package manager for Deucarian packages.
 
+## Scoped Registry Mode
+
+Scoped registry mode adds or repairs this Unity project manifest entry:
+
+```json
+{
+  "name": "Deucarian",
+  "url": "https://registry.npmjs.org",
+  "scopes": ["com.deucarian"]
+}
+```
+
+Use the repair button to configure the scoped registry without installing packages. Use the setup button to repair the scoped registry, then install Package Installer by package name.
+
 ## Behavior
 
-Bootstrap uses `UnityEditor.PackageManager.Client.Add` with Git URLs for the short-term setup flow. It detects missing dependencies and circular dependencies before installing, avoids duplicate plan entries, skips packages that are already installed, and stores an in-progress setup marker in Unity `SessionState` so it can continue after a domain reload when the Bootstrap window is open.
+Bootstrap uses `UnityEditor.PackageManager.Client.Add` with Git URLs for the fallback setup flow and with `com.deucarian.package-installer` for the scoped registry setup flow. It detects missing dependencies and circular dependencies before Git fallback installs, avoids duplicate plan entries, skips packages that are already installed, and stores an in-progress setup marker in Unity `SessionState` so it can continue after a domain reload when the Bootstrap window is open.
 
 Bootstrap does not auto-install packages on editor startup. The user must explicitly open the Bootstrapper and click setup.
 
 ## Versioning
 
-Current package version: `0.1.2`.
+Current package version: `0.1.4`.
 
 ## Bootstrap Logo Placeholder
 

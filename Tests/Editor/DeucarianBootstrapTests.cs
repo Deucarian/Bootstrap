@@ -1,7 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEditor.PackageManager;
 
 namespace Deucarian.Bootstrap.Editor.Tests
@@ -52,17 +53,15 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void BootstrapWindowOpenCreatesSetupHubWindow()
+        public void BootstrapWindowSizingDefaultsFitSetupHub()
         {
-            DeucarianBootstrapWindow.Open();
-            DeucarianBootstrapWindow window = Resources.FindObjectsOfTypeAll<DeucarianBootstrapWindow>().FirstOrDefault();
-
-            Assert.NotNull(window);
-            Assert.AreEqual("Deucarian Bootstrap", window.titleContent.text);
-            Assert.GreaterOrEqual(window.minSize.x, 720f);
-            Assert.GreaterOrEqual(window.minSize.y, 540f);
-
-            window.Close();
+            Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, 760f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 860f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 740f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, DeucarianBootstrapWindow.MinWindowHeight);
         }
 
         [Test]
@@ -74,6 +73,38 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.AreEqual(DeucarianBootstrapPackageConstants.EditorPackageId, steps[0].PackageId);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.LoggingPackageId, steps[1].PackageId);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerPackageId, steps[2].PackageId);
+        }
+
+        [Test]
+        public void ContinuationSkipsInstalledPackages()
+        {
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
+            HashSet<string> installed = new HashSet<string>
+            {
+                DeucarianBootstrapPackageConstants.EditorPackageId
+            };
+
+            int nextIndex = DeucarianBootstrapWindow.FindNextMissingStepIndex(steps, installed);
+
+            Assert.AreEqual(1, nextIndex);
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.LoggingPackageId, steps[nextIndex].PackageId);
+
+            installed.Add(DeucarianBootstrapPackageConstants.LoggingPackageId);
+            nextIndex = DeucarianBootstrapWindow.FindNextMissingStepIndex(steps, installed);
+
+            Assert.AreEqual(2, nextIndex);
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerPackageId, steps[nextIndex].PackageId);
+        }
+
+        [Test]
+        public void ContinuationReportsCompleteWhenAllPackagesInstalled()
+        {
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
+            HashSet<string> installed = new HashSet<string>(steps.Select(step => step.PackageId));
+
+            int nextIndex = DeucarianBootstrapWindow.FindNextMissingStepIndex(steps, installed);
+
+            Assert.AreEqual(steps.Length, nextIndex);
         }
 
         [Test]
@@ -104,6 +135,71 @@ namespace Deucarian.Bootstrap.Editor.Tests
             StringAssert.Contains("Circular dependency detected", result.ErrorMessage);
         }
 
+        [Test]
+        public void ScopedRegistryRepairAddsNpmjsRegistryToManifest()
+        {
+            string manifestPath = CreateTempManifest(
+                "{\"dependencies\":{\"com.unity.textmeshpro\":\"3.0.6\"}}");
+
+            try
+            {
+                BootstrapScopedRegistryStatus status = BootstrapScopedRegistryManifest.GetStatus(manifestPath);
+                Assert.False(status.Configured);
+                Assert.True(status.NeedsRepair);
+
+                BootstrapScopedRegistryRepairResult result =
+                    BootstrapScopedRegistryManifest.EnsureConfigured(manifestPath);
+
+                Assert.True(result.Success, result.ErrorMessage);
+                Assert.True(result.Changed);
+
+                string manifest = File.ReadAllText(manifestPath);
+                StringAssert.Contains("\"scopedRegistries\"", manifest);
+                StringAssert.Contains("\"name\": \"Deucarian\"", manifest);
+                StringAssert.Contains("\"url\": \"https://registry.npmjs.org\"", manifest);
+                StringAssert.Contains("\"com.deucarian\"", manifest);
+                StringAssert.Contains("\"com.unity.textmeshpro\": \"3.0.6\"", manifest);
+
+                BootstrapScopedRegistryRepairResult secondResult =
+                    BootstrapScopedRegistryManifest.EnsureConfigured(manifestPath);
+
+                Assert.True(secondResult.Success, secondResult.ErrorMessage);
+                Assert.False(secondResult.Changed);
+            }
+            finally
+            {
+                DeleteTempManifest(manifestPath);
+            }
+        }
+
+        [Test]
+        public void ScopedRegistryRepairFixesWrongDeucarianRegistry()
+        {
+            string manifestPath = CreateTempManifest(
+                "{\"scopedRegistries\":[{\"name\":\"Old Deucarian\",\"url\":\"https://example.com\",\"scopes\":[\"com.deucarian\"]},{\"name\":\"Other\",\"url\":\"https://example.org\",\"scopes\":[\"com.deucarian\",\"com.example\"]}],\"dependencies\":{}}");
+
+            try
+            {
+                BootstrapScopedRegistryRepairResult result =
+                    BootstrapScopedRegistryManifest.EnsureConfigured(manifestPath);
+
+                Assert.True(result.Success, result.ErrorMessage);
+                Assert.True(result.Changed);
+
+                string manifest = File.ReadAllText(manifestPath);
+                StringAssert.Contains("\"name\": \"Deucarian\"", manifest);
+                StringAssert.Contains("\"url\": \"https://registry.npmjs.org\"", manifest);
+                Assert.AreEqual(1, CountOccurrences(manifest, "\"com.deucarian\""));
+
+                BootstrapScopedRegistryStatus status = BootstrapScopedRegistryManifest.GetStatus(manifestPath);
+                Assert.True(status.Configured, status.Detail);
+            }
+            finally
+            {
+                DeleteTempManifest(manifestPath);
+            }
+        }
+
         private static BootstrapPackageCatalog ParseCatalog(string json)
         {
             Assert.True(BootstrapCatalogParser.TryParse(json, out BootstrapPackageCatalog catalog, out string errorMessage), errorMessage);
@@ -121,6 +217,43 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             Assert.True(result.Success, result.ErrorMessage);
             return result.Steps.ToArray();
+        }
+
+        private static string CreateTempManifest(string json)
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "DeucarianBootstrapTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            string manifestPath = Path.Combine(directory, "manifest.json");
+            File.WriteAllText(manifestPath, json);
+            return manifestPath;
+        }
+
+        private static void DeleteTempManifest(string manifestPath)
+        {
+            if (string.IsNullOrWhiteSpace(manifestPath))
+            {
+                return;
+            }
+
+            string directory = Path.GetDirectoryName(manifestPath);
+            if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
+        private static int CountOccurrences(string text, string value)
+        {
+            int count = 0;
+            int index = 0;
+
+            while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+            {
+                count++;
+                index += value.Length;
+            }
+
+            return count;
         }
     }
 }

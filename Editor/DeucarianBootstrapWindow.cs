@@ -16,10 +16,21 @@ namespace Deucarian.Bootstrap.Editor
         private const string StepIndexKey = "Deucarian.Bootstrap.StepIndex";
         private const string StatusKey = "Deucarian.Bootstrap.Status";
         private const string ErrorKey = "Deucarian.Bootstrap.Error";
+        private const string InstallModeKey = "Deucarian.Bootstrap.InstallMode";
+        private const string PlanKey = "Deucarian.Bootstrap.Plan";
+        private const string PendingPackageIdKey = "Deucarian.Bootstrap.PendingPackageId";
+        private const string WaitingForPackageRefreshKey = "Deucarian.Bootstrap.WaitingForPackageRefresh";
+        private const string PackageListRetryCountKey = "Deucarian.Bootstrap.PackageListRetryCount";
+        private const string InterruptedKey = "Deucarian.Bootstrap.Interrupted";
+        private const char PlanSeparator = '|';
 
-        private const float MinWindowWidth = 720f;
-        private const float MinWindowHeight = 540f;
+        internal const float PreferredWindowWidth = 760f;
+        internal const float PreferredWindowHeight = 860f;
+        internal const float MinWindowWidth = 740f;
+        internal const float MinWindowHeight = 720f;
         private const float ActionColumnWidth = 250f;
+        private const int MaxPackageListRefreshAttempts = 90;
+        private const double PackageListRetryDelaySeconds = 1.0d;
 
         private static readonly BootstrapSetupPackage[] RequiredSetupPackages =
         {
@@ -46,12 +57,21 @@ namespace Deucarian.Bootstrap.Editor
         private bool _catalogLoaded;
         private bool _setupActive;
         private bool _continueSetupAfterPackageList;
+        private bool _waitingForPackageRefresh;
+        private bool _setupInterrupted;
+        private bool _packageListRetryQueued;
         private int _stepIndex;
+        private int _packageListRetryCount;
+        private double _nextPackageListRefreshTime;
+        private string _pendingPackageId;
+        private string[] _savedPlanPackageIds;
         private string _registrySource;
         private string _catalogNotice;
         private string _status;
         private string _error;
         private string _packageInstallerOpenMessage;
+        private BootstrapInstallMode _installMode;
+        private BootstrapScopedRegistryStatus _scopedRegistryStatus;
         private Vector2 _scrollPosition;
 
         private bool _stylesInitialized;
@@ -102,20 +122,144 @@ namespace Deucarian.Bootstrap.Editor
             window.titleContent = new GUIContent("Deucarian Bootstrap");
             window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             window.Show();
+            EnsurePreferredFloatingWindowSize(window);
+        }
+
+        [InitializeOnLoadMethod]
+        private static void ScheduleActiveSetupResume()
+        {
+            EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
+            EditorApplication.delayCall += ResumeActiveSetupAfterReload;
+        }
+
+        private static void ResumeActiveSetupAfterReload()
+        {
+            EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
+
+            bool sessionSetupActive = SessionState.GetBool(ActiveKey, false);
+            DeucarianBootstrapWindow window = FindExistingWindow();
+
+            if (!sessionSetupActive && (window == null || !window._setupActive))
+            {
+                return;
+            }
+
+            if (window == null)
+            {
+                window = GetWindow<DeucarianBootstrapWindow>();
+            }
+
+            window.titleContent = new GUIContent("Deucarian Bootstrap");
+            window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
+            window.Show();
+            window.ResumeActiveSetupWindow(sessionSetupActive);
+        }
+
+        private static DeucarianBootstrapWindow FindExistingWindow()
+        {
+            DeucarianBootstrapWindow[] windows = Resources.FindObjectsOfTypeAll<DeucarianBootstrapWindow>();
+            return windows != null ? windows.FirstOrDefault() : null;
         }
 
         private void OnEnable()
         {
             titleContent = new GUIContent("Deucarian Bootstrap");
             minSize = new Vector2(MinWindowWidth, MinWindowHeight);
-            LoadState();
-            BeginCatalogLoad(_setupActive ? "Resuming Deucarian setup..." : "Loading Deucarian package catalog...");
+            RestoreStateForEnable();
+            RefreshScopedRegistryStatus();
+            EditorApplication.delayCall -= HandleDelayedEnable;
+            EditorApplication.delayCall += HandleDelayedEnable;
+        }
+
+        private void RestoreStateForEnable()
+        {
+            if (SessionState.GetBool(ActiveKey, false) || !_setupActive)
+            {
+                LoadState();
+                return;
+            }
+
+            SaveState();
+        }
+
+        private void ResumeActiveSetupWindow(bool preferSessionState)
+        {
+            if (preferSessionState)
+            {
+                LoadState();
+            }
+            else if (_setupActive)
+            {
+                SaveState();
+            }
+
+            RefreshScopedRegistryStatus();
+            HandleDelayedEnable();
+            Repaint();
         }
 
         private void OnDisable()
         {
+            EditorApplication.delayCall -= HandleDelayedEnable;
             EditorApplication.update -= UpdateRequests;
             DisposeCatalogRequest();
+        }
+
+        private static void EnsurePreferredFloatingWindowSize(DeucarianBootstrapWindow window)
+        {
+            if (window == null || window.docked)
+            {
+                return;
+            }
+
+            Rect current = window.position;
+            float width = Mathf.Max(current.width, PreferredWindowWidth);
+            float height = Mathf.Max(current.height, PreferredWindowHeight);
+
+            if (Mathf.Approximately(width, current.width) && Mathf.Approximately(height, current.height))
+            {
+                return;
+            }
+
+            window.position = new Rect(current.x, current.y, width, height);
+        }
+
+        private void HandleDelayedEnable()
+        {
+            if (this == null)
+            {
+                return;
+            }
+
+            EnsureActiveSetupHasResolvablePlan();
+
+            string status = _setupActive
+                ? GetResumeStatus()
+                : "Loading Deucarian package catalog...";
+
+            if (_installMode == BootstrapInstallMode.ScopedRegistry)
+            {
+                SetScopedRegistryInstallPlan();
+                RefreshInstalledPackages(_setupActive ? status : "Checking setup status...", _setupActive);
+                return;
+            }
+
+            BeginCatalogLoad(status);
+        }
+
+        private void EnsureActiveSetupHasResolvablePlan()
+        {
+            if (!_setupActive ||
+                _installMode == BootstrapInstallMode.ScopedRegistry ||
+                !_catalogLoaded ||
+                _installPlan.Count > 0)
+            {
+                return;
+            }
+
+            _catalogLoaded = false;
+            _registrySource = string.Empty;
+            _catalogNotice = string.Empty;
         }
 
         private void OnGUI()
@@ -133,6 +277,22 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private void Update()
+        {
+            if (_catalogRequest != null || _listRequest != null || _addRequest != null || _packageListRetryQueued)
+            {
+                UpdateRequests();
+                return;
+            }
+
+            if (_setupActive && _installPlan.Count == 0)
+            {
+                EnsureActiveSetupHasResolvablePlan();
+                RefreshScopedRegistryStatus();
+                HandleDelayedEnable();
+            }
         }
 
         private void DrawHero()
@@ -195,6 +355,27 @@ namespace Deucarian.Bootstrap.Editor
                     GetCatalogStatusKind(),
                     false);
 
+                DrawStatusRow(
+                    "Registry mode",
+                    GetInstallModeLabel(),
+                    GetInstallModeDetail(),
+                    BootstrapStatusKind.Info,
+                    true);
+
+                DrawStatusRow(
+                    "Scoped registry configured",
+                    GetScopedRegistryStatusText(),
+                    GetScopedRegistryStatusDetail(),
+                    GetScopedRegistryStatusKind(),
+                    false);
+
+                DrawStatusRow(
+                    "Package Installer install source",
+                    GetPackageInstallerInstallSourceText(),
+                    GetPackageInstallerInstallSourceDetail(),
+                    BootstrapStatusKind.Info,
+                    true);
+
                 for (int i = 0; i < RequiredSetupPackages.Length; i++)
                 {
                     BootstrapSetupPackage package = RequiredSetupPackages[i];
@@ -235,19 +416,35 @@ namespace Deucarian.Bootstrap.Editor
                 EditorGUILayout.LabelField(GetActionSummary(), _mutedStyle);
                 GUILayout.Space(10f);
 
-                using (new EditorGUI.DisabledScope(IsRequestActive))
+                EditorGUI.BeginChangeCheck();
+                int selectedMode = GUILayout.Toolbar(
+                    (int)_installMode,
+                    new[] { "Git fallback", "Scoped registry" },
+                    GUILayout.Height(26f));
+                if (EditorGUI.EndChangeCheck())
                 {
-                    string primaryLabel = _setupActive
-                        ? "Continue Deucarian Setup"
-                        : "Install / Repair Deucarian Setup";
+                    SetInstallMode((BootstrapInstallMode)selectedMode);
+                }
 
-                    if (GUILayout.Button(primaryLabel, _primaryButtonStyle, GUILayout.Height(36f)))
+                GUILayout.Space(6f);
+
+                using (new EditorGUI.DisabledScope(IsPrimaryActionDisabled()))
+                {
+                    if (GUILayout.Button(GetPrimaryActionLabel(), _primaryButtonStyle, GUILayout.Height(36f)))
                     {
                         StartSetup();
                     }
                 }
 
                 GUILayout.Space(6f);
+
+                using (new EditorGUI.DisabledScope(IsRequestActive))
+                {
+                    if (GUILayout.Button("Repair Scoped Registry", _secondaryButtonStyle, GUILayout.Height(28f)))
+                    {
+                        RepairScopedRegistry();
+                    }
+                }
 
                 using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
                 {
@@ -334,7 +531,7 @@ namespace Deucarian.Bootstrap.Editor
                     DrawStatusRow(
                         (i + 1) + ". " + step.DisplayName,
                         GetPlanStepState(i, step),
-                        step.PackageId,
+                        GetPlanStepDetail(step),
                         GetPlanStepStatusKind(i, step),
                         i % 2 != 0);
                 }
@@ -406,7 +603,9 @@ namespace Deucarian.Bootstrap.Editor
         {
             if (_setupActive)
             {
-                return "Setup is in progress. Bootstrap will continue in dependency order.";
+                return _waitingForPackageRefresh
+                    ? "Setup is waiting for Unity to finish refreshing packages before continuing."
+                    : "Setup is in progress. Bootstrap will continue in dependency order.";
             }
 
             if (_installedPackageIds != null && RequiredSetupPackages.All(package => IsPackageInstalled(package.PackageId)))
@@ -414,7 +613,49 @@ namespace Deucarian.Bootstrap.Editor
                 return "Setup is complete. Use Package Installer for day-to-day package work.";
             }
 
-            return "Install or repair the minimum ecosystem needed to launch Package Installer.";
+            return _installMode == BootstrapInstallMode.ScopedRegistry
+                ? "Configure the Unity scoped registry and install Package Installer from npmjs."
+                : "Install or repair the minimum ecosystem through Git fallback URLs.";
+        }
+
+        private string GetPrimaryActionLabel()
+        {
+            if (AreRequiredPackagesInstalled())
+            {
+                return "Setup Complete";
+            }
+
+            if (_setupActive)
+            {
+                return _waitingForPackageRefresh ? "Continuing Deucarian Setup" : "Setup In Progress";
+            }
+
+            if (_setupInterrupted)
+            {
+                return "Continue Deucarian Setup";
+            }
+
+            if (HasSomeRequiredPackagesInstalled())
+            {
+                return "Repair Deucarian Setup";
+            }
+
+            return "Install Deucarian Setup";
+        }
+
+        private bool IsPrimaryActionDisabled()
+        {
+            return IsRequestActive || _setupActive || AreRequiredPackagesInstalled();
+        }
+
+        private string GetResumeStatus()
+        {
+            if (_waitingForPackageRefresh && !string.IsNullOrWhiteSpace(_pendingPackageId))
+            {
+                return "Waiting for Unity package refresh after installing " + _pendingPackageId + "...";
+            }
+
+            return "Continuing setup...";
         }
 
         private string GetCatalogStatusText()
@@ -467,11 +708,80 @@ namespace Deucarian.Bootstrap.Editor
             return string.IsNullOrWhiteSpace(_error) ? BootstrapStatusKind.Neutral : BootstrapStatusKind.Error;
         }
 
+        private string GetInstallModeLabel()
+        {
+            return _installMode == BootstrapInstallMode.ScopedRegistry ? "Scoped" : "Git";
+        }
+
+        private string GetInstallModeDetail()
+        {
+            return _installMode == BootstrapInstallMode.ScopedRegistry
+                ? "Use npmjs scoped registry setup"
+                : "Use catalog Git URLs";
+        }
+
+        private string GetPackageInstallerInstallSourceText()
+        {
+            return _installMode == BootstrapInstallMode.ScopedRegistry ? "npm registry" : "Git fallback";
+        }
+
+        private string GetPackageInstallerInstallSourceDetail()
+        {
+            return _installMode == BootstrapInstallMode.ScopedRegistry
+                ? DeucarianBootstrapPackageConstants.PackageInstallerPackageId
+                : DeucarianBootstrapPackageConstants.PackageInstallerPackageGitUrl;
+        }
+
+        private string GetScopedRegistryStatusText()
+        {
+            if (_scopedRegistryStatus == null)
+            {
+                return "Unknown";
+            }
+
+            if (_scopedRegistryStatus.Configured)
+            {
+                return "Yes";
+            }
+
+            return _scopedRegistryStatus.NeedsRepair ? "Repair" : "No";
+        }
+
+        private string GetScopedRegistryStatusDetail()
+        {
+            if (_scopedRegistryStatus == null)
+            {
+                return "Scoped registry status has not been checked";
+            }
+
+            return _scopedRegistryStatus.Detail;
+        }
+
+        private BootstrapStatusKind GetScopedRegistryStatusKind()
+        {
+            if (_scopedRegistryStatus == null)
+            {
+                return BootstrapStatusKind.Neutral;
+            }
+
+            if (_scopedRegistryStatus.Configured)
+            {
+                return BootstrapStatusKind.Success;
+            }
+
+            return _scopedRegistryStatus.NeedsRepair ? BootstrapStatusKind.Info : BootstrapStatusKind.Neutral;
+        }
+
         private string GetPackageStatusText(string packageId)
         {
             if (_installedPackageIds == null)
             {
                 return _listRequest != null ? "Checking" : "Unknown";
+            }
+
+            if (_setupActive && _waitingForPackageRefresh && string.Equals(_pendingPackageId, packageId, StringComparison.OrdinalIgnoreCase))
+            {
+                return "Refreshing";
             }
 
             return IsPackageInstalled(packageId) ? "Installed" : "Missing";
@@ -482,6 +792,11 @@ namespace Deucarian.Bootstrap.Editor
             if (_installedPackageIds == null)
             {
                 return _listRequest != null ? BootstrapStatusKind.Info : BootstrapStatusKind.Neutral;
+            }
+
+            if (_setupActive && _waitingForPackageRefresh && string.Equals(_pendingPackageId, packageId, StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapStatusKind.Info;
             }
 
             return IsPackageInstalled(packageId) ? BootstrapStatusKind.Success : BootstrapStatusKind.Neutral;
@@ -541,6 +856,11 @@ namespace Deucarian.Bootstrap.Editor
                 return "Installed";
             }
 
+            if (_setupActive && string.Equals(_pendingPackageId, step.PackageId, StringComparison.OrdinalIgnoreCase))
+            {
+                return _waitingForPackageRefresh ? "Waiting" : "Installing";
+            }
+
             if (_setupActive && index == _stepIndex)
             {
                 return _addRequest != null ? "Installing" : "Next";
@@ -554,11 +874,28 @@ namespace Deucarian.Bootstrap.Editor
             return "Pending";
         }
 
+        private static string GetPlanStepDetail(BootstrapPackageStep step)
+        {
+            if (step == null)
+            {
+                return string.Empty;
+            }
+
+            return step.InstallSource == BootstrapPackageInstallSource.ScopedRegistry
+                ? "npm registry: " + step.PackageReference
+                : "Git: " + step.PackageId;
+        }
+
         private BootstrapStatusKind GetPlanStepStatusKind(int index, BootstrapPackageStep step)
         {
             if (_installedPackageIds != null && _installedPackageIds.Contains(step.PackageId))
             {
                 return BootstrapStatusKind.Success;
+            }
+
+            if (_setupActive && string.Equals(_pendingPackageId, step.PackageId, StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapStatusKind.Info;
             }
 
             if (_setupActive && index == _stepIndex)
@@ -577,9 +914,115 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             _setupActive = false;
+            _setupInterrupted = false;
+            _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
+            _pendingPackageId = string.Empty;
+            _packageListRetryCount = 0;
             _stepIndex = Mathf.Clamp(_stepIndex, 0, _installPlan.Count);
             _packageInstallerOpenMessage = string.Empty;
+            RefreshScopedRegistryStatus();
+
+            if (_installMode == BootstrapInstallMode.ScopedRegistry)
+            {
+                SetScopedRegistryInstallPlan();
+                RefreshInstalledPackages("Refreshing scoped registry setup status...", false);
+                return;
+            }
+
             ReloadCatalog();
+        }
+
+        private void SetInstallMode(BootstrapInstallMode installMode)
+        {
+            _installMode = installMode;
+            _setupActive = false;
+            _setupInterrupted = false;
+            _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
+            _pendingPackageId = string.Empty;
+            _packageListRetryCount = 0;
+            _stepIndex = 0;
+            _error = string.Empty;
+            _packageInstallerOpenMessage = string.Empty;
+
+            if (_installMode == BootstrapInstallMode.ScopedRegistry)
+            {
+                SetScopedRegistryInstallPlan();
+                _status = "Scoped registry mode selected. Repair the registry if needed, then run setup.";
+            }
+            else
+            {
+                _status = "Git fallback mode selected. Bootstrap will use catalog Git URLs.";
+                if (_catalogLoaded)
+                {
+                    ReloadCatalog();
+                }
+            }
+
+            SaveState();
+            Repaint();
+        }
+
+        private void RefreshScopedRegistryStatus()
+        {
+            _scopedRegistryStatus = BootstrapScopedRegistryManifest.GetStatus();
+        }
+
+        private void RepairScopedRegistry()
+        {
+            BootstrapScopedRegistryRepairResult result = BootstrapScopedRegistryManifest.EnsureConfigured();
+            RefreshScopedRegistryStatus();
+
+            if (!result.Success)
+            {
+                _status = "Scoped registry repair failed.";
+                _error = result.ErrorMessage;
+                SaveState();
+                Repaint();
+                return;
+            }
+
+            _status = result.Message;
+            _error = string.Empty;
+            SaveState();
+            Repaint();
+        }
+
+        private bool ConfigureScopedRegistryForSetup()
+        {
+            BootstrapScopedRegistryRepairResult result = BootstrapScopedRegistryManifest.EnsureConfigured();
+            RefreshScopedRegistryStatus();
+
+            if (result.Success)
+            {
+                _status = result.Changed
+                    ? "Scoped registry configured. Checking installed packages..."
+                    : "Scoped registry already configured. Checking installed packages...";
+                _error = string.Empty;
+                SaveState();
+                return true;
+            }
+
+            Fail("Scoped registry setup failed.", result.ErrorMessage);
+            return false;
+        }
+
+        private void SetScopedRegistryInstallPlan()
+        {
+            _installPlan.Clear();
+            _installPlan.Add(new BootstrapPackageStep(
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                BootstrapPackageInstallSource.ScopedRegistry));
+            _catalogLoaded = true;
+            _registrySource = "Scoped registry: " + DeucarianBootstrapPackageConstants.ScopedRegistryUrl;
+            _catalogNotice = "Scoped registry mode installs Package Installer by package name and lets Unity resolve Editor and Logging dependencies.";
+            _stepIndex = Mathf.Clamp(_stepIndex, 0, _installPlan.Count);
+            _savedPlanPackageIds = _installPlan.Select(step => step.PackageId).ToArray();
         }
 
         private void ReloadCatalog()
@@ -587,9 +1030,13 @@ namespace Deucarian.Bootstrap.Editor
             DisposeCatalogRequest();
             _catalogLoaded = false;
             _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
             _installPlan.Clear();
             _installedPackageIds = null;
             _stepIndex = 0;
+            _pendingPackageId = string.Empty;
+            _packageListRetryCount = 0;
             _error = string.Empty;
             _catalogNotice = string.Empty;
             _registrySource = string.Empty;
@@ -600,25 +1047,49 @@ namespace Deucarian.Bootstrap.Editor
         private void StartSetup()
         {
             _setupActive = true;
+            _setupInterrupted = false;
+            _packageListRetryQueued = false;
             _stepIndex = Mathf.Clamp(_stepIndex, 0, _installPlan.Count);
             _error = string.Empty;
             _packageInstallerOpenMessage = string.Empty;
 
+            if (_installMode == BootstrapInstallMode.ScopedRegistry)
+            {
+                if (!ConfigureScopedRegistryForSetup())
+                {
+                    return;
+                }
+
+                SetScopedRegistryInstallPlan();
+                _status = string.IsNullOrWhiteSpace(_pendingPackageId)
+                    ? "Checking installed packages before scoped registry setup..."
+                    : "Waiting for Unity package refresh...";
+                SaveState();
+                RefreshInstalledPackages(_status, true);
+                return;
+            }
+
             if (!_catalogLoaded)
             {
-                _status = "Loading package catalog before setup...";
+                _status = string.IsNullOrWhiteSpace(_pendingPackageId)
+                    ? "Loading package catalog before setup..."
+                    : "Continuing setup...";
                 SaveState();
                 BeginCatalogLoad(_status);
                 return;
             }
 
-            _status = "Checking installed packages...";
+            _status = string.IsNullOrWhiteSpace(_pendingPackageId)
+                ? "Checking installed packages..."
+                : "Waiting for Unity package refresh...";
             SaveState();
             RefreshInstalledPackages(_status, true);
         }
 
         private void BeginCatalogLoad(string status)
         {
+            EnsureActiveSetupHasResolvablePlan();
+
             if (_catalogRequest != null || _catalogLoaded)
             {
                 return;
@@ -661,6 +1132,13 @@ namespace Deucarian.Bootstrap.Editor
             if (_addRequest != null)
             {
                 UpdateAddRequest();
+                return;
+            }
+
+            if (_packageListRetryQueued && EditorApplication.timeSinceStartup >= _nextPackageListRefreshTime)
+            {
+                _packageListRetryQueued = false;
+                RefreshInstalledPackages("Continuing setup. Checking installed packages...", true);
             }
         }
 
@@ -754,6 +1232,12 @@ namespace Deucarian.Bootstrap.Editor
                 return false;
             }
 
+            if (_installMode == BootstrapInstallMode.ScopedRegistry)
+            {
+                SetScopedRegistryInstallPlan();
+                return true;
+            }
+
             BootstrapInstallPlanResult planResult = BootstrapInstallPlanner.BuildPlan(
                 catalog,
                 DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
@@ -769,6 +1253,7 @@ namespace Deucarian.Bootstrap.Editor
             _registrySource = source;
             _catalogLoaded = true;
             _stepIndex = Mathf.Clamp(_stepIndex, 0, _installPlan.Count);
+            _savedPlanPackageIds = _installPlan.Select(step => step.PackageId).ToArray();
             return true;
         }
 
@@ -790,6 +1275,10 @@ namespace Deucarian.Bootstrap.Editor
                 return;
             }
 
+            _packageListRetryQueued = false;
+
+            EnsureActiveSetupHasResolvablePlan();
+
             if (!_catalogLoaded)
             {
                 BeginCatalogLoad(status);
@@ -809,6 +1298,12 @@ namespace Deucarian.Bootstrap.Editor
             catch (Exception exception)
             {
                 _continueSetupAfterPackageList = false;
+                if (_setupActive)
+                {
+                    SchedulePackageListRetry("Waiting for Unity package refresh. Could not start package list check: " + exception.GetBaseException().Message);
+                    return;
+                }
+
                 Fail("Could not start installed package check.", exception);
             }
         }
@@ -827,7 +1322,14 @@ namespace Deucarian.Bootstrap.Editor
 
             if (request.Status != StatusCode.Success)
             {
-                Fail("Installed package check failed.", request.Error != null ? request.Error.message : "Package Manager returned an unknown error.");
+                string detail = request.Error != null ? request.Error.message : "Package Manager returned an unknown error.";
+                if (_setupActive)
+                {
+                    SchedulePackageListRetry("Waiting for Unity package refresh. Installed package check is not ready: " + detail);
+                    return;
+                }
+
+                Fail("Installed package check failed.", detail);
                 return;
             }
 
@@ -850,10 +1352,45 @@ namespace Deucarian.Bootstrap.Editor
 
         private void ContinueFromInstalledPackages(ISet<string> installedPackageIds)
         {
-            while (_stepIndex < _installPlan.Count && installedPackageIds.Contains(_installPlan[_stepIndex].PackageId))
+            if (_installPlan.Count == 0)
             {
-                _stepIndex++;
+                ReloadInstallPlanForContinuation();
+                return;
             }
+
+            if (_waitingForPackageRefresh && !string.IsNullOrWhiteSpace(_pendingPackageId))
+            {
+                int pendingIndex = FindPlanIndex(_installPlan, _pendingPackageId);
+                if (pendingIndex >= 0)
+                {
+                    _stepIndex = pendingIndex;
+                }
+                else
+                {
+                    _pendingPackageId = string.Empty;
+                    _waitingForPackageRefresh = false;
+                    _packageListRetryCount = 0;
+                    _status = "Continuing setup...";
+                    SaveState();
+                }
+
+                if (_waitingForPackageRefresh && !installedPackageIds.Contains(_pendingPackageId))
+                {
+                    SchedulePackageListRetry("Waiting for Unity package refresh after installing " + _pendingPackageId + "...");
+                    return;
+                }
+
+                if (_waitingForPackageRefresh)
+                {
+                    _pendingPackageId = string.Empty;
+                    _waitingForPackageRefresh = false;
+                    _packageListRetryCount = 0;
+                    _status = "Continuing setup...";
+                    SaveState();
+                }
+            }
+
+            _stepIndex = FindNextMissingStepIndex(_installPlan, installedPackageIds);
 
             if (_stepIndex >= _installPlan.Count)
             {
@@ -864,20 +1401,119 @@ namespace Deucarian.Bootstrap.Editor
             StartInstall(_installPlan[_stepIndex]);
         }
 
+        private void ReloadInstallPlanForContinuation()
+        {
+            DisposeCatalogRequest();
+            _catalogLoaded = false;
+            _installPlan.Clear();
+            _status = "Continuing setup. Reloading package catalog...";
+            _error = string.Empty;
+            SaveState();
+            BeginCatalogLoad(_status);
+        }
+
+        internal static int FindNextMissingStepIndex(IReadOnlyList<BootstrapPackageStep> installPlan, ISet<string> installedPackageIds)
+        {
+            if (installPlan == null || installPlan.Count == 0)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < installPlan.Count; i++)
+            {
+                BootstrapPackageStep step = installPlan[i];
+                if (step == null || installedPackageIds == null || !installedPackageIds.Contains(step.PackageId))
+                {
+                    return i;
+                }
+            }
+
+            return installPlan.Count;
+        }
+
+        private static int FindPlanIndex(IReadOnlyList<BootstrapPackageStep> installPlan, string packageId)
+        {
+            if (installPlan == null || string.IsNullOrWhiteSpace(packageId))
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < installPlan.Count; i++)
+            {
+                BootstrapPackageStep step = installPlan[i];
+                if (step != null && string.Equals(step.PackageId, packageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void SchedulePackageListRetry(string status)
+        {
+            if (_packageListRetryCount >= MaxPackageListRefreshAttempts)
+            {
+                InterruptSetup(
+                    "Setup interrupted while waiting for Unity package refresh.",
+                    "Unity did not report the pending package as installed after " + MaxPackageListRefreshAttempts + " checks. Click Continue Deucarian Setup to retry.");
+                return;
+            }
+
+            _packageListRetryCount++;
+            _status = status + " Checking again (" + _packageListRetryCount + "/" + MaxPackageListRefreshAttempts + ").";
+            _error = string.Empty;
+            _packageListRetryQueued = true;
+            _nextPackageListRefreshTime = EditorApplication.timeSinceStartup + PackageListRetryDelaySeconds;
+            SaveState();
+            EditorApplication.update -= UpdateRequests;
+            EditorApplication.update += UpdateRequests;
+            Repaint();
+        }
+
+        private void InterruptSetup(string status, string error)
+        {
+            _setupActive = false;
+            _setupInterrupted = true;
+            _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
+            _pendingPackageId = string.Empty;
+            _status = status ?? "Setup interrupted.";
+            _error = error ?? string.Empty;
+            _listRequest = null;
+            _addRequest = null;
+            DisposeCatalogRequest();
+            SaveState();
+            EditorApplication.update -= UpdateRequests;
+            Repaint();
+        }
+
         private void StartInstall(BootstrapPackageStep step)
         {
+            if (_listRequest != null || _addRequest != null || _packageListRetryQueued)
+            {
+                return;
+            }
+
             try
             {
-                _status = "Installing " + step.DisplayName + " (" + (_stepIndex + 1) + "/" + _installPlan.Count + ")...";
+                _pendingPackageId = step.PackageId;
+                _waitingForPackageRefresh = true;
+                _packageListRetryCount = 0;
+                _setupInterrupted = false;
+                _status = "Installing " + step.PackageId + "...";
                 _error = string.Empty;
                 SaveState();
-                _addRequest = Client.Add(step.GitUrl);
+                _addRequest = Client.Add(step.PackageReference);
                 EditorApplication.update -= UpdateRequests;
                 EditorApplication.update += UpdateRequests;
                 Repaint();
             }
             catch (Exception exception)
             {
+                _pendingPackageId = string.Empty;
+                _waitingForPackageRefresh = false;
                 Fail("Could not start install for " + step.DisplayName + ".", exception);
             }
         }
@@ -895,6 +1531,15 @@ namespace Deucarian.Bootstrap.Editor
 
             if (request.Status != StatusCode.Success)
             {
+                if (_waitingForPackageRefresh && !string.IsNullOrWhiteSpace(_pendingPackageId))
+                {
+                    _status = "Waiting for Unity package refresh after installing " + _pendingPackageId + "...";
+                    _error = string.Empty;
+                    SaveState();
+                    RefreshInstalledPackages(_status, true);
+                    return;
+                }
+
                 string packageName = completedStep != null ? completedStep.DisplayName : "package";
                 Fail("Install failed for " + packageName + ".", request.Error != null ? request.Error.message : "Package Manager returned an unknown error.");
                 return;
@@ -905,20 +1550,25 @@ namespace Deucarian.Bootstrap.Editor
                 _installedPackageIds.Add(completedStep.PackageId);
             }
 
-            _stepIndex++;
             _status = completedStep != null
-                ? "Installed " + completedStep.DisplayName + "."
-                : "Installed package.";
+                ? "Waiting for Unity package refresh after installing " + completedStep.PackageId + "..."
+                : "Waiting for Unity package refresh...";
             SaveState();
-            RefreshInstalledPackages("Checking next setup step...", true);
+            RefreshInstalledPackages("Waiting for Unity package refresh...", true);
         }
 
         private void CompleteSetup()
         {
             _setupActive = false;
+            _setupInterrupted = false;
+            _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
+            _pendingPackageId = string.Empty;
+            _packageListRetryCount = 0;
             _stepIndex = _installPlan.Count;
             _error = string.Empty;
-            _status = "Deucarian setup completed. Package Installer is ready.";
+            _status = "Setup complete.";
             SaveState();
             EditorApplication.update -= UpdateRequests;
             Repaint();
@@ -932,7 +1582,11 @@ namespace Deucarian.Bootstrap.Editor
         private void Fail(string summary, string detail)
         {
             _setupActive = false;
+            _setupInterrupted = true;
             _continueSetupAfterPackageList = false;
+            _waitingForPackageRefresh = false;
+            _packageListRetryQueued = false;
+            _pendingPackageId = string.Empty;
             _status = summary;
             _error = detail ?? string.Empty;
             _listRequest = null;
@@ -949,6 +1603,19 @@ namespace Deucarian.Bootstrap.Editor
             _stepIndex = SessionState.GetInt(StepIndexKey, 0);
             _status = SessionState.GetString(StatusKey, string.Empty);
             _error = SessionState.GetString(ErrorKey, string.Empty);
+            _pendingPackageId = SessionState.GetString(PendingPackageIdKey, string.Empty);
+            _waitingForPackageRefresh = SessionState.GetBool(WaitingForPackageRefreshKey, false);
+            _packageListRetryCount = SessionState.GetInt(PackageListRetryCountKey, 0);
+            _setupInterrupted = SessionState.GetBool(InterruptedKey, false);
+            _savedPlanPackageIds = ParseSavedPlan(SessionState.GetString(PlanKey, string.Empty));
+            if (string.IsNullOrWhiteSpace(_pendingPackageId))
+            {
+                _waitingForPackageRefresh = false;
+            }
+            _installMode = (BootstrapInstallMode)Mathf.Clamp(
+                SessionState.GetInt(InstallModeKey, (int)BootstrapInstallMode.GitFallback),
+                (int)BootstrapInstallMode.GitFallback,
+                (int)BootstrapInstallMode.ScopedRegistry);
             _registrySource = string.Empty;
             _catalogNotice = string.Empty;
             _packageInstallerOpenMessage = string.Empty;
@@ -960,6 +1627,50 @@ namespace Deucarian.Bootstrap.Editor
             SessionState.SetInt(StepIndexKey, _stepIndex);
             SessionState.SetString(StatusKey, _status ?? string.Empty);
             SessionState.SetString(ErrorKey, _error ?? string.Empty);
+            SessionState.SetInt(InstallModeKey, (int)_installMode);
+            SessionState.SetString(PlanKey, GetPlanPackageIdsForState());
+            SessionState.SetString(PendingPackageIdKey, _pendingPackageId ?? string.Empty);
+            SessionState.SetBool(WaitingForPackageRefreshKey, _waitingForPackageRefresh);
+            SessionState.SetInt(PackageListRetryCountKey, _packageListRetryCount);
+            SessionState.SetBool(InterruptedKey, _setupInterrupted);
+        }
+
+        private string GetPlanPackageIdsForState()
+        {
+            string activePlan = FormatPlanPackageIds(_installPlan);
+            if (!string.IsNullOrWhiteSpace(activePlan))
+            {
+                return activePlan;
+            }
+
+            return _savedPlanPackageIds == null || _savedPlanPackageIds.Length == 0
+                ? string.Empty
+                : string.Join(PlanSeparator.ToString(), _savedPlanPackageIds);
+        }
+
+        private static string FormatPlanPackageIds(IEnumerable<BootstrapPackageStep> installPlan)
+        {
+            if (installPlan == null)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(
+                PlanSeparator.ToString(),
+                installPlan.Where(step => step != null)
+                    .Select(step => step.PackageId)
+                    .Where(packageId => !string.IsNullOrWhiteSpace(packageId))
+                    .ToArray());
+        }
+
+        private static string[] ParseSavedPlan(string savedPlan)
+        {
+            if (string.IsNullOrWhiteSpace(savedPlan))
+            {
+                return Array.Empty<string>();
+            }
+
+            return savedPlan.Split(new[] { PlanSeparator }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private void DisposeCatalogRequest()
@@ -1002,13 +1713,24 @@ namespace Deucarian.Bootstrap.Editor
             return _installedPackageIds != null && _installedPackageIds.Contains(packageId);
         }
 
+        private bool AreRequiredPackagesInstalled()
+        {
+            return _installedPackageIds != null && RequiredSetupPackages.All(package => IsPackageInstalled(package.PackageId));
+        }
+
+        private bool HasSomeRequiredPackagesInstalled()
+        {
+            return _installedPackageIds != null && RequiredSetupPackages.Any(package => IsPackageInstalled(package.PackageId));
+        }
+
         private bool IsPackageInstallerInstalled =>
             IsPackageInstalled(DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
 
         private bool IsRequestActive =>
             (_catalogRequest != null && !_catalogRequest.isDone) ||
             (_listRequest != null && !_listRequest.IsCompleted) ||
-            (_addRequest != null && !_addRequest.IsCompleted);
+            (_addRequest != null && !_addRequest.IsCompleted) ||
+            _packageListRetryQueued;
 
         private string GetRegistrySourceSummary()
         {
@@ -1308,6 +2030,12 @@ namespace Deucarian.Bootstrap.Editor
             Error
         }
 
+        private enum BootstrapInstallMode
+        {
+            GitFallback,
+            ScopedRegistry
+        }
+
         private sealed class BootstrapSetupPackage
         {
             public BootstrapSetupPackage(string packageId, string displayName)
@@ -1325,16 +2053,36 @@ namespace Deucarian.Bootstrap.Editor
     internal sealed class BootstrapPackageStep
     {
         public BootstrapPackageStep(string packageId, string displayName, string gitUrl)
+            : this(packageId, displayName, gitUrl, BootstrapPackageInstallSource.Git)
+        {
+        }
+
+        public BootstrapPackageStep(
+            string packageId,
+            string displayName,
+            string packageReference,
+            BootstrapPackageInstallSource installSource)
         {
             PackageId = packageId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
-            GitUrl = gitUrl ?? string.Empty;
+            PackageReference = packageReference ?? string.Empty;
+            InstallSource = installSource;
         }
 
         public string PackageId { get; }
 
         public string DisplayName { get; }
 
-        public string GitUrl { get; }
+        public string PackageReference { get; }
+
+        public BootstrapPackageInstallSource InstallSource { get; }
+
+        public string GitUrl => InstallSource == BootstrapPackageInstallSource.Git ? PackageReference : string.Empty;
+    }
+
+    internal enum BootstrapPackageInstallSource
+    {
+        Git,
+        ScopedRegistry
     }
 }
