@@ -125,6 +125,34 @@ namespace Deucarian.Bootstrap.Editor
             EnsurePreferredFloatingWindowSize(window);
         }
 
+        [InitializeOnLoadMethod]
+        private static void ScheduleActiveSetupResume()
+        {
+            if (!SessionState.GetBool(ActiveKey, false))
+            {
+                return;
+            }
+
+            EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
+            EditorApplication.delayCall += ResumeActiveSetupAfterReload;
+        }
+
+        private static void ResumeActiveSetupAfterReload()
+        {
+            EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
+
+            if (!SessionState.GetBool(ActiveKey, false))
+            {
+                return;
+            }
+
+            DeucarianBootstrapWindow window = GetWindow<DeucarianBootstrapWindow>();
+            window.titleContent = new GUIContent("Deucarian Bootstrap");
+            window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
+            window.Show();
+            window.ResumeActiveSetupWindow();
+        }
+
         private void OnEnable()
         {
             titleContent = new GUIContent("Deucarian Bootstrap");
@@ -133,6 +161,14 @@ namespace Deucarian.Bootstrap.Editor
             RefreshScopedRegistryStatus();
             EditorApplication.delayCall -= HandleDelayedEnable;
             EditorApplication.delayCall += HandleDelayedEnable;
+        }
+
+        private void ResumeActiveSetupWindow()
+        {
+            LoadState();
+            RefreshScopedRegistryStatus();
+            HandleDelayedEnable();
+            Repaint();
         }
 
         private void OnDisable()
