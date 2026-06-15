@@ -4,11 +4,14 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "0.1.2";
+        public const string Version = "0.1.4";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
         public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
         public const string LegacyPackageInstallerMenuPath = "Deucarian/Package Installer";
         public const string RegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json";
+        public const string ScopedRegistryName = "Deucarian";
+        public const string ScopedRegistryUrl = "https://registry.npmjs.org";
+        public const string ScopedRegistryScope = "com.deucarian";
         public const string FallbackCatalogRelativePath = "Editor/PackageCatalogFallback.json";
         public const string LogoAssetRelativePath = "Editor/Assets/DeucarianBootstrapLogo.png";
         public const string LogoAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/DeucarianBootstrapLogo.png";
