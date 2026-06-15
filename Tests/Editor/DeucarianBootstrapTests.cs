@@ -32,22 +32,29 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void BootstrapLogoPlaceholderExistsInPackage()
+        public void BootstrapHeroAssetsExistInPackage()
         {
             PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
             string logoPath = Path.Combine(
                 packageInfo.resolvedPath,
                 DeucarianBootstrapPackageConstants.LogoAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string backgroundPath = Path.Combine(
+                packageInfo.resolvedPath,
+                DeucarianBootstrapPackageConstants.HeroBackgroundAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
             Assert.True(File.Exists(logoPath), logoPath);
+            Assert.True(File.Exists(backgroundPath), backgroundPath);
         }
 
         [Test]
-        public void BootstrapLinksAndLogoStayPackageLocal()
+        public void BootstrapLinksAndAssetsStayPackageLocal()
         {
             StringAssert.StartsWith(
                 "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
                 DeucarianBootstrapPackageConstants.LogoAssetPath);
+            StringAssert.StartsWith(
+                "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
+                DeucarianBootstrapPackageConstants.HeroBackgroundAssetPath);
             StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.GitHubUrl);
             StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.DocumentationUrl);
         }
@@ -57,11 +64,42 @@ namespace Deucarian.Bootstrap.Editor.Tests
         {
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, 760f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 960f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 860f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 740f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, DeucarianBootstrapWindow.MinWindowHeight);
+        }
+
+        [Test]
+        public void StartupPreferenceKeyIsProjectScopedAndStable()
+        {
+            string firstKey = DeucarianBootstrapWindow.GetProjectShowOnStartupPreferenceKey("C:/Projects/First");
+            string firstKeyWithSlashes = DeucarianBootstrapWindow.GetProjectShowOnStartupPreferenceKey("C:\\Projects\\First\\");
+            string secondKey = DeucarianBootstrapWindow.GetProjectShowOnStartupPreferenceKey("C:/Projects/Second");
+
+            StringAssert.StartsWith("Deucarian.Bootstrap.ShowOnStartup.", firstKey);
+            Assert.AreEqual(firstKey, firstKeyWithSlashes);
+            Assert.AreNotEqual(firstKey, secondKey);
+        }
+
+        [Test]
+        public void StartupPreferenceCanBeToggledForCurrentProject()
+        {
+            bool original = DeucarianBootstrapWindow.ShouldShowOnStartup();
+
+            try
+            {
+                DeucarianBootstrapWindow.SetShowOnStartup(false);
+                Assert.False(DeucarianBootstrapWindow.ShouldShowOnStartup());
+
+                DeucarianBootstrapWindow.SetShowOnStartup(true);
+                Assert.True(DeucarianBootstrapWindow.ShouldShowOnStartup());
+            }
+            finally
+            {
+                DeucarianBootstrapWindow.SetShowOnStartup(original);
+            }
         }
 
         [Test]

@@ -22,10 +22,13 @@ namespace Deucarian.Bootstrap.Editor
         private const string WaitingForPackageRefreshKey = "Deucarian.Bootstrap.WaitingForPackageRefresh";
         private const string PackageListRetryCountKey = "Deucarian.Bootstrap.PackageListRetryCount";
         private const string InterruptedKey = "Deucarian.Bootstrap.Interrupted";
+        private const string StartupShownThisSessionKey = "Deucarian.Bootstrap.StartupShownThisSession";
+        private const string ShowOnStartupPreferencePrefix = "Deucarian.Bootstrap.ShowOnStartup.";
+        private const string SetupDetailsExpandedKey = "Deucarian.Bootstrap.SetupDetailsExpanded";
         private const char PlanSeparator = '|';
 
         internal const float PreferredWindowWidth = 760f;
-        internal const float PreferredWindowHeight = 960f;
+        internal const float PreferredWindowHeight = 860f;
         internal const float MinWindowWidth = 740f;
         internal const float MinWindowHeight = 720f;
         private const float ActionColumnWidth = 250f;
@@ -111,8 +114,15 @@ namespace Deucarian.Bootstrap.Editor
         private GUIStyle _badgeStyle;
         private GUIStyle _footerStyle;
         private GUIStyle _footerRightStyle;
+        private GUIStyle _heroTitleStyle;
+        private GUIStyle _heroSubtitleLargeStyle;
+        private GUIStyle _heroEyebrowStyle;
+        private GUIStyle _summaryValueStyle;
+        private GUIStyle _foldoutStyle;
 
         private Texture2D _logoTexture;
+        private Texture2D _heroBackgroundTexture;
+        private bool _setupDetailsExpanded;
 
         internal IReadOnlyList<BootstrapPackageStep> InstallPlan => _installPlan;
 
@@ -122,10 +132,17 @@ namespace Deucarian.Bootstrap.Editor
         public static void Open()
         {
             DeucarianBootstrapWindow window = GetWindow<DeucarianBootstrapWindow>();
-            window.titleContent = new GUIContent("Deucarian Bootstrap");
+            window.titleContent = new GUIContent("Deucarian Setup");
             window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             window.Show();
             EnsurePreferredFloatingWindowSize(window);
+        }
+
+        [InitializeOnLoadMethod]
+        private static void ScheduleStartupWelcome()
+        {
+            EditorApplication.delayCall -= OpenStartupWelcomeWhenReady;
+            EditorApplication.delayCall += OpenStartupWelcomeWhenReady;
         }
 
         [InitializeOnLoadMethod]
@@ -133,6 +150,35 @@ namespace Deucarian.Bootstrap.Editor
         {
             EditorApplication.delayCall -= ResumeActiveSetupAfterReload;
             EditorApplication.delayCall += ResumeActiveSetupAfterReload;
+        }
+
+        private static void OpenStartupWelcomeWhenReady()
+        {
+            EditorApplication.delayCall -= OpenStartupWelcomeWhenReady;
+
+            if (Application.isBatchMode ||
+                SessionState.GetBool(StartupShownThisSessionKey, false) ||
+                !ShouldShowOnStartup())
+            {
+                return;
+            }
+
+            if (EditorApplication.isCompiling ||
+                EditorApplication.isUpdating ||
+                EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorApplication.delayCall += OpenStartupWelcomeWhenReady;
+                return;
+            }
+
+            if (FindExistingWindow() != null)
+            {
+                SessionState.SetBool(StartupShownThisSessionKey, true);
+                return;
+            }
+
+            SessionState.SetBool(StartupShownThisSessionKey, true);
+            Open();
         }
 
         private static void ResumeActiveSetupAfterReload()
@@ -152,7 +198,7 @@ namespace Deucarian.Bootstrap.Editor
                 window = GetWindow<DeucarianBootstrapWindow>();
             }
 
-            window.titleContent = new GUIContent("Deucarian Bootstrap");
+            window.titleContent = new GUIContent("Deucarian Setup");
             window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             window.Show();
             window.ResumeActiveSetupWindow(sessionSetupActive);
@@ -166,8 +212,9 @@ namespace Deucarian.Bootstrap.Editor
 
         private void OnEnable()
         {
-            titleContent = new GUIContent("Deucarian Bootstrap");
+            titleContent = new GUIContent("Deucarian Setup");
             minSize = new Vector2(MinWindowWidth, MinWindowHeight);
+            _setupDetailsExpanded = SessionState.GetBool(SetupDetailsExpandedKey, false);
             RestoreStateForEnable();
             RefreshScopedRegistryStatus();
             EditorApplication.delayCall -= HandleDelayedEnable;
@@ -273,10 +320,10 @@ namespace Deucarian.Bootstrap.Editor
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             using (new EditorGUILayout.VerticalScope(_windowStyle))
             {
-                DrawHero();
-                DrawStatusAndActions();
                 DrawPackageInstallerProductCard();
-                DrawInstallPlan();
+                DrawCompactSetupSummary();
+                DrawSetupActions();
+                DrawSetupDetails();
                 DrawFooter();
             }
 
@@ -312,10 +359,12 @@ namespace Deucarian.Bootstrap.Editor
                 using (new EditorGUILayout.VerticalScope())
                 {
                     GUILayout.FlexibleSpace();
-                    EditorGUILayout.LabelField("Deucarian", _titleStyle);
-                    EditorGUILayout.LabelField("Unity package ecosystem setup", _subtitleStyle);
+                    EditorGUILayout.LabelField("Deucarian Setup", _titleStyle);
                     EditorGUILayout.LabelField(
                         "Install, repair, and launch the Deucarian package ecosystem.",
+                        _subtitleStyle);
+                    EditorGUILayout.LabelField(
+                        "Bootstrap configures the scoped registry, installs Package Installer, and leaves daily package work to Package Installer.",
                         _taglineStyle);
                     GUILayout.FlexibleSpace();
                 }
@@ -344,64 +393,35 @@ namespace Deucarian.Bootstrap.Editor
             }
         }
 
-        private void DrawStatusCard(params GUILayoutOption[] options)
+        private void DrawCompactSetupSummary()
         {
-            using (new EditorGUILayout.VerticalScope(_cardStyle, options))
+            using (new EditorGUILayout.VerticalScope(_cardStyle))
             {
-                EditorGUILayout.LabelField("Setup Status", _sectionTitleStyle);
-                EditorGUILayout.LabelField(GetSetupSummary(), _mutedStyle);
-                GUILayout.Space(8f);
-
-                DrawStatusRow(
-                    "Registry/catalog loaded",
-                    GetCatalogStatusText(),
-                    GetCatalogStatusDetail(),
-                    GetCatalogStatusKind(),
-                    false);
-
-                DrawStatusRow(
-                    "Registry mode",
-                    GetInstallModeLabel(),
-                    GetInstallModeDetail(),
-                    BootstrapStatusKind.Info,
-                    true);
-
-                DrawStatusRow(
-                    "Scoped registry configured",
-                    GetScopedRegistryStatusText(),
-                    GetScopedRegistryStatusDetail(),
-                    GetScopedRegistryStatusKind(),
-                    false);
-
-                DrawStatusRow(
-                    "Package Installer install source",
-                    GetPackageInstallerInstallSourceText(),
-                    GetPackageInstallerInstallSourceDetail(),
-                    BootstrapStatusKind.Info,
-                    true);
-
-                for (int i = 0; i < RequiredSetupPackages.Length; i++)
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    BootstrapSetupPackage package = RequiredSetupPackages[i];
-                    DrawStatusRow(
-                        package.PackageId,
-                        GetPackageStatusText(package.PackageId),
-                        package.DisplayName,
-                        GetPackageStatusKind(package.PackageId),
-                        i % 2 == 0);
+                    DrawSummaryItem(
+                        "Registry configured",
+                        GetRegistryConfiguredSummaryText(),
+                        GetScopedRegistryStatusKind(),
+                        GUILayout.ExpandWidth(true));
+                    GUILayout.Space(8f);
+                    DrawSummaryItem(
+                        "Required packages installed",
+                        GetRequiredPackagesSummaryText(),
+                        GetRequiredPackagesSummaryKind(),
+                        GUILayout.ExpandWidth(true));
+                    GUILayout.Space(8f);
+                    DrawSummaryItem(
+                        "Package Installer ready",
+                        IsPackageInstallerInstalled ? "Yes" : "No",
+                        GetPackageInstallerAvailabilityKind(),
+                        GUILayout.ExpandWidth(true));
                 }
 
-                DrawStatusRow(
-                    "Package Installer available",
-                    GetPackageInstallerAvailabilityText(),
-                    GetPackageInstallerAvailabilityDetail(),
-                    GetPackageInstallerAvailabilityKind(),
-                    true);
-
-                if (!string.IsNullOrWhiteSpace(_catalogNotice))
+                if (_setupActive && _installPlan.Count > 0)
                 {
                     GUILayout.Space(8f);
-                    EditorGUILayout.HelpBox(_catalogNotice, MessageType.Info);
+                    DrawInstallProgressBar();
                 }
 
                 if (!string.IsNullOrWhiteSpace(_error))
@@ -412,6 +432,206 @@ namespace Deucarian.Bootstrap.Editor
             }
         }
 
+        private void DrawSetupActions()
+        {
+            using (new EditorGUILayout.VerticalScope(_cardStyle))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
+                    {
+                        EditorGUILayout.LabelField("Setup Mode", _sectionTitleStyle);
+                        EditorGUILayout.LabelField(GetActionSummary(), _mutedStyle);
+                    }
+
+                    GUILayout.Space(10f);
+
+                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(300f)))
+                    {
+                        DrawSetupModeSelector();
+                    }
+                }
+
+                GUILayout.Space(8f);
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
+                    {
+                        if (GUILayout.Button("Refresh Status", _secondaryButtonStyle, GUILayout.Height(28f)))
+                        {
+                            RefreshStatus();
+                        }
+                    }
+
+                    using (new EditorGUI.DisabledScope(IsRequestActive))
+                    {
+                        if (GUILayout.Button("Repair Scoped Registry", _secondaryButtonStyle, GUILayout.Height(28f)))
+                        {
+                            RepairScopedRegistry();
+                        }
+                    }
+
+                    if (GUILayout.Button("Open GitHub", _secondaryButtonStyle, GUILayout.Height(28f)))
+                    {
+                        Application.OpenURL(DeucarianBootstrapPackageConstants.GitHubUrl);
+                    }
+
+                    if (GUILayout.Button("Open Documentation", _secondaryButtonStyle, GUILayout.Height(28f)))
+                    {
+                        Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
+                    }
+                }
+
+                GUILayout.Space(8f);
+                DrawStartupPreferenceToggle();
+            }
+        }
+
+        private void DrawSetupDetails()
+        {
+            using (new EditorGUILayout.VerticalScope(_cardStyle))
+            {
+                EditorGUI.BeginChangeCheck();
+                bool expanded = EditorGUILayout.Foldout(_setupDetailsExpanded, "Setup Details", true, _foldoutStyle);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    _setupDetailsExpanded = expanded;
+                    SessionState.SetBool(SetupDetailsExpandedKey, _setupDetailsExpanded);
+                }
+
+                if (!_setupDetailsExpanded)
+                {
+                    EditorGUILayout.LabelField(
+                        "Diagnostics, package rows, registry source, and install plan are available here when needed.",
+                        _miniMutedStyle);
+                    return;
+                }
+
+                GUILayout.Space(8f);
+                DrawDetailedStatusRows();
+                DrawStatusMessages();
+
+                GUILayout.Space(10f);
+                DrawInstallPlanContents();
+            }
+        }
+
+        private void DrawStatusCard(params GUILayoutOption[] options)
+        {
+            using (new EditorGUILayout.VerticalScope(_cardStyle, options))
+            {
+                EditorGUILayout.LabelField("Setup Status", _sectionTitleStyle);
+                EditorGUILayout.LabelField(GetSetupSummary(), _mutedStyle);
+                GUILayout.Space(8f);
+
+                DrawDetailedStatusRows();
+                DrawStatusMessages();
+            }
+        }
+
+        private void DrawSummaryItem(string label, string value, BootstrapStatusKind kind, params GUILayoutOption[] options)
+        {
+            Rect itemRect = GUILayoutUtility.GetRect(1f, 46f, options);
+            EditorGUI.DrawRect(itemRect, _rowBackgroundColor);
+
+            Rect iconRect = new Rect(itemRect.x + 8f, itemRect.y + 12f, 22f, 22f);
+            GUIStyle iconStyle = new GUIStyle(_statusIconStyle);
+            iconStyle.normal.background = TextureForColor("summary-" + kind, GetStatusColor(kind));
+            GUI.Label(iconRect, GetStatusMarker(kind), iconStyle);
+
+            Rect labelRect = new Rect(iconRect.xMax + 8f, itemRect.y + 7f, itemRect.width - 44f, 16f);
+            Rect valueRect = new Rect(iconRect.xMax + 8f, labelRect.yMax + 1f, itemRect.width - 44f, 18f);
+            GUI.Label(labelRect, label ?? string.Empty, _miniMutedStyle);
+            GUI.Label(valueRect, value ?? string.Empty, _summaryValueStyle);
+        }
+
+        private void DrawDetailedStatusRows()
+        {
+            DrawStatusRow(
+                "Registry/catalog loaded",
+                GetCatalogStatusText(),
+                GetCatalogStatusDetail(),
+                GetCatalogStatusKind(),
+                false);
+
+            DrawStatusRow(
+                "Registry mode",
+                GetInstallModeLabel(),
+                GetInstallModeDetail(),
+                BootstrapStatusKind.Info,
+                true);
+
+            DrawStatusRow(
+                "Scoped registry configured",
+                GetScopedRegistryStatusText(),
+                GetScopedRegistryStatusDetail(),
+                GetScopedRegistryStatusKind(),
+                false);
+
+            DrawStatusRow(
+                "Package Installer install source",
+                GetPackageInstallerInstallSourceText(),
+                GetPackageInstallerInstallSourceDetail(),
+                BootstrapStatusKind.Info,
+                true);
+
+            for (int i = 0; i < RequiredSetupPackages.Length; i++)
+            {
+                BootstrapSetupPackage package = RequiredSetupPackages[i];
+                DrawStatusRow(
+                    package.PackageId,
+                    GetPackageStatusText(package.PackageId),
+                    package.DisplayName,
+                    GetPackageStatusKind(package.PackageId),
+                    i % 2 == 0);
+            }
+
+            DrawStatusRow(
+                "Package Installer available",
+                GetPackageInstallerAvailabilityText(),
+                GetPackageInstallerAvailabilityDetail(),
+                GetPackageInstallerAvailabilityKind(),
+                true);
+        }
+
+        private void DrawStatusMessages()
+        {
+            if (!string.IsNullOrWhiteSpace(_catalogNotice))
+            {
+                GUILayout.Space(8f);
+                EditorGUILayout.HelpBox(_catalogNotice, MessageType.Info);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                GUILayout.Space(8f);
+                EditorGUILayout.HelpBox(_error, MessageType.Error);
+            }
+        }
+
+        private void DrawSetupModeSelector()
+        {
+            EditorGUI.BeginChangeCheck();
+            int selectedMode = _installMode == BootstrapInstallMode.ScopedRegistry ? 0 : 1;
+            selectedMode = GUILayout.Toolbar(
+                selectedMode,
+                new[] { "Scoped registry", "Git fallback" },
+                GUILayout.Height(26f));
+            if (EditorGUI.EndChangeCheck())
+            {
+                SetInstallMode(selectedMode == 0
+                    ? BootstrapInstallMode.ScopedRegistry
+                    : BootstrapInstallMode.GitFallback);
+            }
+
+            EditorGUILayout.LabelField(
+                _installMode == BootstrapInstallMode.ScopedRegistry
+                    ? "Recommended"
+                    : "Advanced fallback",
+                _miniMutedStyle);
+        }
+
         private void DrawActionCard(params GUILayoutOption[] options)
         {
             using (new EditorGUILayout.VerticalScope(_cardStyle, options))
@@ -420,15 +640,7 @@ namespace Deucarian.Bootstrap.Editor
                 EditorGUILayout.LabelField(GetActionSummary(), _mutedStyle);
                 GUILayout.Space(10f);
 
-                EditorGUI.BeginChangeCheck();
-                int selectedMode = GUILayout.Toolbar(
-                    (int)_installMode,
-                    new[] { "Git fallback", "Scoped registry" },
-                    GUILayout.Height(26f));
-                if (EditorGUI.EndChangeCheck())
-                {
-                    SetInstallMode((BootstrapInstallMode)selectedMode);
-                }
+                DrawSetupModeSelector();
 
                 GUILayout.Space(6f);
 
@@ -469,6 +681,9 @@ namespace Deucarian.Bootstrap.Editor
                 {
                     Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
                 }
+
+                GUILayout.Space(8f);
+                DrawStartupPreferenceToggle();
             }
         }
 
@@ -476,24 +691,16 @@ namespace Deucarian.Bootstrap.Editor
         {
             bool ready = IsPackageInstallerInstalled;
 
-            using (new EditorGUILayout.VerticalScope(_cardStyle))
+            using (new EditorGUILayout.VerticalScope(_heroStyle))
             {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    using (new EditorGUILayout.VerticalScope())
-                    {
-                        EditorGUILayout.LabelField(DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName, _productTitleStyle);
-                        EditorGUILayout.LabelField("The final destination for day-to-day Deucarian package work.", _mutedStyle);
-                    }
+                Rect heroRect = GUILayoutUtility.GetRect(1f, 356f, GUILayout.ExpandWidth(true), GUILayout.MinHeight(340f));
+                DrawHeroBackground(heroRect, ready);
 
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("DESTINATION", _badgeStyle, GUILayout.Width(98f), GUILayout.Height(22f));
-                }
+                Rect badgeRect = new Rect(heroRect.x + 18f, heroRect.y + 16f, 148f, 22f);
+                GUI.Label(badgeRect, "DEUCARIAN SETUP", _badgeStyle);
 
-                GUILayout.Space(10f);
-
-                Rect logoArea = GUILayoutUtility.GetRect(1f, 108f, GUILayout.ExpandWidth(true));
-                DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha());
+                Rect logoArea = new Rect(heroRect.x, heroRect.y + 44f, heroRect.width, 114f);
+                DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha(), 108f);
 
                 if (ready)
                 {
@@ -505,31 +712,64 @@ namespace Deucarian.Bootstrap.Editor
                     }
                 }
 
-                GUILayout.Space(8f);
-                DrawPackageInstallerStatusStrip();
-                GUILayout.Space(8f);
+                float contentWidth = Mathf.Min(560f, Mathf.Max(320f, heroRect.width - 48f));
+                float contentX = heroRect.x + (heroRect.width - contentWidth) * 0.5f;
 
-                using (new EditorGUI.DisabledScope(!ready))
+                Rect titleRect = new Rect(contentX, heroRect.y + 164f, contentWidth, 42f);
+                GUI.Label(titleRect, DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName, _heroTitleStyle);
+
+                Rect subtitleRect = new Rect(contentX, titleRect.yMax + 2f, contentWidth, 26f);
+                GUI.Label(subtitleRect, "Discover. Install. Elevate.", _heroSubtitleLargeStyle);
+
+                Rect noteRect = new Rect(contentX, subtitleRect.yMax + 4f, contentWidth, 34f);
+                GUI.Label(noteRect, "Install, repair, and launch the Deucarian package ecosystem. Package Installer is the place you go next.", _heroEyebrowStyle);
+
+                Rect stripRect = new Rect(contentX, heroRect.yMax - 92f, contentWidth, 32f);
+                DrawPackageInstallerStatusStrip(stripRect);
+
+                Rect buttonRect = new Rect(
+                    contentX + Mathf.Max(0f, (contentWidth - 260f) * 0.5f),
+                    heroRect.yMax - 48f,
+                    Mathf.Min(260f, contentWidth),
+                    34f);
+
+                using (new EditorGUI.DisabledScope(IsHeroPrimaryActionDisabled()))
                 {
                     GUIStyle buttonStyle = ready ? _primaryButtonStyle : _secondaryButtonStyle;
-                    if (GUILayout.Button(GetPackageInstallerCardButtonText(), buttonStyle, GUILayout.Height(34f)))
+                    if (GUI.Button(buttonRect, GetHeroPrimaryActionLabel(), buttonStyle))
                     {
-                        OpenPackageInstaller();
+                        InvokeHeroPrimaryAction();
                     }
                 }
 
                 if (!string.IsNullOrWhiteSpace(_packageInstallerOpenMessage))
                 {
-                    GUILayout.Space(6f);
                     EditorGUILayout.HelpBox(_packageInstallerOpenMessage, MessageType.Info);
                 }
             }
         }
 
-        private void DrawCenteredPackageInstallerLogo(Rect logoArea, float alpha)
+        private void DrawHeroBackground(Rect heroRect, bool ready)
+        {
+            Texture2D background = GetHeroBackgroundTexture();
+            if (background != null)
+            {
+                GUI.DrawTexture(heroRect, background, ScaleMode.ScaleAndCrop, false);
+            }
+            else
+            {
+                EditorGUI.DrawRect(heroRect, _heroBackgroundColor);
+            }
+
+            Color vignette = ready
+                ? new Color(0f, 0f, 0f, 0.10f)
+                : new Color(0f, 0f, 0f, 0.28f);
+            EditorGUI.DrawRect(heroRect, vignette);
+        }
+
+        private void DrawCenteredPackageInstallerLogo(Rect logoArea, float alpha, float logoSize = 96f)
         {
             Texture2D logo = GetLogoTexture();
-            const float logoSize = 96f;
             Rect logoRect = new Rect(
                 logoArea.x + Mathf.Max(0f, (logoArea.width - logoSize) * 0.5f),
                 logoArea.y + Mathf.Max(0f, (logoArea.height - logoSize) * 0.5f),
@@ -544,8 +784,13 @@ namespace Deucarian.Bootstrap.Editor
 
         private void DrawPackageInstallerStatusStrip()
         {
-            BootstrapStatusKind kind = GetPackageInstallerProductStatusKind();
             Rect stripRect = GUILayoutUtility.GetRect(1f, 32f, GUILayout.ExpandWidth(true));
+            DrawPackageInstallerStatusStrip(stripRect);
+        }
+
+        private void DrawPackageInstallerStatusStrip(Rect stripRect)
+        {
+            BootstrapStatusKind kind = GetPackageInstallerProductStatusKind();
             EditorGUI.DrawRect(stripRect, GetStatusColor(kind));
 
             Rect iconRect = new Rect(stripRect.x + 10f, stripRect.y + 6f, 20f, 20f);
@@ -561,51 +806,61 @@ namespace Deucarian.Bootstrap.Editor
         {
             using (new EditorGUILayout.VerticalScope(_cardStyle))
             {
-                EditorGUILayout.LabelField("Install / Repair Flow", _sectionTitleStyle);
-
-                string status = string.IsNullOrWhiteSpace(_status)
-                    ? "Bootstrap is ready. Click setup when you want to install or repair the required packages."
-                    : _status;
-
-                if (_setupActive && _installPlan.Count > 0 && _stepIndex < _installPlan.Count)
-                {
-                    BootstrapPackageStep currentStep = _installPlan[_stepIndex];
-                    status += "\nCurrent step: " + (_stepIndex + 1) + "/" + _installPlan.Count + " - " + currentStep.DisplayName + ".";
-                }
-
-                EditorGUILayout.LabelField(status, _bodyStyle);
-
-                if (_setupActive && _installPlan.Count > 0)
-                {
-                    Rect progressRect = GUILayoutUtility.GetRect(1f, 18f, GUILayout.ExpandWidth(true));
-                    float progress = Mathf.Clamp01(_installPlan.Count == 0 ? 0f : (float)_stepIndex / _installPlan.Count);
-                    EditorGUI.ProgressBar(progressRect, progress, _stepIndex + "/" + _installPlan.Count);
-                    GUILayout.Space(4f);
-                }
-
-                if (!_catalogLoaded)
-                {
-                    EditorGUILayout.LabelField("Install plan will appear after the catalog loads.", _mutedStyle);
-                    return;
-                }
-
-                if (_installPlan.Count == 0)
-                {
-                    EditorGUILayout.LabelField("No setup plan is available.", _mutedStyle);
-                    return;
-                }
-
-                for (int i = 0; i < _installPlan.Count; i++)
-                {
-                    BootstrapPackageStep step = _installPlan[i];
-                    DrawStatusRow(
-                        (i + 1) + ". " + step.DisplayName,
-                        GetPlanStepState(i, step),
-                        GetPlanStepDetail(step),
-                        GetPlanStepStatusKind(i, step),
-                        i % 2 != 0);
-                }
+                DrawInstallPlanContents();
             }
+        }
+
+        private void DrawInstallPlanContents()
+        {
+            EditorGUILayout.LabelField("Install / Repair Flow", _sectionTitleStyle);
+
+            string status = string.IsNullOrWhiteSpace(_status)
+                ? "Bootstrap is ready. Click setup when you want to install or repair the required packages."
+                : _status;
+
+            if (_setupActive && _installPlan.Count > 0 && _stepIndex < _installPlan.Count)
+            {
+                BootstrapPackageStep currentStep = _installPlan[_stepIndex];
+                status += "\nCurrent step: " + (_stepIndex + 1) + "/" + _installPlan.Count + " - " + currentStep.DisplayName + ".";
+            }
+
+            EditorGUILayout.LabelField(status, _bodyStyle);
+
+            if (_setupActive && _installPlan.Count > 0)
+            {
+                DrawInstallProgressBar();
+                GUILayout.Space(4f);
+            }
+
+            if (!_catalogLoaded)
+            {
+                EditorGUILayout.LabelField("Install plan will appear after the catalog loads.", _mutedStyle);
+                return;
+            }
+
+            if (_installPlan.Count == 0)
+            {
+                EditorGUILayout.LabelField("No setup plan is available.", _mutedStyle);
+                return;
+            }
+
+            for (int i = 0; i < _installPlan.Count; i++)
+            {
+                BootstrapPackageStep step = _installPlan[i];
+                DrawStatusRow(
+                    (i + 1) + ". " + step.DisplayName,
+                    GetPlanStepState(i, step),
+                    GetPlanStepDetail(step),
+                    GetPlanStepStatusKind(i, step),
+                    i % 2 != 0);
+            }
+        }
+
+        private void DrawInstallProgressBar()
+        {
+            Rect progressRect = GUILayoutUtility.GetRect(1f, 18f, GUILayout.ExpandWidth(true));
+            float progress = Mathf.Clamp01(_installPlan.Count == 0 ? 0f : (float)_stepIndex / _installPlan.Count);
+            EditorGUI.ProgressBar(progressRect, progress, _stepIndex + "/" + _installPlan.Count);
         }
 
         private void DrawFooter()
@@ -684,8 +939,8 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             return _installMode == BootstrapInstallMode.ScopedRegistry
-                ? "Configure the Unity scoped registry and install Package Installer from npmjs."
-                : "Install or repair the minimum ecosystem through Git fallback URLs.";
+                ? "Recommended: configure the Unity scoped registry and install Package Installer from npmjs."
+                : "Fallback: install or repair the minimum ecosystem through Git URLs.";
         }
 
         private string GetPrimaryActionLabel()
@@ -716,6 +971,54 @@ namespace Deucarian.Bootstrap.Editor
         private bool IsPrimaryActionDisabled()
         {
             return IsRequestActive || _setupActive || AreRequiredPackagesInstalled();
+        }
+
+        private string GetHeroPrimaryActionLabel()
+        {
+            return "Open Package Installer";
+        }
+
+        private bool IsHeroPrimaryActionDisabled()
+        {
+            return !IsPackageInstallerInstalled;
+        }
+
+        private void InvokeHeroPrimaryAction()
+        {
+            OpenPackageInstaller();
+        }
+
+        private string GetRegistryConfiguredSummaryText()
+        {
+            if (_scopedRegistryStatus == null)
+            {
+                return "Checking";
+            }
+
+            return _scopedRegistryStatus.Configured ? "Yes" : "No";
+        }
+
+        private string GetRequiredPackagesSummaryText()
+        {
+            if (_installedPackageIds == null)
+            {
+                return "Checking";
+            }
+
+            int installed = RequiredSetupPackages.Count(package => IsPackageInstalled(package.PackageId));
+            return installed == RequiredSetupPackages.Length
+                ? "Yes"
+                : "No (" + installed + "/" + RequiredSetupPackages.Length + ")";
+        }
+
+        private BootstrapStatusKind GetRequiredPackagesSummaryKind()
+        {
+            if (_installedPackageIds == null)
+            {
+                return BootstrapStatusKind.Info;
+            }
+
+            return AreRequiredPackagesInstalled() ? BootstrapStatusKind.Success : BootstrapStatusKind.Neutral;
         }
 
         private string GetResumeStatus()
@@ -786,8 +1089,8 @@ namespace Deucarian.Bootstrap.Editor
         private string GetInstallModeDetail()
         {
             return _installMode == BootstrapInstallMode.ScopedRegistry
-                ? "Use npmjs scoped registry setup"
-                : "Use catalog Git URLs";
+                ? "Recommended npmjs scoped registry setup"
+                : "Advanced Git fallback URLs";
         }
 
         private string GetPackageInstallerInstallSourceText()
@@ -933,7 +1236,7 @@ namespace Deucarian.Bootstrap.Editor
 
             if (_installedPackageIds == null)
             {
-                return _listRequest != null ? "Checking" : "Not installed";
+                return "Not installed";
             }
 
             return "Not installed";
@@ -981,22 +1284,7 @@ namespace Deucarian.Bootstrap.Editor
 
         private string GetPackageInstallerCardButtonText()
         {
-            if (IsPackageInstallerInstalled)
-            {
-                return "Open Package Installer";
-            }
-
-            if (_setupActive)
-            {
-                return "Setup in progress";
-            }
-
-            if (_installedPackageIds == null)
-            {
-                return "Checking setup";
-            }
-
-            return "Install setup first";
+            return GetHeroPrimaryActionLabel();
         }
 
         private string GetPlanStepState(int index, BootstrapPackageStep step)
@@ -1101,11 +1389,11 @@ namespace Deucarian.Bootstrap.Editor
             if (_installMode == BootstrapInstallMode.ScopedRegistry)
             {
                 SetScopedRegistryInstallPlan();
-                _status = "Scoped registry mode selected. Repair the registry if needed, then run setup.";
+                _status = "Scoped registry mode selected. Bootstrap will repair the registry, install Package Installer, and let Unity resolve dependencies.";
             }
             else
             {
-                _status = "Git fallback mode selected. Bootstrap will use catalog Git URLs.";
+                _status = "Git fallback mode selected. Bootstrap will use catalog Git URLs for advanced or emergency setup.";
                 if (_catalogLoaded)
                 {
                     ReloadCatalog();
@@ -1763,7 +2051,7 @@ namespace Deucarian.Bootstrap.Editor
                 _waitingForPackageRefresh = false;
             }
             _installMode = (BootstrapInstallMode)Mathf.Clamp(
-                SessionState.GetInt(InstallModeKey, (int)BootstrapInstallMode.GitFallback),
+                SessionState.GetInt(InstallModeKey, (int)BootstrapInstallMode.ScopedRegistry),
                 (int)BootstrapInstallMode.GitFallback,
                 (int)BootstrapInstallMode.ScopedRegistry);
             _registrySource = string.Empty;
@@ -1882,6 +2170,71 @@ namespace Deucarian.Bootstrap.Editor
             (_addRequest != null && !_addRequest.IsCompleted) ||
             _packageListRetryQueued;
 
+        private void DrawStartupPreferenceToggle()
+        {
+            EditorGUI.BeginChangeCheck();
+            bool showOnStartup = EditorGUILayout.ToggleLeft("Show Bootstrap on startup", ShouldShowOnStartup());
+            if (EditorGUI.EndChangeCheck())
+            {
+                SetShowOnStartup(showOnStartup);
+            }
+
+            EditorGUILayout.LabelField(
+                "Project setting. Startup opens this setup hub only; it never installs packages automatically.",
+                _miniMutedStyle);
+        }
+
+        internal static bool ShouldShowOnStartup()
+        {
+            return EditorPrefs.GetBool(GetProjectShowOnStartupPreferenceKey(), true);
+        }
+
+        internal static void SetShowOnStartup(bool showOnStartup)
+        {
+            EditorPrefs.SetBool(GetProjectShowOnStartupPreferenceKey(), showOnStartup);
+        }
+
+        internal static string GetProjectShowOnStartupPreferenceKey()
+        {
+            string projectRoot = string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(Application.dataPath))
+            {
+                DirectoryInfo parent = Directory.GetParent(Application.dataPath);
+                projectRoot = parent != null ? parent.FullName : Application.dataPath;
+            }
+
+            return GetProjectShowOnStartupPreferenceKey(projectRoot);
+        }
+
+        internal static string GetProjectShowOnStartupPreferenceKey(string projectRoot)
+        {
+            string normalizedProjectRoot = (projectRoot ?? string.Empty)
+                .Replace('\\', '/')
+                .TrimEnd('/')
+                .ToLowerInvariant();
+
+            return ShowOnStartupPreferencePrefix + ComputeStableHash(normalizedProjectRoot);
+        }
+
+        private static string ComputeStableHash(string value)
+        {
+            unchecked
+            {
+                const uint offsetBasis = 2166136261;
+                const uint prime = 16777619;
+                uint hash = offsetBasis;
+
+                for (int i = 0; i < (value ?? string.Empty).Length; i++)
+                {
+                    hash ^= value[i];
+                    hash *= prime;
+                }
+
+                return hash.ToString("x8");
+            }
+        }
+
         private string GetRegistrySourceSummary()
         {
             if (string.IsNullOrWhiteSpace(_registrySource))
@@ -1923,6 +2276,25 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             return _logoTexture;
+        }
+
+        private Texture2D GetHeroBackgroundTexture()
+        {
+            if (_heroBackgroundTexture != null)
+            {
+                return _heroBackgroundTexture;
+            }
+
+            string backgroundAssetPath = GetPackageAssetPath(DeucarianBootstrapPackageConstants.HeroBackgroundAssetRelativePath);
+            _heroBackgroundTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backgroundAssetPath);
+
+            if (_heroBackgroundTexture == null)
+            {
+                _heroBackgroundTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    DeucarianBootstrapPackageConstants.HeroBackgroundAssetPath);
+            }
+
+            return _heroBackgroundTexture;
         }
 
         private static string GetPackageAssetPath(string relativePath)
@@ -1985,7 +2357,7 @@ namespace Deucarian.Bootstrap.Editor
             _lastProSkin = proSkin;
 
             _windowBackgroundColor = proSkin ? FromRgb(33, 39, 44) : FromRgb(221, 227, 230);
-            _heroBackgroundColor = proSkin ? FromRgb(38, 47, 53) : FromRgb(227, 232, 235);
+            _heroBackgroundColor = proSkin ? FromRgb(13, 30, 43) : FromRgb(24, 78, 88);
             _cardBackgroundColor = proSkin ? FromRgb(45, 52, 58) : FromRgb(238, 241, 243);
             _rowBackgroundColor = proSkin ? FromRgb(39, 46, 51) : FromRgb(232, 236, 239);
             _rowAlternateBackgroundColor = proSkin ? FromRgb(43, 50, 56) : FromRgb(241, 244, 246);
@@ -2004,7 +2376,7 @@ namespace Deucarian.Bootstrap.Editor
             };
 
             _heroStyle = CopyStyle(() => EditorStyles.helpBox);
-            _heroStyle.padding = new RectOffset(14, 14, 12, 12);
+            _heroStyle.padding = new RectOffset(0, 0, 0, 0);
             _heroStyle.margin = new RectOffset(0, 0, 0, 10);
             _heroStyle.normal.background = TextureForColor("hero", _heroBackgroundColor);
 
@@ -2019,6 +2391,25 @@ namespace Deucarian.Bootstrap.Editor
             _titleStyle.wordWrap = true;
             _titleStyle.alignment = TextAnchor.MiddleLeft;
             _titleStyle.normal.textColor = _titleTextColor;
+
+            _heroTitleStyle = CopyStyle(() => EditorStyles.boldLabel);
+            _heroTitleStyle.fontSize = 28;
+            _heroTitleStyle.fontStyle = FontStyle.Bold;
+            _heroTitleStyle.wordWrap = true;
+            _heroTitleStyle.alignment = TextAnchor.MiddleCenter;
+            _heroTitleStyle.normal.textColor = Color.white;
+
+            _heroSubtitleLargeStyle = CopyStyle(() => EditorStyles.label);
+            _heroSubtitleLargeStyle.fontSize = 15;
+            _heroSubtitleLargeStyle.fontStyle = FontStyle.Bold;
+            _heroSubtitleLargeStyle.wordWrap = true;
+            _heroSubtitleLargeStyle.alignment = TextAnchor.MiddleCenter;
+            _heroSubtitleLargeStyle.normal.textColor = FromRgb(154, 238, 226);
+
+            _heroEyebrowStyle = CopyStyle(() => EditorStyles.wordWrappedMiniLabel);
+            _heroEyebrowStyle.wordWrap = true;
+            _heroEyebrowStyle.alignment = TextAnchor.UpperCenter;
+            _heroEyebrowStyle.normal.textColor = new Color(0.82f, 0.91f, 0.94f, 0.88f);
 
             _subtitleStyle = CopyStyle(() => EditorStyles.label);
             _subtitleStyle.fontSize = 13;
@@ -2077,6 +2468,16 @@ namespace Deucarian.Bootstrap.Editor
             _statusDetailStyle = CopyStyle(() => EditorStyles.miniLabel);
             _statusDetailStyle.clipping = TextClipping.Clip;
             _statusDetailStyle.normal.textColor = _mutedTextColor;
+
+            _summaryValueStyle = CopyStyle(() => EditorStyles.boldLabel);
+            _summaryValueStyle.fontSize = 12;
+            _summaryValueStyle.clipping = TextClipping.Clip;
+            _summaryValueStyle.normal.textColor = _titleTextColor;
+
+            _foldoutStyle = CopyStyle(() => EditorStyles.foldout);
+            _foldoutStyle.fontStyle = FontStyle.Bold;
+            _foldoutStyle.normal.textColor = _titleTextColor;
+            _foldoutStyle.onNormal.textColor = _titleTextColor;
 
             _primaryButtonStyle = CopyStyle(() => GUI.skin.button);
             _primaryButtonStyle.fontStyle = FontStyle.Bold;

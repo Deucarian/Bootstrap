@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6 - 2026-06-16
+
+- Refocused the Bootstrap window around a Package Installer hero card with a local Deucarian-style background asset.
+- Demoted setup diagnostics into a compact summary and collapsible setup details section.
+- Made Bootstrap the official Deucarian Setup entry point with startup welcome behavior and a project-scoped startup toggle.
+- Made scoped registry mode the recommended default while keeping Git URL fallback available.
+- Clarified that startup opens the setup hub only and never installs packages automatically.
+
 ## 0.1.5 - 2026-06-16
 
 - Added a large Package Installer destination card that shows setup availability, progress, and the final open action.
