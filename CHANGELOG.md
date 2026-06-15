@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 - 2026-06-16
+
+- Added a large Package Installer destination card that shows setup availability, progress, and the final open action.
+- Moved the Package Installer launch affordance out of the setup action card so Bootstrap stays focused on setup and repair.
+- Increased the preferred setup hub window height to fit the destination card in the default floating window.
+
 ## 0.1.4 - 2026-06-15
 
 - Increased the default Bootstrap setup hub window size and minimum size so the normal layout opens without immediate scrolling.

@@ -63,11 +63,11 @@ Bootstrap does not auto-install packages on editor startup. The user must explic
 
 ## Versioning
 
-Current package version: `0.1.4`.
+Current package version: `0.1.5`.
 
 ## Bootstrap Logo Placeholder
 
-The setup hub uses a local placeholder logo at:
+The setup hub hero and Package Installer destination card use a local placeholder logo at:
 
 ```text
 Editor/Assets/DeucarianBootstrapLogo.png
