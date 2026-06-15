@@ -1531,6 +1531,15 @@ namespace Deucarian.Bootstrap.Editor
 
             if (request.Status != StatusCode.Success)
             {
+                if (_waitingForPackageRefresh && !string.IsNullOrWhiteSpace(_pendingPackageId))
+                {
+                    _status = "Waiting for Unity package refresh after installing " + _pendingPackageId + "...";
+                    _error = string.Empty;
+                    SaveState();
+                    RefreshInstalledPackages(_status, true);
+                    return;
+                }
+
                 string packageName = completedStep != null ? completedStep.DisplayName : "package";
                 Fail("Install failed for " + packageName + ".", request.Error != null ? request.Error.message : "Package Manager returned an unknown error.");
                 return;
