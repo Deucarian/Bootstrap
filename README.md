@@ -44,7 +44,7 @@ With the current catalog, Bootstrap installs:
 2. `com.deucarian.logging`
 3. `com.deucarian.package-installer`
 
-After setup completes, use Package Installer as the normal ecosystem manager for Deucarian packages.
+After setup completes, use Package Installer to install and manage Deucarian packages.
 
 ## Scoped Registry Mode
 

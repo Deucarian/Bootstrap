@@ -60,6 +60,16 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
+        public void BootstrapHeroCopyUsesFunctionalWording()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            string windowSourcePath = Path.Combine(packageInfo.resolvedPath, "Editor", "DeucarianBootstrapWindow.cs");
+            string windowSource = File.ReadAllText(windowSourcePath);
+
+            StringAssert.Contains("Install and manage Deucarian Unity packages.", windowSource);
+        }
+
+        [Test]
         public void BootstrapWindowSizingDefaultsFitSetupHub()
         {
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);

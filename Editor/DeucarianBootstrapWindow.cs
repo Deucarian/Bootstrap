@@ -361,7 +361,7 @@ namespace Deucarian.Bootstrap.Editor
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.LabelField("Deucarian Setup", _titleStyle);
                     EditorGUILayout.LabelField(
-                        "Install, repair, and launch the Deucarian package ecosystem.",
+                        "Install and repair Deucarian Unity packages.",
                         _subtitleStyle);
                     EditorGUILayout.LabelField(
                         "Bootstrap configures the scoped registry, installs Package Installer, and leaves daily package work to Package Installer.",
@@ -719,10 +719,10 @@ namespace Deucarian.Bootstrap.Editor
                 GUI.Label(titleRect, DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName, _heroTitleStyle);
 
                 Rect subtitleRect = new Rect(contentX, titleRect.yMax + 2f, contentWidth, 26f);
-                GUI.Label(subtitleRect, "Discover. Install. Elevate.", _heroSubtitleLargeStyle);
+                GUI.Label(subtitleRect, "Install and manage Deucarian Unity packages.", _heroSubtitleLargeStyle);
 
                 Rect noteRect = new Rect(contentX, subtitleRect.yMax + 4f, contentWidth, 34f);
-                GUI.Label(noteRect, "Install, repair, and launch the Deucarian package ecosystem. Package Installer is the place you go next.", _heroEyebrowStyle);
+                GUI.Label(noteRect, "Bootstrap installs Package Installer and the required setup packages.", _heroEyebrowStyle);
 
                 Rect stripRect = new Rect(contentX, heroRect.yMax - 92f, contentWidth, 32f);
                 DrawPackageInstallerStatusStrip(stripRect);
@@ -832,6 +832,12 @@ namespace Deucarian.Bootstrap.Editor
                 GUILayout.Space(4f);
             }
 
+            if (AreRequiredPackagesInstalled())
+            {
+                EditorGUILayout.LabelField("Required setup packages are installed.", _mutedStyle);
+                return;
+            }
+
             if (!_catalogLoaded)
             {
                 EditorGUILayout.LabelField("Install plan will appear after the catalog loads.", _mutedStyle);
@@ -918,7 +924,7 @@ namespace Deucarian.Bootstrap.Editor
             int missing = RequiredSetupPackages.Count(package => !IsPackageInstalled(package.PackageId));
             if (missing == 0)
             {
-                return "Required setup packages are installed. Package Installer can manage the broader ecosystem.";
+                return "Required setup packages are installed. Package Installer can manage Deucarian packages.";
             }
 
             return missing + " setup package" + (missing == 1 ? " is" : "s are") + " missing. Setup will install only what is needed.";
@@ -935,12 +941,12 @@ namespace Deucarian.Bootstrap.Editor
 
             if (_installedPackageIds != null && RequiredSetupPackages.All(package => IsPackageInstalled(package.PackageId)))
             {
-                return "Setup is complete. Use Package Installer for day-to-day package work.";
+                return "Setup is complete. Use Package Installer to manage Deucarian packages.";
             }
 
             return _installMode == BootstrapInstallMode.ScopedRegistry
                 ? "Recommended: configure the Unity scoped registry and install Package Installer from npmjs."
-                : "Fallback: install or repair the minimum ecosystem through Git URLs.";
+                : "Fallback: install or repair setup through Git URLs.";
         }
 
         private string GetPrimaryActionLabel()
