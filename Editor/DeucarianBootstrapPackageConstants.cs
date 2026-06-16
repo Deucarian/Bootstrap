@@ -4,7 +4,7 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "0.1.5";
+        public const string Version = "0.1.7";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
         public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
         public const string LegacyPackageInstallerMenuPath = "Deucarian/Package Installer";
@@ -15,6 +15,8 @@ namespace Deucarian.Bootstrap.Editor
         public const string FallbackCatalogRelativePath = "Editor/PackageCatalogFallback.json";
         public const string LogoAssetRelativePath = "Editor/Assets/DeucarianBootstrapLogo.png";
         public const string LogoAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/DeucarianBootstrapLogo.png";
+        public const string HeroBackgroundAssetRelativePath = "Editor/Assets/DeucarianBootstrapHeroBackground.png";
+        public const string HeroBackgroundAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/DeucarianBootstrapHeroBackground.png";
         public const string GitHubUrl = "https://github.com/Deucarian/Bootstrap";
         public const string DocumentationUrl = "https://github.com/Deucarian/Bootstrap#readme";
 

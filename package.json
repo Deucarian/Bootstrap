@@ -1,11 +1,15 @@
 {
   "name": "com.deucarian.bootstrap",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "displayName": "Deucarian Bootstrap",
-  "description": "Self-contained first-time setup tool for installing Deucarian Editor and Package Installer.",
+  "description": "Self-contained first-time setup and repair entry point for Deucarian Unity packages.",
   "unity": "2021.3",
   "author": {
     "name": "Deucarian"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deucarian/Bootstrap.git"
   },
   "keywords": [
     "deucarian",
