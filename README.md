@@ -77,7 +77,7 @@ The hero button changes with setup state:
 
 ## Versioning
 
-Current package version: `0.1.7`.
+Current package version: `0.1.8`.
 
 ## Bootstrap Placeholder Assets
 

@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.bootstrap",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "displayName": "Deucarian Bootstrap",
   "description": "Self-contained first-time setup and repair entry point for Deucarian Unity packages.",
   "unity": "2021.3",
