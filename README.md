@@ -20,7 +20,7 @@ After Unity imports the package, Bootstrap opens the Deucarian Setup hub automat
 Tools/Deucarian/Bootstrap/Open Bootstrapper
 ```
 
-Click the setup button. Bootstrap does not install anything automatically on startup; it only opens the setup hub and shows setup/repair status until the user starts setup.
+Use the primary button in the Package Installer hero card. Bootstrap does not install anything automatically on startup; it only opens the setup hub and shows setup/repair status until the user starts setup.
 
 Recommended setup mode:
 
@@ -46,6 +46,8 @@ With the current catalog, Bootstrap installs:
 
 After setup completes, use Package Installer to install and manage Deucarian packages.
 
+The default Bootstrap view keeps setup information compact. It shows whether the registry is configured, whether required setup packages are installed, whether Package Installer is ready, and which install source is active. Detailed package rows, registry source, catalog status, and install plan diagnostics remain under Setup Details.
+
 ## Scoped Registry Mode
 
 Scoped registry mode adds or repairs this Unity project manifest entry:
@@ -66,9 +68,16 @@ Bootstrap uses `UnityEditor.PackageManager.Client.Add` with Git URLs for the fal
 
 Bootstrap opens its Deucarian Setup hub on startup by default. The window includes a project-scoped `Show Bootstrap on startup` toggle. Startup only opens the hub and refreshes setup status; it does not auto-install packages. The user must explicitly click setup.
 
+The hero button changes with setup state:
+
+- `Install Deucarian Setup` when setup has not been installed.
+- `Installing...` or `Waiting for Unity...` while setup is running.
+- `Continue Setup` or `Repair Setup` when setup was interrupted or needs repair.
+- `Open Package Installer` when setup is healthy.
+
 ## Versioning
 
-Current package version: `0.1.6`.
+Current package version: `0.1.7`.
 
 ## Bootstrap Placeholder Assets
 

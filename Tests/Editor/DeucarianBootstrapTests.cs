@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.PackageManager;
+using UnityEngine;
 
 namespace Deucarian.Bootstrap.Editor.Tests
 {
@@ -71,6 +73,14 @@ namespace Deucarian.Bootstrap.Editor.Tests
             StringAssert.Contains("\"Repair Registry\"", windowSource);
             StringAssert.Contains("\"GitHub\"", windowSource);
             StringAssert.Contains("\"Docs\"", windowSource);
+            StringAssert.Contains("Install source: npm scoped registry", windowSource);
+            StringAssert.Contains("Setup progress", windowSource);
+            StringAssert.Contains("Setup looks healthy.", windowSource);
+            StringAssert.Contains("Show Bootstrap on startup", windowSource);
+            StringAssert.Contains("Registry source, package IDs, install plan, and diagnostics are available here when needed.", windowSource);
+            StringAssert.Contains("Bootstrap only sets up and repairs the Deucarian package ecosystem.", windowSource);
+            StringAssert.Contains("Recommended. Uses npmjs scoped registry and lets Unity resolve dependencies.", windowSource);
+            StringAssert.Contains("Advanced fallback mode for development or registry outages.", windowSource);
 
             int heroIndex = windowSource.IndexOf("DrawPackageInstallerProductCard();", StringComparison.Ordinal);
             int summaryIndex = windowSource.IndexOf("DrawCompactSetupSummary();", StringComparison.Ordinal);
@@ -97,6 +107,69 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, DeucarianBootstrapWindow.MinWindowHeight);
+        }
+
+        [Test]
+        public void HeroPrimaryButtonLabelsFollowSetupState()
+        {
+            DeucarianBootstrapWindow window = ScriptableObject.CreateInstance<DeucarianBootstrapWindow>();
+
+            try
+            {
+                SetInstalledPackages(window);
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.NotSetUp, window.GetHeroState());
+                Assert.AreEqual("Install Deucarian Setup", window.GetHeroPrimaryActionLabel());
+                Assert.False(window.IsHeroPrimaryActionDisabled());
+                Assert.AreEqual("Not installed", window.GetPackageInstallerProductStatusText());
+                Assert.AreEqual("Setup required", window.GetPackageInstallerProductStatusDetail());
+
+                SetField(window, "_setupActive", true);
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.Installing, window.GetHeroState());
+                Assert.AreEqual("Installing...", window.GetHeroPrimaryActionLabel());
+                Assert.True(window.IsHeroPrimaryActionDisabled());
+                Assert.AreEqual("Installing", window.GetPackageInstallerProductStatusText());
+
+                SetField(window, "_waitingForPackageRefresh", true);
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.WaitingForUnity, window.GetHeroState());
+                Assert.AreEqual("Waiting for Unity...", window.GetHeroPrimaryActionLabel());
+                Assert.True(window.IsHeroPrimaryActionDisabled());
+                Assert.AreEqual("Waiting for Unity", window.GetPackageInstallerProductStatusText());
+
+                SetField(window, "_setupActive", false);
+                SetField(window, "_waitingForPackageRefresh", false);
+                SetField(window, "_setupInterrupted", true);
+                SetField(window, "_error", string.Empty);
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.Interrupted, window.GetHeroState());
+                Assert.AreEqual("Continue Setup", window.GetHeroPrimaryActionLabel());
+                Assert.False(window.IsHeroPrimaryActionDisabled());
+
+                SetField(window, "_error", "Package Manager failed.");
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.NeedsRepair, window.GetHeroState());
+                Assert.AreEqual("Repair Setup", window.GetHeroPrimaryActionLabel());
+                Assert.False(window.IsHeroPrimaryActionDisabled());
+                Assert.AreEqual("Setup needs repair", window.GetPackageInstallerProductStatusText());
+
+                SetField(window, "_setupInterrupted", false);
+                SetField(window, "_error", string.Empty);
+                SetInstalledPackages(
+                    window,
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+                SetField(
+                    window,
+                    "_scopedRegistryStatus",
+                    BootstrapScopedRegistryStatus.CreateConfigured("Packages/manifest.json", DeucarianBootstrapPackageConstants.ScopedRegistryUrl));
+                Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.Ready, window.GetHeroState());
+                Assert.AreEqual("Open Package Installer", window.GetHeroPrimaryActionLabel());
+                Assert.False(window.IsHeroPrimaryActionDisabled());
+                Assert.AreEqual("Ready", window.GetPackageInstallerProductStatusText());
+                Assert.AreEqual("Installed and available", window.GetPackageInstallerProductStatusDetail());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(window);
+            }
         }
 
         [Test]
@@ -320,6 +393,21 @@ namespace Deucarian.Bootstrap.Editor.Tests
             }
 
             return count;
+        }
+
+        private static void SetInstalledPackages(DeucarianBootstrapWindow window, params string[] packageIds)
+        {
+            SetField(
+                window,
+                "_installedPackageIds",
+                new HashSet<string>(packageIds ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase));
+        }
+
+        private static void SetField(DeucarianBootstrapWindow window, string fieldName, object value)
+        {
+            FieldInfo field = typeof(DeucarianBootstrapWindow).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(field, fieldName);
+            field.SetValue(window, value);
         }
     }
 }

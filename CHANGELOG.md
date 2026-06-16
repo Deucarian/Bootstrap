@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7 - 2026-06-16
+
+- Made the Package Installer hero action context-aware for install, continue, repair, waiting, and open states.
+- Added a compact setup progress timeline to the hero and collapsed the complete state into a short healthy setup summary.
+- Reworked the visible setup summary into compact status chips with a subtle install source indicator.
+- Added tooltips for setup mode, utility actions, the startup toggle, and the hero action.
+- Clarified the footer note that Bootstrap is only for first-time setup and repair.
+
 ## 0.1.6 - 2026-06-16
 
 - Refocused the Bootstrap window around a Package Installer hero card with a local Deucarian-style background asset.
