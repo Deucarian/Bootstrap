@@ -67,6 +67,18 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string windowSource = File.ReadAllText(windowSourcePath);
 
             StringAssert.Contains("Install and manage Deucarian Unity packages.", windowSource);
+            StringAssert.Contains("\"Refresh\"", windowSource);
+            StringAssert.Contains("\"Repair Registry\"", windowSource);
+            StringAssert.Contains("\"GitHub\"", windowSource);
+            StringAssert.Contains("\"Docs\"", windowSource);
+
+            int heroIndex = windowSource.IndexOf("DrawPackageInstallerProductCard();", StringComparison.Ordinal);
+            int summaryIndex = windowSource.IndexOf("DrawCompactSetupSummary();", StringComparison.Ordinal);
+            int detailsIndex = windowSource.IndexOf("DrawSetupDetails();", StringComparison.Ordinal);
+            int actionsIndex = windowSource.IndexOf("DrawSetupActions();", StringComparison.Ordinal);
+            Assert.Less(heroIndex, summaryIndex);
+            Assert.Less(summaryIndex, detailsIndex);
+            Assert.Less(detailsIndex, actionsIndex);
         }
 
         [Test]
@@ -75,6 +87,12 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, 760f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 860f);
+            Assert.GreaterOrEqual(
+                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
+                0.60f);
+            Assert.LessOrEqual(
+                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
+                0.70f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 740f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);

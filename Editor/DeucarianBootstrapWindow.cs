@@ -31,7 +31,7 @@ namespace Deucarian.Bootstrap.Editor
         internal const float PreferredWindowHeight = 860f;
         internal const float MinWindowWidth = 740f;
         internal const float MinWindowHeight = 720f;
-        private const float ActionColumnWidth = 250f;
+        internal const float HeroCardHeight = 540f;
         private const int MaxPackageListRefreshAttempts = 90;
         private const double PackageListRetryDelaySeconds = 1.0d;
 
@@ -96,11 +96,7 @@ namespace Deucarian.Bootstrap.Editor
         private GUIStyle _windowStyle;
         private GUIStyle _heroStyle;
         private GUIStyle _cardStyle;
-        private GUIStyle _titleStyle;
-        private GUIStyle _subtitleStyle;
-        private GUIStyle _taglineStyle;
         private GUIStyle _sectionTitleStyle;
-        private GUIStyle _productTitleStyle;
         private GUIStyle _bodyStyle;
         private GUIStyle _mutedStyle;
         private GUIStyle _miniMutedStyle;
@@ -111,6 +107,7 @@ namespace Deucarian.Bootstrap.Editor
         private GUIStyle _statusDetailStyle;
         private GUIStyle _primaryButtonStyle;
         private GUIStyle _secondaryButtonStyle;
+        private GUIStyle _utilityButtonStyle;
         private GUIStyle _badgeStyle;
         private GUIStyle _footerStyle;
         private GUIStyle _footerRightStyle;
@@ -322,8 +319,8 @@ namespace Deucarian.Bootstrap.Editor
             {
                 DrawPackageInstallerProductCard();
                 DrawCompactSetupSummary();
-                DrawSetupActions();
                 DrawSetupDetails();
+                DrawSetupActions();
                 DrawFooter();
             }
 
@@ -343,53 +340,6 @@ namespace Deucarian.Bootstrap.Editor
                 EnsureActiveSetupHasResolvablePlan();
                 RefreshScopedRegistryStatus();
                 HandleDelayedEnable();
-            }
-        }
-
-        private void DrawHero()
-        {
-            using (new EditorGUILayout.HorizontalScope(_heroStyle, GUILayout.MinHeight(112f)))
-            {
-                Texture2D logo = GetLogoTexture();
-                Rect logoRect = GUILayoutUtility.GetRect(88f, 88f, GUILayout.Width(88f), GUILayout.Height(88f));
-                GUI.DrawTexture(logoRect, logo, ScaleMode.ScaleToFit, true);
-
-                GUILayout.Space(12f);
-
-                using (new EditorGUILayout.VerticalScope())
-                {
-                    GUILayout.FlexibleSpace();
-                    EditorGUILayout.LabelField("Deucarian Setup", _titleStyle);
-                    EditorGUILayout.LabelField(
-                        "Install and repair Deucarian Unity packages.",
-                        _subtitleStyle);
-                    EditorGUILayout.LabelField(
-                        "Bootstrap configures the scoped registry, installs Package Installer, and leaves daily package work to Package Installer.",
-                        _taglineStyle);
-                    GUILayout.FlexibleSpace();
-                }
-
-                GUILayout.FlexibleSpace();
-                GUILayout.Label("BOOTSTRAP", _badgeStyle, GUILayout.Width(92f), GUILayout.Height(22f));
-            }
-        }
-
-        private void DrawStatusAndActions()
-        {
-            bool stacked = position.width < 760f;
-
-            if (stacked)
-            {
-                DrawStatusCard();
-                DrawActionCard(GUILayout.ExpandWidth(true));
-                return;
-            }
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                DrawStatusCard(GUILayout.ExpandWidth(true));
-                GUILayout.Space(8f);
-                DrawActionCard(GUILayout.Width(ActionColumnWidth));
             }
         }
 
@@ -438,27 +388,17 @@ namespace Deucarian.Bootstrap.Editor
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
-                    {
-                        EditorGUILayout.LabelField("Setup Mode", _sectionTitleStyle);
-                        EditorGUILayout.LabelField(GetActionSummary(), _mutedStyle);
-                    }
-
-                    GUILayout.Space(10f);
-
-                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(300f)))
+                    EditorGUILayout.LabelField("Mode", _miniMutedStyle, GUILayout.Width(34f));
+                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(230f)))
                     {
                         DrawSetupModeSelector();
                     }
-                }
 
-                GUILayout.Space(8f);
+                    GUILayout.Space(6f);
 
-                using (new EditorGUILayout.HorizontalScope())
-                {
                     using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
                     {
-                        if (GUILayout.Button("Refresh Status", _secondaryButtonStyle, GUILayout.Height(28f)))
+                        if (GUILayout.Button("Refresh", _utilityButtonStyle, GUILayout.Width(70f), GUILayout.Height(24f)))
                         {
                             RefreshStatus();
                         }
@@ -466,25 +406,31 @@ namespace Deucarian.Bootstrap.Editor
 
                     using (new EditorGUI.DisabledScope(IsRequestActive))
                     {
-                        if (GUILayout.Button("Repair Scoped Registry", _secondaryButtonStyle, GUILayout.Height(28f)))
+                        if (GUILayout.Button("Repair Registry", _utilityButtonStyle, GUILayout.Width(108f), GUILayout.Height(24f)))
                         {
                             RepairScopedRegistry();
                         }
                     }
 
-                    if (GUILayout.Button("Open GitHub", _secondaryButtonStyle, GUILayout.Height(28f)))
+                    GUILayout.FlexibleSpace();
+
+                    if (GUILayout.Button("GitHub", _utilityButtonStyle, GUILayout.Width(64f), GUILayout.Height(24f)))
                     {
                         Application.OpenURL(DeucarianBootstrapPackageConstants.GitHubUrl);
                     }
 
-                    if (GUILayout.Button("Open Documentation", _secondaryButtonStyle, GUILayout.Height(28f)))
+                    if (GUILayout.Button("Docs", _utilityButtonStyle, GUILayout.Width(54f), GUILayout.Height(24f)))
                     {
                         Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
                     }
                 }
 
-                GUILayout.Space(8f);
-                DrawStartupPreferenceToggle();
+                GUILayout.Space(4f);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace();
+                    DrawStartupPreferenceToggle(true);
+                }
             }
         }
 
@@ -502,9 +448,6 @@ namespace Deucarian.Bootstrap.Editor
 
                 if (!_setupDetailsExpanded)
                 {
-                    EditorGUILayout.LabelField(
-                        "Diagnostics, package rows, registry source, and install plan are available here when needed.",
-                        _miniMutedStyle);
                     return;
                 }
 
@@ -514,19 +457,6 @@ namespace Deucarian.Bootstrap.Editor
 
                 GUILayout.Space(10f);
                 DrawInstallPlanContents();
-            }
-        }
-
-        private void DrawStatusCard(params GUILayoutOption[] options)
-        {
-            using (new EditorGUILayout.VerticalScope(_cardStyle, options))
-            {
-                EditorGUILayout.LabelField("Setup Status", _sectionTitleStyle);
-                EditorGUILayout.LabelField(GetSetupSummary(), _mutedStyle);
-                GUILayout.Space(8f);
-
-                DrawDetailedStatusRows();
-                DrawStatusMessages();
             }
         }
 
@@ -632,75 +562,20 @@ namespace Deucarian.Bootstrap.Editor
                 _miniMutedStyle);
         }
 
-        private void DrawActionCard(params GUILayoutOption[] options)
-        {
-            using (new EditorGUILayout.VerticalScope(_cardStyle, options))
-            {
-                EditorGUILayout.LabelField("Setup Hub", _sectionTitleStyle);
-                EditorGUILayout.LabelField(GetActionSummary(), _mutedStyle);
-                GUILayout.Space(10f);
-
-                DrawSetupModeSelector();
-
-                GUILayout.Space(6f);
-
-                using (new EditorGUI.DisabledScope(IsPrimaryActionDisabled()))
-                {
-                    if (GUILayout.Button(GetPrimaryActionLabel(), _primaryButtonStyle, GUILayout.Height(36f)))
-                    {
-                        StartSetup();
-                    }
-                }
-
-                GUILayout.Space(6f);
-
-                using (new EditorGUI.DisabledScope(IsRequestActive))
-                {
-                    if (GUILayout.Button("Repair Scoped Registry", _secondaryButtonStyle, GUILayout.Height(28f)))
-                    {
-                        RepairScopedRegistry();
-                    }
-                }
-
-                using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
-                {
-                    if (GUILayout.Button("Refresh Status", _secondaryButtonStyle, GUILayout.Height(28f)))
-                    {
-                        RefreshStatus();
-                    }
-                }
-
-                GUILayout.Space(4f);
-
-                if (GUILayout.Button("Open GitHub", _secondaryButtonStyle, GUILayout.Height(26f)))
-                {
-                    Application.OpenURL(DeucarianBootstrapPackageConstants.GitHubUrl);
-                }
-
-                if (GUILayout.Button("Open Documentation", _secondaryButtonStyle, GUILayout.Height(26f)))
-                {
-                    Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
-                }
-
-                GUILayout.Space(8f);
-                DrawStartupPreferenceToggle();
-            }
-        }
-
         private void DrawPackageInstallerProductCard()
         {
             bool ready = IsPackageInstallerInstalled;
 
             using (new EditorGUILayout.VerticalScope(_heroStyle))
             {
-                Rect heroRect = GUILayoutUtility.GetRect(1f, 356f, GUILayout.ExpandWidth(true), GUILayout.MinHeight(340f));
+                Rect heroRect = GUILayoutUtility.GetRect(1f, HeroCardHeight, GUILayout.ExpandWidth(true), GUILayout.MinHeight(420f));
                 DrawHeroBackground(heroRect, ready);
 
                 Rect badgeRect = new Rect(heroRect.x + 18f, heroRect.y + 16f, 148f, 22f);
                 GUI.Label(badgeRect, "DEUCARIAN SETUP", _badgeStyle);
 
-                Rect logoArea = new Rect(heroRect.x, heroRect.y + 44f, heroRect.width, 114f);
-                DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha(), 108f);
+                Rect logoArea = new Rect(heroRect.x, heroRect.y + 84f, heroRect.width, 154f);
+                DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha(), 148f);
 
                 if (ready)
                 {
@@ -715,13 +590,13 @@ namespace Deucarian.Bootstrap.Editor
                 float contentWidth = Mathf.Min(560f, Mathf.Max(320f, heroRect.width - 48f));
                 float contentX = heroRect.x + (heroRect.width - contentWidth) * 0.5f;
 
-                Rect titleRect = new Rect(contentX, heroRect.y + 164f, contentWidth, 42f);
+                Rect titleRect = new Rect(contentX, heroRect.y + 258f, contentWidth, 42f);
                 GUI.Label(titleRect, DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName, _heroTitleStyle);
 
                 Rect subtitleRect = new Rect(contentX, titleRect.yMax + 2f, contentWidth, 26f);
                 GUI.Label(subtitleRect, "Install and manage Deucarian Unity packages.", _heroSubtitleLargeStyle);
 
-                Rect noteRect = new Rect(contentX, subtitleRect.yMax + 4f, contentWidth, 34f);
+                Rect noteRect = new Rect(contentX, subtitleRect.yMax + 6f, contentWidth, 34f);
                 GUI.Label(noteRect, "Bootstrap installs Package Installer and the required setup packages.", _heroEyebrowStyle);
 
                 Rect stripRect = new Rect(contentX, heroRect.yMax - 92f, contentWidth, 32f);
@@ -800,14 +675,6 @@ namespace Deucarian.Bootstrap.Editor
             GUI.Label(iconRect, GetStatusMarker(kind), _productStatusStyle);
             GUI.Label(statusRect, GetPackageInstallerProductStatusText(), _productStatusStyle);
             GUI.Label(detailRect, GetPackageInstallerProductStatusDetail(), _productStatusDetailStyle);
-        }
-
-        private void DrawInstallPlan()
-        {
-            using (new EditorGUILayout.VerticalScope(_cardStyle))
-            {
-                DrawInstallPlanContents();
-            }
         }
 
         private void DrawInstallPlanContents()
@@ -928,25 +795,6 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             return missing + " setup package" + (missing == 1 ? " is" : "s are") + " missing. Setup will install only what is needed.";
-        }
-
-        private string GetActionSummary()
-        {
-            if (_setupActive)
-            {
-                return _waitingForPackageRefresh
-                    ? "Setup is waiting for Unity to finish refreshing packages before continuing."
-                    : "Setup is in progress. Bootstrap will continue in dependency order.";
-            }
-
-            if (_installedPackageIds != null && RequiredSetupPackages.All(package => IsPackageInstalled(package.PackageId)))
-            {
-                return "Setup is complete. Use Package Installer to manage Deucarian packages.";
-            }
-
-            return _installMode == BootstrapInstallMode.ScopedRegistry
-                ? "Recommended: configure the Unity scoped registry and install Package Installer from npmjs."
-                : "Fallback: install or repair setup through Git URLs.";
         }
 
         private string GetPrimaryActionLabel()
@@ -2176,13 +2024,21 @@ namespace Deucarian.Bootstrap.Editor
             (_addRequest != null && !_addRequest.IsCompleted) ||
             _packageListRetryQueued;
 
-        private void DrawStartupPreferenceToggle()
+        private void DrawStartupPreferenceToggle(bool compact)
         {
             EditorGUI.BeginChangeCheck();
-            bool showOnStartup = EditorGUILayout.ToggleLeft("Show Bootstrap on startup", ShouldShowOnStartup());
+            bool showOnStartup = EditorGUILayout.ToggleLeft(
+                "Show on startup",
+                ShouldShowOnStartup(),
+                GUILayout.Width(compact ? 126f : 220f));
             if (EditorGUI.EndChangeCheck())
             {
                 SetShowOnStartup(showOnStartup);
+            }
+
+            if (compact)
+            {
+                return;
             }
 
             EditorGUILayout.LabelField(
@@ -2391,13 +2247,6 @@ namespace Deucarian.Bootstrap.Editor
             _cardStyle.margin = new RectOffset(0, 0, 0, 8);
             _cardStyle.normal.background = TextureForColor("card", _cardBackgroundColor);
 
-            _titleStyle = CopyStyle(() => EditorStyles.boldLabel);
-            _titleStyle.fontSize = 24;
-            _titleStyle.fontStyle = FontStyle.Bold;
-            _titleStyle.wordWrap = true;
-            _titleStyle.alignment = TextAnchor.MiddleLeft;
-            _titleStyle.normal.textColor = _titleTextColor;
-
             _heroTitleStyle = CopyStyle(() => EditorStyles.boldLabel);
             _heroTitleStyle.fontSize = 28;
             _heroTitleStyle.fontStyle = FontStyle.Bold;
@@ -2417,27 +2266,11 @@ namespace Deucarian.Bootstrap.Editor
             _heroEyebrowStyle.alignment = TextAnchor.UpperCenter;
             _heroEyebrowStyle.normal.textColor = new Color(0.82f, 0.91f, 0.94f, 0.88f);
 
-            _subtitleStyle = CopyStyle(() => EditorStyles.label);
-            _subtitleStyle.fontSize = 13;
-            _subtitleStyle.fontStyle = FontStyle.Bold;
-            _subtitleStyle.wordWrap = true;
-            _subtitleStyle.normal.textColor = _bodyTextColor;
-
-            _taglineStyle = CopyStyle(() => EditorStyles.wordWrappedMiniLabel);
-            _taglineStyle.wordWrap = true;
-            _taglineStyle.normal.textColor = _mutedTextColor;
-
             _sectionTitleStyle = CopyStyle(() => EditorStyles.boldLabel);
             _sectionTitleStyle.fontSize = 12;
             _sectionTitleStyle.fontStyle = FontStyle.Bold;
             _sectionTitleStyle.wordWrap = true;
             _sectionTitleStyle.normal.textColor = _titleTextColor;
-
-            _productTitleStyle = CopyStyle(() => EditorStyles.boldLabel);
-            _productTitleStyle.fontSize = 15;
-            _productTitleStyle.fontStyle = FontStyle.Bold;
-            _productTitleStyle.wordWrap = true;
-            _productTitleStyle.normal.textColor = _titleTextColor;
 
             _bodyStyle = CopyStyle(() => EditorStyles.label);
             _bodyStyle.wordWrap = true;
@@ -2497,6 +2330,12 @@ namespace Deucarian.Bootstrap.Editor
             _secondaryButtonStyle = CopyStyle(() => GUI.skin.button);
             _secondaryButtonStyle.alignment = TextAnchor.MiddleCenter;
             _secondaryButtonStyle.normal.textColor = _bodyTextColor;
+
+            _utilityButtonStyle = CopyStyle(() => EditorStyles.miniButton);
+            _utilityButtonStyle.alignment = TextAnchor.MiddleCenter;
+            _utilityButtonStyle.clipping = TextClipping.Clip;
+            _utilityButtonStyle.fontSize = 11;
+            _utilityButtonStyle.normal.textColor = _bodyTextColor;
 
             _badgeStyle = CopyStyle(() => EditorStyles.miniBoldLabel);
             _badgeStyle.alignment = TextAnchor.MiddleCenter;
