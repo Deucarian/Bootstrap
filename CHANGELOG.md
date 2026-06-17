@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 - 2026-06-17
+
+- Updated the bundled package catalog fallback to use Integration package IDs and categories instead of Bridge package IDs.
+
 ## 0.1.7 - 2026-06-16
 
 - Made the Package Installer hero action context-aware for install, continue, repair, waiting, and open states.
