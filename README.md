@@ -24,13 +24,13 @@ Use the primary button in the Package Installer hero card. Bootstrap does not in
 
 Recommended setup mode:
 
-- Scoped registry mode configures the Unity scoped registry for `com.deucarian`, installs `com.deucarian.package-installer` by package name from npmjs, and lets Unity resolve `com.deucarian.editor` and `com.deucarian.logging`.
+- Git setup mode loads the Deucarian package catalog, resolves the dependency graph for `com.deucarian.package-installer`, shows the planned install order, and installs the plan sequentially from Git URLs.
 
-Fallback setup mode:
+Deferred setup mode:
 
-- Git fallback mode loads the Deucarian package catalog, resolves the dependency graph for `com.deucarian.package-installer`, shows the planned install order, and installs the plan sequentially from Git URLs.
+- Scoped registry mode is deferred while Git-only distribution is active. npm/scoped-registry publication is not the recommended setup path until the manual release process is finalized.
 
-Bootstrap uses the remote Deucarian Package Registry catalog for Git fallback mode when available:
+Bootstrap uses the remote Deucarian Package Registry catalog for Git setup mode when available:
 
 ```text
 https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json
