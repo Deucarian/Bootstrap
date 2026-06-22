@@ -1,7 +1,16 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-17",
+  "updatedAt": "2026-06-22",
   "packages": [
+    {
+      "id": "com.deucarian.common",
+      "displayName": "Deucarian Common",
+      "category": "Core",
+      "description": "Tiny dependency-free runtime primitives shared across Deucarian packages.",
+      "stableUrl": "https://github.com/Deucarian/Common.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Common.git#develop",
+      "dependencies": []
+    },
     {
       "id": "com.deucarian.editor",
       "displayName": "Deucarian Editor",
@@ -50,6 +59,7 @@
       "stableUrl": "https://github.com/Deucarian/Object-Loading.git#main",
       "developmentUrl": "https://github.com/Deucarian/Object-Loading.git#develop",
       "dependencies": [
+        "com.deucarian.common",
         "com.deucarian.logging"
       ]
     },
@@ -71,7 +81,21 @@
       "description": "Data-driven UI Binding containers for Unity.",
       "stableUrl": "https://github.com/Deucarian/UI-Binding.git#main",
       "developmentUrl": "https://github.com/Deucarian/UI-Binding.git#develop",
-      "dependencies": []
+      "dependencies": [
+        "com.deucarian.common"
+      ]
+    },
+    {
+      "id": "com.deucarian.ui-flow",
+      "displayName": "Deucarian UI Flow",
+      "category": "UI",
+      "description": "Deterministic asynchronous UI navigation with route assets, channels, guards, transitions, Back handling, action assets, and typed modal presentations.",
+      "stableUrl": "https://github.com/Deucarian/UI-FLow.git#main",
+      "developmentUrl": "https://github.com/Deucarian/UI-FLow.git#develop",
+      "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.logging"
+      ]
     },
     {
       "id": "com.deucarian.theming",

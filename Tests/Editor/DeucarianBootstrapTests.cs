@@ -31,6 +31,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.False(manifest.Contains("com.deucarian.editor"));
             Assert.False(manifest.Contains("com.deucarian.package-installer"));
             Assert.False(manifest.Contains("com.deucarian.logging"));
+            Assert.False(manifest.Contains("com.deucarian.common"));
         }
 
         [Test]
@@ -212,6 +213,28 @@ namespace Deucarian.Bootstrap.Editor.Tests
             Assert.AreEqual(DeucarianBootstrapPackageConstants.EditorPackageId, steps[0].PackageId);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.LoggingPackageId, steps[1].PackageId);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerPackageId, steps[2].PackageId);
+        }
+
+        [Test]
+        public void FallbackCatalogIncludesCommonAndRuntimeConsumerDependencies()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            string fallbackPath = Path.Combine(packageInfo.resolvedPath, DeucarianBootstrapPackageConstants.FallbackCatalogRelativePath);
+            BootstrapPackageCatalog catalog = ParseCatalog(File.ReadAllText(fallbackPath));
+
+            BootstrapPackageDefinition common = catalog.packages.Single(package => package.id == "com.deucarian.common");
+            Assert.AreEqual("Deucarian Common", common.displayName);
+            Assert.AreEqual("Core", common.category);
+            Assert.IsEmpty(common.dependencies);
+
+            BootstrapPackageDefinition objectLoading = catalog.packages.Single(package => package.id == "com.deucarian.object-loading");
+            BootstrapPackageDefinition uiBinding = catalog.packages.Single(package => package.id == "com.deucarian.ui-binding");
+            BootstrapPackageDefinition uiFlow = catalog.packages.Single(package => package.id == "com.deucarian.ui-flow");
+
+            CollectionAssert.Contains(objectLoading.dependencies, "com.deucarian.common");
+            CollectionAssert.Contains(uiBinding.dependencies, "com.deucarian.common");
+            CollectionAssert.Contains(uiFlow.dependencies, "com.deucarian.common");
+            CollectionAssert.Contains(uiFlow.dependencies, "com.deucarian.logging");
         }
 
         [Test]
