@@ -68,19 +68,22 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string windowSourcePath = Path.Combine(packageInfo.resolvedPath, "Editor", "DeucarianBootstrapWindow.cs");
             string windowSource = File.ReadAllText(windowSourcePath);
 
-            StringAssert.Contains("Install and manage Deucarian Unity packages.", windowSource);
+            StringAssert.Contains("Install or repair the Deucarian package setup.", windowSource);
+            StringAssert.Contains("\"Channel\"", windowSource);
+            StringAssert.Contains("\"Stable\"", windowSource);
+            StringAssert.Contains("\"Development\"", windowSource);
             StringAssert.Contains("\"Refresh\"", windowSource);
-            StringAssert.Contains("\"Repair Registry\"", windowSource);
             StringAssert.Contains("\"GitHub\"", windowSource);
             StringAssert.Contains("\"Docs\"", windowSource);
-            StringAssert.Contains("Install source: npm scoped registry", windowSource);
             StringAssert.Contains("Setup progress", windowSource);
-            StringAssert.Contains("Setup looks healthy.", windowSource);
+            StringAssert.Contains("Package Installer is installed and matches the selected channel.", windowSource);
             StringAssert.Contains("Show Bootstrap on startup", windowSource);
             StringAssert.Contains("Registry source, package IDs, install plan, and diagnostics are available here when needed.", windowSource);
-            StringAssert.Contains("Bootstrap only sets up and repairs the Deucarian package ecosystem.", windowSource);
-            StringAssert.Contains("Recommended. Uses npmjs scoped registry and lets Unity resolve dependencies.", windowSource);
-            StringAssert.Contains("Advanced fallback mode for development or registry outages.", windowSource);
+            StringAssert.Contains("Stable: Git #main", windowSource);
+            StringAssert.Contains("Development: Git #develop", windowSource);
+            StringAssert.Contains("Deferred. Git URLs are the supported distribution path for now.", windowSource);
+            Assert.False(windowSource.Contains("Recommended. Uses npmjs scoped registry"));
+            Assert.False(windowSource.Contains("\"Repair Registry\""));
 
             int heroIndex = windowSource.IndexOf("DrawPackageInstallerProductCard();", StringComparison.Ordinal);
             int summaryIndex = windowSource.IndexOf("DrawCompactSetupSummary();", StringComparison.Ordinal);
@@ -140,14 +143,14 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 SetField(window, "_setupInterrupted", true);
                 SetField(window, "_error", string.Empty);
                 Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.Interrupted, window.GetHeroState());
-                Assert.AreEqual("Continue Setup", window.GetHeroPrimaryActionLabel());
+                Assert.AreEqual("Repair Package Installer", window.GetHeroPrimaryActionLabel());
                 Assert.False(window.IsHeroPrimaryActionDisabled());
 
                 SetField(window, "_error", "Package Manager failed.");
                 Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.NeedsRepair, window.GetHeroState());
-                Assert.AreEqual("Repair Setup", window.GetHeroPrimaryActionLabel());
+                Assert.AreEqual("Repair Package Installer", window.GetHeroPrimaryActionLabel());
                 Assert.False(window.IsHeroPrimaryActionDisabled());
-                Assert.AreEqual("Setup needs repair", window.GetPackageInstallerProductStatusText());
+                Assert.AreEqual("Missing", window.GetPackageInstallerProductStatusText());
 
                 SetField(window, "_setupInterrupted", false);
                 SetField(window, "_error", string.Empty);
@@ -156,15 +159,19 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     DeucarianBootstrapPackageConstants.EditorPackageId,
                     DeucarianBootstrapPackageConstants.LoggingPackageId,
                     DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
-                SetField(
+                SetInstalledPackageInfo(
                     window,
-                    "_scopedRegistryStatus",
-                    BootstrapScopedRegistryStatus.CreateConfigured("Packages/manifest.json", DeucarianBootstrapPackageConstants.ScopedRegistryUrl));
+                    new BootstrapInstalledPackageInfo(
+                        DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                        "1.1.53",
+                        "Git",
+                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
+                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl));
                 Assert.AreEqual(DeucarianBootstrapWindow.BootstrapHeroState.Ready, window.GetHeroState());
                 Assert.AreEqual("Open Package Installer", window.GetHeroPrimaryActionLabel());
                 Assert.False(window.IsHeroPrimaryActionDisabled());
-                Assert.AreEqual("Ready", window.GetPackageInstallerProductStatusText());
-                Assert.AreEqual("Installed and available", window.GetPackageInstallerProductStatusDetail());
+                Assert.AreEqual("Healthy", window.GetPackageInstallerProductStatusText());
+                Assert.AreEqual("Package Installer is installed and matches the selected channel.", window.GetPackageInstallerProductStatusDetail());
             }
             finally
             {
@@ -180,6 +187,18 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string secondKey = DeucarianBootstrapWindow.GetProjectShowOnStartupPreferenceKey("C:/Projects/Second");
 
             StringAssert.StartsWith("Deucarian.Bootstrap.ShowOnStartup.", firstKey);
+            Assert.AreEqual(firstKey, firstKeyWithSlashes);
+            Assert.AreNotEqual(firstKey, secondKey);
+        }
+
+        [Test]
+        public void ChannelPreferenceKeyIsProjectScopedAndStable()
+        {
+            string firstKey = DeucarianBootstrapWindow.GetProjectChannelPreferenceKey("C:/Projects/First");
+            string firstKeyWithSlashes = DeucarianBootstrapWindow.GetProjectChannelPreferenceKey("C:\\Projects\\First\\");
+            string secondKey = DeucarianBootstrapWindow.GetProjectChannelPreferenceKey("C:/Projects/Second");
+
+            StringAssert.StartsWith("Deucarian.Bootstrap.Channel.", firstKey);
             Assert.AreEqual(firstKey, firstKeyWithSlashes);
             Assert.AreNotEqual(firstKey, secondKey);
         }
@@ -204,9 +223,28 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
+        public void SelectedChannelPersistsForCurrentProject()
+        {
+            BootstrapChannel original = DeucarianBootstrapWindow.GetPersistedChannel();
+
+            try
+            {
+                DeucarianBootstrapWindow.SetPersistedChannel(BootstrapChannel.Development);
+                Assert.AreEqual(BootstrapChannel.Development, DeucarianBootstrapWindow.GetPersistedChannel());
+
+                DeucarianBootstrapWindow.SetPersistedChannel(BootstrapChannel.Stable);
+                Assert.AreEqual(BootstrapChannel.Stable, DeucarianBootstrapWindow.GetPersistedChannel());
+            }
+            finally
+            {
+                DeucarianBootstrapWindow.SetPersistedChannel(original);
+            }
+        }
+
+        [Test]
         public void SetupResolvesDependencyFirstPlanFromBundledFallback()
         {
-            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog(BootstrapChannel.Stable);
 
             Assert.AreEqual(3, steps.Length);
             Assert.AreEqual(DeucarianBootstrapPackageConstants.EditorPackageId, steps[0].PackageId);
@@ -215,9 +253,29 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
+        public void StableChannelUsesMainGitUrls()
+        {
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog(BootstrapChannel.Stable);
+
+            Assert.True(steps.All(step => step.PackageReference.EndsWith("#main", StringComparison.OrdinalIgnoreCase)));
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.StableRegistryCatalogUrl, BootstrapChannelUtility.GetRegistryCatalogUrl(BootstrapChannel.Stable));
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl, steps.Last().PackageReference);
+        }
+
+        [Test]
+        public void DevelopmentChannelUsesDevelopGitUrls()
+        {
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog(BootstrapChannel.Development);
+
+            Assert.True(steps.All(step => step.PackageReference.EndsWith("#develop", StringComparison.OrdinalIgnoreCase)));
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.DevelopmentRegistryCatalogUrl, BootstrapChannelUtility.GetRegistryCatalogUrl(BootstrapChannel.Development));
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerDevelopmentGitUrl, steps.Last().PackageReference);
+        }
+
+        [Test]
         public void ContinuationSkipsInstalledPackages()
         {
-            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog(BootstrapChannel.Stable);
             HashSet<string> installed = new HashSet<string>
             {
                 DeucarianBootstrapPackageConstants.EditorPackageId
@@ -238,7 +296,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
         [Test]
         public void ContinuationReportsCompleteWhenAllPackagesInstalled()
         {
-            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog();
+            BootstrapPackageStep[] steps = BuildPlanFromFallbackCatalog(BootstrapChannel.Stable);
             HashSet<string> installed = new HashSet<string>(steps.Select(step => step.PackageId));
 
             int nextIndex = DeucarianBootstrapWindow.FindNextMissingStepIndex(steps, installed);
@@ -254,7 +312,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
                 catalog,
-                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                BootstrapChannel.Stable);
 
             Assert.False(result.Success);
             StringAssert.Contains("Missing dependency com.deucarian.missing", result.ErrorMessage);
@@ -268,10 +327,78 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
                 catalog,
-                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                BootstrapChannel.Stable);
 
             Assert.False(result.Success);
             StringAssert.Contains("Circular dependency detected", result.ErrorMessage);
+        }
+
+        [Test]
+        public void PlannerFailsClearlyWhenSelectedChannelUrlIsMissing()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":1,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"stableUrl\":\"https://example.com/installer.git\",\"developmentUrl\":\"\",\"dependencies\":[]}]}");
+
+            BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
+                catalog,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                BootstrapChannel.Development);
+
+            Assert.False(result.Success);
+            StringAssert.Contains("does not define a Development Git URL", result.ErrorMessage);
+        }
+
+        [Test]
+        public void PackageInstallerStatusDetectsMissingOutdatedWrongChannelAndHealthy()
+        {
+            Assert.AreEqual(
+                BootstrapPackageInstallerSetupState.Missing,
+                BootstrapPackageInstallerStatus.Evaluate(BootstrapChannel.Stable, null, "1.1.53"));
+
+            Assert.AreEqual(
+                BootstrapPackageInstallerSetupState.Healthy,
+                BootstrapPackageInstallerStatus.Evaluate(
+                    BootstrapChannel.Stable,
+                    InstalledPackage("1.1.53", "Git", DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl),
+                    "1.1.53"));
+
+            Assert.AreEqual(
+                BootstrapPackageInstallerSetupState.Outdated,
+                BootstrapPackageInstallerStatus.Evaluate(
+                    BootstrapChannel.Stable,
+                    InstalledPackage("1.1.52", "Git", DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl),
+                    "1.1.53"));
+
+            Assert.AreEqual(
+                BootstrapPackageInstallerSetupState.WrongChannel,
+                BootstrapPackageInstallerStatus.Evaluate(
+                    BootstrapChannel.Stable,
+                    InstalledPackage("1.1.55", "Git", DeucarianBootstrapPackageConstants.PackageInstallerDevelopmentGitUrl),
+                    "1.1.53"));
+
+            Assert.AreEqual(
+                BootstrapPackageInstallerSetupState.WrongChannel,
+                BootstrapPackageInstallerStatus.Evaluate(
+                    BootstrapChannel.Stable,
+                    InstalledPackage("1.1.53", "Registry", DeucarianBootstrapPackageConstants.PackageInstallerPackageId),
+                    "1.1.53"));
+        }
+
+        [Test]
+        public void PackageLockInspectorReadsGitUrlAndChannel()
+        {
+            string lockJson =
+                "{\"dependencies\":{\"com.deucarian.package-installer\":{\"version\":\"https://github.com/Deucarian/Package-Installer.git#develop\",\"depth\":0,\"source\":\"git\",\"dependencies\":{}}}}";
+
+            Assert.True(BootstrapPackageLockInspector.TryGetPackage(
+                lockJson,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                out BootstrapPackageLockEntry entry));
+            Assert.AreEqual("git", entry.Source);
+            Assert.AreEqual(DeucarianBootstrapPackageConstants.PackageInstallerDevelopmentGitUrl, entry.GitUrl);
+            Assert.True(BootstrapChannelUtility.TryDetectFromGitReference(entry.GitUrl, out BootstrapChannel channel));
+            Assert.AreEqual(BootstrapChannel.Development, channel);
         }
 
         [Test]
@@ -345,14 +472,15 @@ namespace Deucarian.Bootstrap.Editor.Tests
             return catalog;
         }
 
-        private static BootstrapPackageStep[] BuildPlanFromFallbackCatalog()
+        private static BootstrapPackageStep[] BuildPlanFromFallbackCatalog(BootstrapChannel channel)
         {
             PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
             string fallbackPath = Path.Combine(packageInfo.resolvedPath, DeucarianBootstrapPackageConstants.FallbackCatalogRelativePath);
             BootstrapPackageCatalog catalog = ParseCatalog(File.ReadAllText(fallbackPath));
             BootstrapInstallPlanResult result = BootstrapInstallPlanner.BuildPlan(
                 catalog,
-                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                channel);
 
             Assert.True(result.Success, result.ErrorMessage);
             return result.Steps.ToArray();
@@ -401,6 +529,29 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 window,
                 "_installedPackageIds",
                 new HashSet<string>(packageIds ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase));
+        }
+
+        private static BootstrapInstalledPackageInfo InstalledPackage(string version, string source, string reference)
+        {
+            return new BootstrapInstalledPackageInfo(
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                version,
+                source,
+                reference,
+                reference);
+        }
+
+        private static void SetInstalledPackageInfo(DeucarianBootstrapWindow window, params BootstrapInstalledPackageInfo[] packages)
+        {
+            Dictionary<string, BootstrapInstalledPackageInfo> packagesById =
+                new Dictionary<string, BootstrapInstalledPackageInfo>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (BootstrapInstalledPackageInfo package in packages ?? Array.Empty<BootstrapInstalledPackageInfo>())
+            {
+                packagesById[package.PackageId] = package;
+            }
+
+            SetField(window, "_installedPackagesById", packagesById);
         }
 
         private static void SetField(DeucarianBootstrapWindow window, string fieldName, object value)

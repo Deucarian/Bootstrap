@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-06-17",
+  "updatedAt": "2026-06-23",
   "packages": [
     {
       "id": "com.deucarian.editor",
@@ -8,7 +8,7 @@
       "category": "Editor",
       "description": "Shared editor tooling and branded editor UI helpers for Deucarian Unity packages.",
       "stableUrl": "https://github.com/Deucarian/Editor.git#main",
-      "developmentUrl": "",
+      "developmentUrl": "https://github.com/Deucarian/Editor.git#develop",
       "dependencies": []
     },
     {
@@ -37,7 +37,7 @@
       "category": "Core",
       "description": "Small dependency-light logging wrapper for Deucarian Unity packages.",
       "stableUrl": "https://github.com/Deucarian/Logging.git#main",
-      "developmentUrl": "",
+      "developmentUrl": "https://github.com/Deucarian/Logging.git#develop",
       "dependencies": [
         "com.deucarian.editor"
       ]
@@ -103,6 +103,8 @@
       "description": "Editor installer window for installing and composing Deucarian Unity UPM packages.",
       "stableUrl": "https://github.com/Deucarian/Package-Installer.git#main",
       "developmentUrl": "https://github.com/Deucarian/Package-Installer.git#develop",
+      "stableVersion": "1.1.53",
+      "developmentVersion": "1.1.55",
       "dependencies": [
         "com.deucarian.editor",
         "com.deucarian.logging"

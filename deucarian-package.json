@@ -1,0 +1,18 @@
+{
+  "packageId": "com.deucarian.bootstrap",
+  "displayName": "Deucarian Bootstrap",
+  "ownedCapabilities": [],
+  "runtimeAssemblies": [],
+  "editorAssemblies": [
+    "Deucarian.Bootstrap.Editor"
+  ],
+  "sampleAssemblies": [],
+  "testAssemblies": [
+    "Deucarian.Bootstrap.Editor.Tests"
+  ],
+  "requiredDependencies": [],
+  "optionalVersionDefinedDependencies": [],
+  "allowedDirectDebugCalls": [],
+  "allowedDirectUnityObjectLifetimeCalls": [],
+  "expectedSamplesRoot": ""
+}

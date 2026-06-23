@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 - 2026-06-23
+
+- Changed the primary setup flow to install Package Installer and setup dependencies from selected Git channel URLs.
+- Added Stable and Development channels for Package Registry catalog selection and Package Installer target URLs.
+- Added Package Installer source, channel, and version status detection with missing, outdated, wrong-channel, healthy, and review-required states.
+- Added safe Package Installer repair behavior for stale scoped-registry or untrusted installs.
+- Refreshed the Bootstrap window with a premium dark Deucarian setup header, channel dropdown, status cards, target diagnostics, and Git-channel footer copy.
+- Updated the bundled fallback catalog with development setup URLs and Package Installer target versions.
+- Marked npm/scoped registry setup as deferred, advanced, and legacy instead of the recommended primary path.
+
 ## 1.0.1 - 2026-06-17
 
 - Updated the bundled package catalog fallback to use Integration package IDs and categories instead of Bridge package IDs.

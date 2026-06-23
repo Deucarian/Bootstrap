@@ -4,11 +4,12 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "0.1.7";
+        public const string Version = "1.1.0";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
         public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
         public const string LegacyPackageInstallerMenuPath = "Deucarian/Package Installer";
-        public const string RegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json";
+        public const string StableRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json";
+        public const string DevelopmentRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/develop/packages.json";
         public const string ScopedRegistryName = "Deucarian";
         public const string ScopedRegistryUrl = "https://registry.npmjs.org";
         public const string ScopedRegistryScope = "com.deucarian";
@@ -30,6 +31,8 @@ namespace Deucarian.Bootstrap.Editor
 
         public const string PackageInstallerPackageId = "com.deucarian.package-installer";
         public const string PackageInstallerPackageDisplayName = "Deucarian Package Installer";
-        public const string PackageInstallerPackageGitUrl = "https://github.com/Deucarian/Package-Installer.git#main";
+        public const string PackageInstallerStableGitUrl = "https://github.com/Deucarian/Package-Installer.git#main";
+        public const string PackageInstallerDevelopmentGitUrl = "https://github.com/Deucarian/Package-Installer.git#develop";
+        public const string PackageInstallerPackageGitUrl = PackageInstallerStableGitUrl;
     }
 }

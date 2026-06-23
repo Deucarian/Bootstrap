@@ -21,6 +21,8 @@ namespace Deucarian.Bootstrap.Editor
         public string description;
         public string stableUrl;
         public string developmentUrl;
+        public string stableVersion;
+        public string developmentVersion;
         public string[] dependencies;
     }
 
@@ -71,7 +73,10 @@ namespace Deucarian.Bootstrap.Editor
 
     internal static class BootstrapInstallPlanner
     {
-        public static BootstrapInstallPlanResult BuildPlan(BootstrapPackageCatalog catalog, string targetPackageId)
+        public static BootstrapInstallPlanResult BuildPlan(
+            BootstrapPackageCatalog catalog,
+            string targetPackageId,
+            BootstrapChannel channel)
         {
             if (catalog == null)
             {
@@ -106,7 +111,7 @@ namespace Deucarian.Bootstrap.Editor
             Stack<string> stack = new Stack<string>();
             string errorMessage;
 
-            if (!Visit(targetPackageId, packagesById, visiting, visited, stack, steps, out errorMessage))
+            if (!Visit(targetPackageId, channel, packagesById, visiting, visited, stack, steps, out errorMessage))
             {
                 return BootstrapInstallPlanResult.CreateFailure(errorMessage);
             }
@@ -114,8 +119,51 @@ namespace Deucarian.Bootstrap.Editor
             return BootstrapInstallPlanResult.CreateSuccess(steps);
         }
 
+        public static BootstrapPackageDefinition FindPackage(BootstrapPackageCatalog catalog, string packageId)
+        {
+            if (catalog == null || string.IsNullOrWhiteSpace(packageId))
+            {
+                return null;
+            }
+
+            foreach (BootstrapPackageDefinition package in catalog.packages ?? Array.Empty<BootstrapPackageDefinition>())
+            {
+                if (package != null && string.Equals(package.id, packageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return package;
+                }
+            }
+
+            return null;
+        }
+
+        public static string GetUrlForChannel(BootstrapPackageDefinition package, BootstrapChannel channel)
+        {
+            if (package == null)
+            {
+                return string.Empty;
+            }
+
+            return channel == BootstrapChannel.Development
+                ? package.developmentUrl
+                : package.stableUrl;
+        }
+
+        public static string GetVersionForChannel(BootstrapPackageDefinition package, BootstrapChannel channel)
+        {
+            if (package == null)
+            {
+                return string.Empty;
+            }
+
+            return channel == BootstrapChannel.Development
+                ? package.developmentVersion
+                : package.stableVersion;
+        }
+
         private static bool Visit(
             string packageId,
+            BootstrapChannel channel,
             IReadOnlyDictionary<string, BootstrapPackageDefinition> packagesById,
             ISet<string> visiting,
             ISet<string> visited,
@@ -153,7 +201,7 @@ namespace Deucarian.Bootstrap.Editor
                     return false;
                 }
 
-                if (!Visit(dependencyId, packagesById, visiting, visited, stack, steps, out errorMessage))
+                if (!Visit(dependencyId, channel, packagesById, visiting, visited, stack, steps, out errorMessage))
                 {
                     return false;
                 }
@@ -163,16 +211,19 @@ namespace Deucarian.Bootstrap.Editor
             visiting.Remove(packageId);
             visited.Add(packageId);
 
-            if (string.IsNullOrWhiteSpace(package.stableUrl))
+            string packageUrl = GetUrlForChannel(package, channel);
+            if (string.IsNullOrWhiteSpace(packageUrl))
             {
-                errorMessage = "Package " + packageId + " does not define a stable Git URL.";
+                errorMessage = "Package " + packageId + " does not define a " +
+                    BootstrapChannelUtility.GetDisplayName(channel) +
+                    " Git URL.";
                 return false;
             }
 
             steps.Add(new BootstrapPackageStep(
                 package.id,
                 string.IsNullOrWhiteSpace(package.displayName) ? package.id : package.displayName,
-                package.stableUrl));
+                packageUrl));
 
             return true;
         }
