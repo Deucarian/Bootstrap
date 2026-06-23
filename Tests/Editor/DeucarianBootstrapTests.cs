@@ -79,6 +79,52 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
+        public void BootstrapUnityImportedRootFilesHaveMeta()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            string[] relativePaths =
+            {
+                "AGENTS.md",
+                "CHANGELOG.md",
+                "deucarian-package.json",
+                "LICENSE.md",
+                "package.json",
+                "README.md",
+                Path.Combine(".github", "copilot-instructions.md")
+            };
+
+            foreach (string relativePath in relativePaths)
+            {
+                string filePath = Path.Combine(packageInfo.resolvedPath, relativePath);
+                if (!File.Exists(filePath))
+                {
+                    continue;
+                }
+
+                Assert.True(File.Exists(filePath + ".meta"), filePath + ".meta");
+            }
+        }
+
+        [Test]
+        public void BootstrapMetaGuidsAreUniqueInsidePackage()
+        {
+            PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
+            Dictionary<string, string> seenGuids = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (string metaPath in Directory.GetFiles(packageInfo.resolvedPath, "*.meta", SearchOption.AllDirectories))
+            {
+                string guid = ReadMetaGuid(metaPath);
+                if (string.IsNullOrWhiteSpace(guid))
+                {
+                    continue;
+                }
+
+                Assert.False(seenGuids.TryGetValue(guid, out string existingPath), guid + " is used by both " + existingPath + " and " + metaPath);
+                seenGuids[guid] = metaPath;
+            }
+        }
+
+        [Test]
         public void BootstrapHeroCopyUsesFunctionalWording()
         {
             PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
@@ -98,9 +144,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
             StringAssert.Contains("Full Git URLs, install plan, status log, and deferred scoped-registry diagnostics are available here.", windowSource);
             StringAssert.Contains("Stable: Git #main", windowSource);
             StringAssert.Contains("Development: Git #develop", windowSource);
+            StringAssert.Contains("npm/scoped registry deferred", windowSource);
             StringAssert.Contains("Deferred. Git URLs are the supported distribution path for now.", windowSource);
             StringAssert.Contains("DrawStatusCard", windowSource);
-            StringAssert.Contains("GUILayout.Width(300f)", windowSource);
+            StringAssert.Contains("GUILayout.Width(320f)", windowSource);
             Assert.False(windowSource.Contains("Recommended. Uses npmjs scoped registry"));
             Assert.False(windowSource.Contains("\"Repair Registry\""));
 
@@ -117,18 +164,18 @@ namespace Deucarian.Bootstrap.Editor.Tests
         public void BootstrapWindowSizingDefaultsFitSetupHub()
         {
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 1080f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 760f);
-            Assert.LessOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 820f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 1180f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 820f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.ContentMaxWidth, 1180f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, DeucarianBootstrapWindow.MinWindowHeight);
             Assert.LessOrEqual(
                 DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
-                0.42f);
+                0.34f);
             Assert.GreaterOrEqual(
                 DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
-                0.34f);
-            Assert.AreEqual(154f, DeucarianBootstrapWindow.StatusGridHeight);
+                0.28f);
+            Assert.AreEqual(166f, DeucarianBootstrapWindow.StatusGridHeight);
         }
 
         [Test]
@@ -176,8 +223,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string stableSummary = DeucarianBootstrapWindow.GetHeroShortTargetText(BootstrapChannel.Stable);
             string developmentSummary = DeucarianBootstrapWindow.GetHeroShortTargetText(BootstrapChannel.Development);
 
-            Assert.AreEqual("Stable - Package Installer #main", stableSummary);
-            Assert.AreEqual("Development - Package Installer #develop", developmentSummary);
+            Assert.AreEqual("Stable \u00b7 Package Installer #main", stableSummary);
+            Assert.AreEqual("Development \u00b7 Package Installer #develop", developmentSummary);
             Assert.False(stableSummary.Contains("github.com"));
             Assert.False(developmentSummary.Contains("github.com"));
         }
@@ -229,10 +276,34 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Assert.AreEqual("Editor + Logging", cards[1].Subtext);
                 Assert.AreEqual("Package Installer", cards[2].Label);
                 Assert.AreEqual("Healthy", cards[2].Value);
-                Assert.AreEqual("1.1.58 - Git #main", cards[2].Subtext);
+                Assert.AreEqual("1.1.58 \u00b7 Git #main", cards[2].Subtext);
                 Assert.AreEqual("Startup", cards[3].Label);
                 Assert.IsNotEmpty(cards[3].Value);
                 Assert.IsNotEmpty(cards[3].Subtext);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(window);
+            }
+        }
+
+        [Test]
+        public void StatusCardDrawingAcceptsNullAndEmptyModels()
+        {
+            DeucarianBootstrapWindow window = ScriptableObject.CreateInstance<DeucarianBootstrapWindow>();
+
+            try
+            {
+                Assert.DoesNotThrow(() => window.DrawStatusCard(Rect.zero, null));
+                Assert.DoesNotThrow(
+                    () => window.DrawStatusCard(
+                        Rect.zero,
+                        new DeucarianBootstrapWindow.BootstrapStatusCardModel(
+                            null,
+                            null,
+                            null,
+                            DeucarianBootstrapWindow.BootstrapStatusKind.Neutral,
+                            null)));
             }
             finally
             {
@@ -671,6 +742,19 @@ namespace Deucarian.Bootstrap.Editor.Tests
             }
 
             return count;
+        }
+
+        private static string ReadMetaGuid(string metaPath)
+        {
+            foreach (string line in File.ReadAllLines(metaPath))
+            {
+                if (line.StartsWith("guid:", StringComparison.Ordinal))
+                {
+                    return line.Substring("guid:".Length).Trim();
+                }
+            }
+
+            return string.Empty;
         }
 
         private static void SetInstalledPackages(DeucarianBootstrapWindow window, params string[] packageIds)

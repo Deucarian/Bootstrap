@@ -28,12 +28,13 @@ namespace Deucarian.Bootstrap.Editor
         private const string SetupDetailsExpandedKey = "Deucarian.Bootstrap.SetupDetailsExpanded";
         private const char PlanSeparator = '|';
 
-        internal const float PreferredWindowWidth = 1120f;
-        internal const float PreferredWindowHeight = 820f;
-        internal const float MinWindowWidth = 1080f;
-        internal const float MinWindowHeight = 780f;
-        internal const float HeroCardHeight = 318f;
-        internal const float StatusCardHeight = 72f;
+        internal const float PreferredWindowWidth = 1240f;
+        internal const float PreferredWindowHeight = 860f;
+        internal const float MinWindowWidth = 1180f;
+        internal const float MinWindowHeight = 820f;
+        internal const float ContentMaxWidth = 1180f;
+        internal const float HeroCardHeight = 276f;
+        internal const float StatusCardHeight = 78f;
         internal const float StatusGridHeight = StatusCardHeight * 2f + 10f;
         private const int MaxPackageListRefreshAttempts = 90;
         private const double PackageListRetryDelaySeconds = 1.0d;
@@ -326,17 +327,31 @@ namespace Deucarian.Bootstrap.Editor
             DrawWindowBackground();
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            using (new EditorGUILayout.VerticalScope(_windowStyle))
+            try
             {
-                DrawHeader();
-                DrawPackageInstallerProductCard();
-                DrawCompactSetupSummary();
-                DrawSetupDetails();
-                DrawSetupActions();
-                DrawFooter();
-            }
+                using (new EditorGUILayout.VerticalScope(_windowStyle))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        GUILayout.FlexibleSpace();
+                        using (new EditorGUILayout.VerticalScope(GUILayout.MaxWidth(ContentMaxWidth), GUILayout.ExpandWidth(true)))
+                        {
+                            DrawHeader();
+                            DrawPackageInstallerProductCard();
+                            DrawCompactSetupSummary();
+                            DrawSetupDetails();
+                            DrawSetupActions();
+                            DrawFooter();
+                        }
 
-            EditorGUILayout.EndScrollView();
+                        GUILayout.FlexibleSpace();
+                    }
+                }
+            }
+            finally
+            {
+                EditorGUILayout.EndScrollView();
+            }
         }
 
         private void Update()
@@ -363,37 +378,43 @@ namespace Deucarian.Bootstrap.Editor
         private void DrawHeader()
         {
             Rect panelRect = EditorGUILayout.BeginHorizontal(_cardStyle);
-            DrawGlassPanel(panelRect, _glassStrongColor, _borderColor);
-
-            Texture2D logo = GetLogoTexture();
-            Rect logoRect = GUILayoutUtility.GetRect(46f, 46f, GUILayout.Width(46f), GUILayout.Height(46f));
-            if (logo != null)
+            try
             {
-                GUI.DrawTexture(logoRect, logo, ScaleMode.ScaleToFit, true);
-            }
+                DrawGlassPanel(panelRect, _glassStrongColor, _borderColor);
 
-            using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
+                Texture2D logo = GetLogoTexture();
+                Rect logoRect = GUILayoutUtility.GetRect(46f, 46f, GUILayout.Width(46f), GUILayout.Height(46f));
+                if (logo != null)
+                {
+                    GUI.DrawTexture(logoRect, logo, ScaleMode.ScaleToFit, true);
+                }
+
+                using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
+                {
+                    EditorGUILayout.LabelField("Deucarian Bootstrap", _sectionTitleStyle);
+                    EditorGUILayout.LabelField(
+                        "Git-channel setup for the Deucarian package ecosystem.",
+                        _mutedStyle);
+                }
+
+                GUILayout.Space(16f);
+                DrawChannelSelector(GUILayout.Width(320f));
+            }
+            finally
             {
-                EditorGUILayout.LabelField("Deucarian Bootstrap", _sectionTitleStyle);
-                EditorGUILayout.LabelField(
-                    "Git-channel setup for the Deucarian package ecosystem.",
-                    _mutedStyle);
+                EditorGUILayout.EndHorizontal();
             }
-
-            GUILayout.Space(16f);
-            DrawChannelSelector(GUILayout.Width(310f));
-            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawCompactSetupSummary()
         {
-            BootstrapStatusCardModel[] cards = BuildStatusCards();
+            BootstrapStatusCardModel[] cards = BuildStatusCards() ?? Array.Empty<BootstrapStatusCardModel>();
             Rect gridRect = GUILayoutUtility.GetRect(1f, StatusGridHeight, GUILayout.ExpandWidth(true));
             float gap = 10f;
-            float cardWidth = (gridRect.width - gap) * 0.5f;
-            float cardHeight = (gridRect.height - gap) * 0.5f;
+            float cardWidth = Mathf.Max(220f, (gridRect.width - gap) * 0.5f);
+            float cardHeight = Mathf.Max(68f, (gridRect.height - gap) * 0.5f);
 
-            for (int i = 0; i < cards.Length; i++)
+            for (int i = 0; i < 4; i++)
             {
                 int row = i / 2;
                 int column = i % 2;
@@ -402,7 +423,7 @@ namespace Deucarian.Bootstrap.Editor
                     gridRect.y + row * (cardHeight + gap),
                     cardWidth,
                     cardHeight);
-                DrawStatusCard(cardRect, cards[i]);
+                DrawStatusCard(cardRect, i < cards.Length ? cards[i] : null);
             }
 
             if (!string.IsNullOrWhiteSpace(_error))
@@ -415,68 +436,78 @@ namespace Deucarian.Bootstrap.Editor
         private void DrawSetupActions()
         {
             Rect panelRect = EditorGUILayout.BeginVertical(_cardStyle);
-            DrawGlassPanel(panelRect, _glassPanelColor, _borderColor);
-
-            using (new EditorGUILayout.HorizontalScope())
+            try
             {
-                using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
+                DrawGlassPanel(panelRect, _glassPanelColor, _borderColor);
+
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    GUIContent refreshContent = new GUIContent(
-                        "Refresh",
-                        "Refresh installed packages and setup status.");
-                    if (GUILayout.Button(refreshContent, _utilityButtonStyle, GUILayout.Width(78f), GUILayout.Height(24f)))
+                    using (new EditorGUI.DisabledScope(_setupActive || IsRequestActive))
                     {
-                        RefreshStatus();
+                        GUIContent refreshContent = new GUIContent(
+                            "Refresh",
+                            "Refresh installed packages and setup status.");
+                        if (GUILayout.Button(refreshContent, SafeStyle(_utilityButtonStyle), GUILayout.Width(78f), GUILayout.Height(24f)))
+                        {
+                            RefreshStatus();
+                        }
+                    }
+
+                    GUILayout.Space(12f);
+                    DrawStartupPreferenceToggle(true);
+                    GUILayout.FlexibleSpace();
+
+                    if (GUILayout.Button(new GUIContent("GitHub", "Open the Bootstrap repository."), SafeStyle(_utilityButtonStyle), GUILayout.Width(66f), GUILayout.Height(24f)))
+                    {
+                        Application.OpenURL(DeucarianBootstrapPackageConstants.GitHubUrl);
+                    }
+
+                    if (GUILayout.Button(new GUIContent("Docs", "Open Bootstrap documentation."), SafeStyle(_utilityButtonStyle), GUILayout.Width(56f), GUILayout.Height(24f)))
+                    {
+                        Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
                     }
                 }
-
-                GUILayout.Space(12f);
-                DrawStartupPreferenceToggle(true);
-                GUILayout.FlexibleSpace();
-
-                if (GUILayout.Button(new GUIContent("GitHub", "Open the Bootstrap repository."), _utilityButtonStyle, GUILayout.Width(66f), GUILayout.Height(24f)))
-                {
-                    Application.OpenURL(DeucarianBootstrapPackageConstants.GitHubUrl);
-                }
-
-                if (GUILayout.Button(new GUIContent("Docs", "Open Bootstrap documentation."), _utilityButtonStyle, GUILayout.Width(56f), GUILayout.Height(24f)))
-                {
-                    Application.OpenURL(DeucarianBootstrapPackageConstants.DocumentationUrl);
-                }
             }
-
-            EditorGUILayout.EndVertical();
+            finally
+            {
+                EditorGUILayout.EndVertical();
+            }
         }
 
         private void DrawSetupDetails()
         {
             Rect panelRect = EditorGUILayout.BeginVertical(_cardStyle);
-            DrawGlassPanel(panelRect, _glassPanelColor, _borderColor);
-
-            EditorGUI.BeginChangeCheck();
-            bool expanded = EditorGUILayout.Foldout(_setupDetailsExpanded, "Setup Details", true, _foldoutStyle);
-            if (EditorGUI.EndChangeCheck())
+            try
             {
-                _setupDetailsExpanded = expanded;
-                SessionState.SetBool(SetupDetailsExpandedKey, _setupDetailsExpanded);
+                DrawGlassPanel(panelRect, _glassPanelColor, _borderColor);
+
+                EditorGUI.BeginChangeCheck();
+                bool expanded = EditorGUILayout.Foldout(_setupDetailsExpanded, "Setup Details", true, SafeStyle(_foldoutStyle));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    _setupDetailsExpanded = expanded;
+                    SessionState.SetBool(SetupDetailsExpandedKey, _setupDetailsExpanded);
+                }
+
+                if (!_setupDetailsExpanded)
+                {
+                    EditorGUILayout.LabelField(
+                        "Full Git URLs, install plan, status log, and deferred scoped-registry diagnostics are available here.",
+                        SafeStyle(_miniMutedStyle));
+                    return;
+                }
+
+                GUILayout.Space(8f);
+                DrawDetailedStatusRows();
+                DrawStatusMessages();
+
+                GUILayout.Space(10f);
+                DrawInstallPlanContents();
             }
-
-            if (!_setupDetailsExpanded)
+            finally
             {
-                EditorGUILayout.LabelField(
-                    "Full Git URLs, install plan, status log, and deferred scoped-registry diagnostics are available here.",
-                    _miniMutedStyle);
                 EditorGUILayout.EndVertical();
-                return;
             }
-
-            GUILayout.Space(8f);
-            DrawDetailedStatusRows();
-            DrawStatusMessages();
-
-            GUILayout.Space(10f);
-            DrawInstallPlanContents();
-            EditorGUILayout.EndVertical();
         }
 
         internal BootstrapStatusCardModel[] BuildStatusCards()
@@ -510,22 +541,34 @@ namespace Deucarian.Bootstrap.Editor
             };
         }
 
-        private void DrawStatusCard(Rect cardRect, BootstrapStatusCardModel card)
+        internal void DrawStatusCard(Rect cardRect, BootstrapStatusCardModel card)
         {
-            DrawGlassPanel(cardRect, _glassPanelColor, GetStatusBorderColor(card.Kind));
+            if (cardRect.width <= 0f || cardRect.height <= 0f)
+            {
+                return;
+            }
+
+            BootstrapStatusKind kind = card != null ? card.Kind : BootstrapStatusKind.Neutral;
+            string label = card != null ? card.Label : string.Empty;
+            string value = card != null ? card.Value : string.Empty;
+            string subtext = card != null ? card.Subtext : string.Empty;
+            string tooltip = card != null ? card.Tooltip : string.Empty;
+
+            DrawGlassPanel(cardRect, _glassPanelColor, GetStatusBorderColor(kind));
 
             Rect iconRect = new Rect(cardRect.x + 12f, cardRect.y + 13f, 22f, 22f);
-            GUIStyle iconStyle = new GUIStyle(_statusIconStyle);
-            iconStyle.normal.background = TextureForColor("summary-" + card.Kind, BootstrapVisualResources.WithAlpha(GetStatusColor(card.Kind), 0.82f));
-            GUI.Label(iconRect, GetStatusMarker(card.Kind), iconStyle);
+            GUIStyle iconStyle = new GUIStyle(SafeStyle(_statusIconStyle));
+            iconStyle.normal.background = TextureForColor("summary-" + kind, BootstrapVisualResources.WithAlpha(GetStatusColor(kind), 0.82f));
+            GUI.Label(iconRect, SafeContent(GetStatusMarker(kind), tooltip), iconStyle);
 
-            Rect labelRect = new Rect(iconRect.xMax + 10f, cardRect.y + 10f, cardRect.width - 54f, 16f);
-            Rect valueRect = new Rect(iconRect.xMax + 10f, labelRect.yMax + 1f, cardRect.width - 54f, 18f);
-            Rect subtextRect = new Rect(iconRect.xMax + 10f, valueRect.yMax + 2f, cardRect.width - 54f, 16f);
+            float textWidth = Mathf.Max(1f, cardRect.width - 54f);
+            Rect labelRect = new Rect(iconRect.xMax + 10f, cardRect.y + 10f, textWidth, 16f);
+            Rect valueRect = new Rect(iconRect.xMax + 10f, labelRect.yMax + 1f, textWidth, 18f);
+            Rect subtextRect = new Rect(iconRect.xMax + 10f, valueRect.yMax + 3f, textWidth, 17f);
 
-            GUI.Label(labelRect, new GUIContent(card.Label, card.Tooltip), _summaryLabelStyle);
-            GUI.Label(valueRect, new GUIContent(card.Value, card.Tooltip), _summaryValueStyle);
-            GUI.Label(subtextRect, new GUIContent(card.Subtext, card.Tooltip), _summarySubtextStyle);
+            GUI.Label(labelRect, SafeContent(label, tooltip), SafeStyle(_summaryLabelStyle));
+            GUI.Label(valueRect, SafeContent(value, tooltip), SafeStyle(_summaryValueStyle));
+            GUI.Label(subtextRect, SafeContent(subtext, tooltip), SafeStyle(_summarySubtextStyle));
         }
 
         private void DrawGlassPanel(Rect rect, Color backgroundColor, Color borderColor)
@@ -546,14 +589,14 @@ namespace Deucarian.Bootstrap.Editor
             EditorGUI.DrawRect(itemRect, _rowBackgroundColor);
 
             Rect iconRect = new Rect(itemRect.x + 8f, itemRect.y + 7f, 18f, 18f);
-            GUIStyle iconStyle = new GUIStyle(_statusIconStyle);
+            GUIStyle iconStyle = new GUIStyle(SafeStyle(_statusIconStyle));
             iconStyle.normal.background = TextureForColor("summary-" + kind, GetStatusColor(kind));
-            GUI.Label(iconRect, GetStatusMarker(kind), iconStyle);
+            GUI.Label(iconRect, SafeContent(GetStatusMarker(kind), string.Empty), iconStyle);
 
             Rect labelRect = new Rect(iconRect.xMax + 7f, itemRect.y + 7f, Mathf.Min(126f, itemRect.width * 0.62f), 18f);
             Rect valueRect = new Rect(labelRect.xMax + 4f, itemRect.y + 7f, Mathf.Max(32f, itemRect.xMax - labelRect.xMax - 12f), 18f);
-            GUI.Label(labelRect, label ?? string.Empty, _summaryLabelStyle);
-            GUI.Label(valueRect, value ?? string.Empty, _summaryValueStyle);
+            GUI.Label(labelRect, SafeContent(label, string.Empty), SafeStyle(_summaryLabelStyle));
+            GUI.Label(valueRect, SafeContent(value, string.Empty), SafeStyle(_summaryValueStyle));
         }
 
         private void DrawStartupSummaryIndicator(params GUILayoutOption[] options)
@@ -567,8 +610,8 @@ namespace Deucarian.Bootstrap.Editor
             Rect sourceRect = new Rect(itemRect.x + 8f, itemRect.y + 7f, itemRect.width - 16f, 18f);
             GUI.Label(
                 sourceRect,
-                "Startup: " + (ShouldShowOnStartup() ? "opens setup hub" : "manual"),
-                _summaryLabelStyle);
+                SafeContent("Startup: " + (ShouldShowOnStartup() ? "opens setup hub" : "manual"), string.Empty),
+                SafeStyle(_summaryLabelStyle));
         }
 
         private void DrawDetailedStatusRows()
@@ -693,14 +736,14 @@ namespace Deucarian.Bootstrap.Editor
             Rect heroRect = GUILayoutUtility.GetRect(1f, HeroCardHeight, GUILayout.ExpandWidth(true), GUILayout.Height(HeroCardHeight));
             DrawHeroBackground(heroRect, ready);
 
-            Rect badgeRect = new Rect(heroRect.x + 18f, heroRect.y + 16f, 176f, 22f);
-            GUI.Label(badgeRect, BootstrapChannelUtility.GetDisplayName(_selectedChannel).ToUpperInvariant() + " GIT CHANNEL", _badgeStyle);
+            Rect badgeRect = new Rect(heroRect.x + 18f, heroRect.y + 14f, 176f, 22f);
+            GUI.Label(badgeRect, SafeContent(BootstrapChannelUtility.GetDisplayName(_selectedChannel).ToUpperInvariant() + " GIT CHANNEL", string.Empty), SafeStyle(_badgeStyle));
 
-            float contentWidth = Mathf.Min(620f, Mathf.Max(420f, heroRect.width - 64f));
+            float contentWidth = Mathf.Min(680f, Mathf.Max(480f, heroRect.width - 64f));
             float contentX = heroRect.x + (heroRect.width - contentWidth) * 0.5f;
 
-            Rect logoArea = new Rect(contentX, heroRect.y + 42f, contentWidth, 74f);
-            DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha(), 72f);
+            Rect logoArea = new Rect(contentX, heroRect.y + 28f, contentWidth, 56f);
+            DrawCenteredPackageInstallerLogo(logoArea, GetPackageInstallerLogoAlpha(), 52f);
 
             if (ready)
             {
@@ -712,33 +755,33 @@ namespace Deucarian.Bootstrap.Editor
                 }
             }
 
-            Rect titleRect = new Rect(contentX, heroRect.y + 120f, contentWidth, 30f);
-            GUI.Label(titleRect, DeucarianBootstrapPackageConstants.DisplayName, _heroTitleStyle);
+            Rect titleRect = new Rect(contentX, heroRect.y + 88f, contentWidth, 28f);
+            GUI.Label(titleRect, SafeContent(DeucarianBootstrapPackageConstants.DisplayName, string.Empty), SafeStyle(_heroTitleStyle));
 
-            Rect subtitleRect = new Rect(contentX, titleRect.yMax + 1f, contentWidth, 22f);
-            GUI.Label(subtitleRect, "Install or repair the Deucarian package setup.", _heroSubtitleLargeStyle);
+            Rect subtitleRect = new Rect(contentX, titleRect.yMax, contentWidth, 20f);
+            GUI.Label(subtitleRect, SafeContent("Install or repair the Deucarian package setup.", string.Empty), SafeStyle(_heroSubtitleLargeStyle));
 
             Rect noteRect = new Rect(contentX, subtitleRect.yMax + 3f, contentWidth, 18f);
-            GUI.Label(noteRect, GetHeroChannelSummary(), _heroEyebrowStyle);
+            GUI.Label(noteRect, SafeContent(GetHeroChannelSummary(), string.Empty), SafeStyle(_heroEyebrowStyle));
 
-            Rect timelineRect = new Rect(contentX, noteRect.yMax + 10f, contentWidth, 46f);
+            Rect timelineRect = new Rect(contentX, noteRect.yMax + 8f, contentWidth, 40f);
             DrawHeroSetupTimeline(timelineRect);
 
-            Rect stripRect = new Rect(contentX, heroRect.yMax - 72f, contentWidth, 36f);
+            Rect stripRect = new Rect(contentX, heroRect.yMax - 68f, contentWidth, 32f);
             DrawPackageInstallerStatusStrip(stripRect);
 
             Rect buttonRect = new Rect(
                 contentX + Mathf.Max(0f, (contentWidth - 250f) * 0.5f),
                 heroRect.yMax - 30f,
                 Mathf.Min(250f, contentWidth),
-                28f);
+                26f);
 
             using (new EditorGUI.DisabledScope(IsHeroPrimaryActionDisabled()))
             {
                 GUIStyle buttonStyle = GetHeroState() == BootstrapHeroState.Ready
                     ? _primaryButtonStyle
                     : _secondaryButtonStyle;
-                if (GUI.Button(buttonRect, new GUIContent(GetHeroPrimaryActionLabel(), GetHeroPrimaryActionTooltip()), buttonStyle))
+                if (GUI.Button(buttonRect, SafeContent(GetHeroPrimaryActionLabel(), GetHeroPrimaryActionTooltip()), SafeStyle(buttonStyle)))
                 {
                     InvokeHeroPrimaryAction();
                 }
@@ -746,7 +789,7 @@ namespace Deucarian.Bootstrap.Editor
 
             if (!string.IsNullOrWhiteSpace(_packageInstallerOpenMessage))
             {
-                GUILayout.Space(6f);
+                GUILayout.Space(4f);
                 EditorGUILayout.HelpBox(_packageInstallerOpenMessage, MessageType.Info);
             }
         }
@@ -773,7 +816,7 @@ namespace Deucarian.Bootstrap.Editor
             Color glow = _selectedChannel == BootstrapChannel.Development
                 ? new Color(0.13f, 0.48f, 0.72f, 0.14f)
                 : new Color(0.20f, 0.72f, 0.62f, 0.12f);
-            Rect glowRect = new Rect(heroRect.x + 1f, heroRect.yMax - 92f, heroRect.width - 2f, 91f);
+            Rect glowRect = new Rect(heroRect.x + 1f, heroRect.yMax - 82f, heroRect.width - 2f, 81f);
             EditorGUI.DrawRect(glowRect, glow);
         }
 
@@ -788,7 +831,10 @@ namespace Deucarian.Bootstrap.Editor
 
             Color previousColor = GUI.color;
             GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * alpha);
-            GUI.DrawTexture(logoRect, logo, ScaleMode.ScaleToFit, true);
+            if (logo != null)
+            {
+                GUI.DrawTexture(logoRect, logo, ScaleMode.ScaleToFit, true);
+            }
             GUI.color = previousColor;
         }
 
@@ -803,15 +849,15 @@ namespace Deucarian.Bootstrap.Editor
             BootstrapStatusKind kind = GetPackageInstallerProductStatusKind();
             DrawGlassPanel(stripRect, BootstrapVisualResources.WithAlpha(GetStatusColor(kind), 0.28f), GetStatusBorderColor(kind));
 
-            Rect packageIconRect = new Rect(stripRect.x + 10f, stripRect.y + 6f, 24f, 24f);
-            Rect markerRect = new Rect(stripRect.x + 42f, stripRect.y + 8f, 18f, 20f);
-            Rect statusRect = new Rect(stripRect.x + 64f, stripRect.y + 8f, 136f, 20f);
-            Rect detailRect = new Rect(stripRect.x + 208f, stripRect.y + 8f, Mathf.Max(40f, stripRect.width - 220f), 20f);
+            Rect packageIconRect = new Rect(stripRect.x + 10f, stripRect.y + 5f, 22f, 22f);
+            Rect markerRect = new Rect(stripRect.x + 40f, stripRect.y + 6f, 18f, 20f);
+            Rect statusRect = new Rect(stripRect.x + 62f, stripRect.y + 6f, 136f, 20f);
+            Rect detailRect = new Rect(stripRect.x + 206f, stripRect.y + 6f, Mathf.Max(40f, stripRect.width - 218f), 20f);
 
             GUI.DrawTexture(packageIconRect, GetPackageIconTexture(), ScaleMode.ScaleToFit, true);
-            GUI.Label(markerRect, GetStatusMarker(kind), _productStatusStyle);
-            GUI.Label(statusRect, new GUIContent(GetPackageInstallerProductStatusText(), GetPackageInstallerSetupStateDetail()), _productStatusStyle);
-            GUI.Label(detailRect, new GUIContent(GetPackageInstallerProductStatusDetail(), GetPackageInstallerSetupStateDetail()), _productStatusDetailStyle);
+            GUI.Label(markerRect, SafeContent(GetStatusMarker(kind), GetPackageInstallerSetupStateDetail()), SafeStyle(_productStatusStyle));
+            GUI.Label(statusRect, SafeContent(GetPackageInstallerProductStatusText(), GetPackageInstallerSetupStateDetail()), SafeStyle(_productStatusStyle));
+            GUI.Label(detailRect, SafeContent(GetPackageInstallerProductStatusDetail(), GetPackageInstallerSetupStateDetail()), SafeStyle(_productStatusDetailStyle));
         }
 
         private void DrawHeroSetupTimeline(Rect timelineRect)
@@ -823,9 +869,9 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             Rect titleRect = new Rect(timelineRect.x, timelineRect.y, timelineRect.width, 14f);
-            GUI.Label(titleRect, "Setup progress", _heroEyebrowStyle);
+            GUI.Label(titleRect, SafeContent("Setup progress", string.Empty), SafeStyle(_heroEyebrowStyle));
 
-            Rect rowRect = new Rect(timelineRect.x, timelineRect.y + 17f, timelineRect.width, 28f);
+            Rect rowRect = new Rect(timelineRect.x, timelineRect.y + 16f, timelineRect.width, Mathf.Max(22f, timelineRect.height - 16f));
             BootstrapTimelineItem[] items = BuildHeroTimeline();
             float gap = 6f;
             float itemWidth = (rowRect.width - gap * (items.Length - 1)) / items.Length;
@@ -844,30 +890,32 @@ namespace Deucarian.Bootstrap.Editor
             DrawGlassPanel(timelineRect, background, GetStatusBorderColor(BootstrapStatusKind.Success));
 
             Rect iconRect = new Rect(timelineRect.x + 12f, timelineRect.y + 12f, 20f, 20f);
-            GUIStyle iconStyle = new GUIStyle(_statusIconStyle);
+            GUIStyle iconStyle = new GUIStyle(SafeStyle(_statusIconStyle));
             iconStyle.normal.background = TextureForColor("hero-ready-summary", GetStatusColor(BootstrapStatusKind.Success));
-            GUI.Label(iconRect, GetStatusMarker(BootstrapStatusKind.Success), iconStyle);
+            GUI.Label(iconRect, SafeContent(GetStatusMarker(BootstrapStatusKind.Success), string.Empty), iconStyle);
 
-            Rect labelRect = new Rect(iconRect.xMax + 10f, timelineRect.y + 6f, timelineRect.width - 54f, 18f);
-            Rect detailRect = new Rect(iconRect.xMax + 10f, labelRect.yMax + 1f, timelineRect.width - 54f, 18f);
-            GUI.Label(labelRect, "Package Installer matches " + BootstrapChannelUtility.GetDisplayName(_selectedChannel) + ".", _productStatusStyle);
-            GUI.Label(detailRect, "Package Installer is installed and matches the selected channel.", _productStatusDetailStyle);
+            float textWidth = Mathf.Max(1f, timelineRect.width - 54f);
+            Rect labelRect = new Rect(iconRect.xMax + 10f, timelineRect.y + 6f, textWidth, 18f);
+            Rect detailRect = new Rect(iconRect.xMax + 10f, labelRect.yMax + 1f, textWidth, 18f);
+            GUI.Label(labelRect, SafeContent("Package Installer matches " + BootstrapChannelUtility.GetDisplayName(_selectedChannel) + ".", string.Empty), SafeStyle(_productStatusStyle));
+            GUI.Label(detailRect, SafeContent("Package Installer is installed and matches the selected channel.", string.Empty), SafeStyle(_productStatusDetailStyle));
         }
 
         private void DrawTimelineItem(Rect itemRect, BootstrapTimelineItem item)
         {
+            item = item ?? new BootstrapTimelineItem(string.Empty, BootstrapTimelineState.Pending, string.Empty);
             BootstrapStatusKind kind = GetTimelineStatusKind(item.State);
             Color background = GetStatusColor(kind);
             background.a = item.State == BootstrapTimelineState.Pending ? 0.16f : 0.26f;
             DrawGlassPanel(itemRect, background, GetStatusBorderColor(kind));
 
             Rect markerRect = new Rect(itemRect.x + 6f, itemRect.y + 5f, 18f, 18f);
-            GUIStyle markerStyle = new GUIStyle(_statusIconStyle);
+            GUIStyle markerStyle = new GUIStyle(SafeStyle(_statusIconStyle));
             markerStyle.normal.background = TextureForColor("timeline-" + item.State, GetStatusColor(kind));
-            GUI.Label(markerRect, GetTimelineMarker(item.State), markerStyle);
+            GUI.Label(markerRect, SafeContent(GetTimelineMarker(item.State), item.Tooltip), markerStyle);
 
-            Rect labelRect = new Rect(markerRect.xMax + 5f, itemRect.y + 5f, itemRect.width - 31f, 18f);
-            GUI.Label(labelRect, new GUIContent(item.Label, item.Tooltip), _timelineLabelStyle);
+            Rect labelRect = new Rect(markerRect.xMax + 5f, itemRect.y + 5f, Mathf.Max(1f, itemRect.width - 31f), 18f);
+            GUI.Label(labelRect, SafeContent(item.Label, item.Tooltip), SafeStyle(_timelineLabelStyle));
         }
 
         private BootstrapTimelineItem[] BuildHeroTimeline()
@@ -1057,12 +1105,12 @@ namespace Deucarian.Bootstrap.Editor
             Rect rightRect = new Rect(footerRect.xMax - 286f, footerRect.y + 8f, 274f, 16f);
             GUI.Label(
                 leftRect,
-                new GUIContent("Stable: Git #main | Development: Git #develop | scoped registry deferred/legacy", "npm/scoped registry remains deferred and legacy only."),
-                _footerStyle);
+                SafeContent("Stable: Git #main | Development: Git #develop | npm/scoped registry deferred", "npm/scoped registry remains deferred and legacy only."),
+                SafeStyle(_footerStyle));
             GUI.Label(
                 rightRect,
-                "Bootstrap " + DeucarianBootstrapPackageConstants.Version + " | " + BootstrapChannelUtility.GetDisplayName(_selectedChannel),
-                _footerRightStyle);
+                SafeContent("Bootstrap " + DeucarianBootstrapPackageConstants.Version + " | " + BootstrapChannelUtility.GetDisplayName(_selectedChannel), string.Empty),
+                SafeStyle(_footerRightStyle));
         }
 
         private void DrawStatusRow(
@@ -1081,12 +1129,12 @@ namespace Deucarian.Bootstrap.Editor
             Rect detailRect = new Rect(iconRect.xMax + 10f, rowRect.y + 25f, Mathf.Max(120f, rowRect.xMax - iconRect.xMax - 22f), 16f);
 
             Color statusColor = GetStatusColor(kind);
-            GUIStyle iconStyle = new GUIStyle(_statusIconStyle);
+            GUIStyle iconStyle = new GUIStyle(SafeStyle(_statusIconStyle));
             iconStyle.normal.background = TextureForColor("status-" + kind, BootstrapVisualResources.WithAlpha(statusColor, 0.84f));
-            GUI.Label(iconRect, GetStatusMarker(kind), iconStyle);
-            GUI.Label(labelRect, new GUIContent(label ?? string.Empty, detail ?? string.Empty), _statusLabelStyle);
-            GUI.Label(statusRect, new GUIContent(status ?? string.Empty, detail ?? string.Empty), _statusDetailStyle);
-            GUI.Label(detailRect, new GUIContent(detail ?? string.Empty, detail ?? string.Empty), _statusDetailStyle);
+            GUI.Label(iconRect, SafeContent(GetStatusMarker(kind), detail), iconStyle);
+            GUI.Label(labelRect, SafeContent(label, detail), SafeStyle(_statusLabelStyle));
+            GUI.Label(statusRect, SafeContent(status, detail), SafeStyle(_statusDetailStyle));
+            GUI.Label(detailRect, SafeContent(detail, detail), SafeStyle(_statusDetailStyle));
         }
 
         private string GetSetupSummary()
@@ -1220,7 +1268,7 @@ namespace Deucarian.Bootstrap.Editor
         internal static string GetHeroShortTargetText(BootstrapChannel channel)
         {
             return BootstrapChannelUtility.GetDisplayName(channel) +
-                " - Package Installer #" +
+                " \u00b7 Package Installer #" +
                 BootstrapChannelUtility.GetGitBranch(channel);
         }
 
@@ -1301,14 +1349,15 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             string version = string.IsNullOrWhiteSpace(packageInfo.Version) ? "Version unknown" : packageInfo.Version;
-            return version + " - " + GetInstalledPackageInstallerSourceText();
+            return version + " \u00b7 " + GetInstalledPackageInstallerSourceText();
         }
 
         internal static bool ArePackageVisualAssetsAvailable()
         {
             return IsPackageTextureAvailable(DeucarianBootstrapPackageConstants.LogoAssetRelativePath) &&
                 IsPackageTextureAvailable(DeucarianBootstrapPackageConstants.WallpaperAssetRelativePath) &&
-                IsPackageTextureAvailable(DeucarianBootstrapPackageConstants.HeroBackgroundAssetRelativePath);
+                IsPackageTextureAvailable(DeucarianBootstrapPackageConstants.HeroBackgroundAssetRelativePath) &&
+                IsPackageTextureAvailable(DeucarianBootstrapPackageConstants.PackageIconAssetRelativePath);
         }
 
         private string GetVisualAssetsStatusText()
@@ -1320,7 +1369,7 @@ namespace Deucarian.Bootstrap.Editor
         {
             if (ArePackageVisualAssetsAvailable())
             {
-                return "Package-local wallpaper, hero, and logo assets loaded.";
+                return "Package-local wallpaper, hero, logo, and icon assets loaded.";
             }
 
             return "Optional visual asset missing. Procedural fallback keeps Bootstrap readable.";
@@ -3462,6 +3511,16 @@ namespace Deucarian.Bootstrap.Editor
             return new GUIStyle();
         }
 
+        private static GUIStyle SafeStyle(GUIStyle style)
+        {
+            return style ?? GUIStyle.none;
+        }
+
+        private static GUIContent SafeContent(string text, string tooltip)
+        {
+            return new GUIContent(text ?? string.Empty, tooltip ?? string.Empty);
+        }
+
         private static Texture2D TextureForColor(string name, Color color)
         {
             return BootstrapVisualResources.TextureForColor(name, color);
@@ -3492,7 +3551,7 @@ namespace Deucarian.Bootstrap.Editor
             Error
         }
 
-        internal struct BootstrapStatusCardModel
+        internal sealed class BootstrapStatusCardModel
         {
             public BootstrapStatusCardModel(
                 string label,

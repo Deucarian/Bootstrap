@@ -5,6 +5,8 @@
 - Copied the Deucarian wallpaper, Package Installer hero, logo, and icon assets into Bootstrap-owned paths.
 - Rebalanced the Bootstrap window around a larger minimum size, compact hero, 2x2 status grid, and aligned channel selector.
 - Reworked major panels, details rows, status cards, and footer into a darker frosted-glass visual treatment with procedural fallbacks.
+- Hardened IMGUI layout scopes and status-card drawing against null styles, null text, and resize-time layout exceptions.
+- Added stable `.meta` files for root/editor-imported text files that Unity can import from immutable package folders.
 - Kept Git-channel setup logic intact with Stable using Package Installer `#main` and Development using `#develop`.
 
 ## 1.1.0 - 2026-06-23
