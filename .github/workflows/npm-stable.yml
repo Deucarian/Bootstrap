@@ -1,6 +1,9 @@
 name: Publish stable package to npmjs
 
 on:
+  # Git-only stable distribution is active for now; npm release is deferred.
+  # Stable publication is manual-only; branch promotion must not publish.
+  # Do not trigger publish mode without a dedicated release wave.
   workflow_dispatch:
     inputs:
       mode:
@@ -11,13 +14,13 @@ on:
           - dry-run
           - publish
         default: dry-run
-      target_branch:
-        description: "Optional branch/ref to check out for manual runs. Leave empty to use the selected run branch."
-        required: false
+      confirm_release:
+        description: "Type exactly: I understand this publishes a Deucarian package"
+        required: true
         type: string
         default: ""
-      confirm_release:
-        description: "Type 'I understand this publishes a Deucarian package' to enable publish mode."
+      target_branch:
+        description: "Optional branch/ref to check out for manual runs. Leave empty to use the selected run branch."
         required: false
         type: string
         default: ""
@@ -69,8 +72,8 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_MODE: ${{ inputs.mode }}
-          INPUT_TARGET_BRANCH: ${{ inputs.target_branch }}
           INPUT_CONFIRM_RELEASE: ${{ inputs.confirm_release }}
+          INPUT_TARGET_BRANCH: ${{ inputs.target_branch }}
         run: |
           effective_branch="${GITHUB_REF_NAME}"
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$INPUT_TARGET_BRANCH" ]; then
@@ -88,6 +91,10 @@ jobs:
             should_publish=true
           fi
 
+          if [ "$should_publish" = "true" ]; then
+            echo "::error::Git-only stable distribution is active for now; npm publication is deferred to a dedicated release wave."
+            exit 1
+          fi
           if [ "$should_publish" = "true" ] && [ "$effective_branch" != "main" ]; then
             echo "::error::Stable publishes must run from main; effective branch is ${effective_branch}."
             exit 1

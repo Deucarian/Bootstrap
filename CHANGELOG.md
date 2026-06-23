@@ -10,6 +10,11 @@
 - Updated the bundled fallback catalog with development setup URLs and Package Installer target versions.
 - Marked npm/scoped registry setup as deferred, advanced, and legacy instead of the recommended primary path.
 
+## 1.0.2 - 2026-06-22
+
+- Added Deucarian Common to the bundled fallback catalog.
+- Updated bundled Object Loading and UI Binding dependency metadata to include Common.
+
 ## 1.0.1 - 2026-06-17
 
 - Updated the bundled package catalog fallback to use Integration package IDs and categories instead of Bridge package IDs.

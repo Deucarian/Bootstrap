@@ -118,4 +118,12 @@ Editor/Assets/DeucarianBootstrapLogo.png
 Editor/Assets/DeucarianBootstrapHeroBackground.png
 ```
 
-Keep these assets and their `.meta` files in the Bootstrap package so Bootstrap remains self-contained.
+Replace these PNGs with the final Deucarian mark and hero artwork when they are ready. Keep the file names and `.meta` files if possible so existing package references stay stable. If the assets move later, update `DeucarianBootstrapPackageConstants.LogoAssetRelativePath`, `LogoAssetPath`, `HeroBackgroundAssetRelativePath`, and `HeroBackgroundAssetPath`.
+
+These assets are intentionally package-local while Bootstrap remains self-contained. Shared editor icons currently live in `com.deucarian.editor` as `Editor/DeucarianEditorIcons.cs`, which resolves Unity built-in icons and generates fallback textures in code. Bootstrap mirrors the clear package-local naming style now so the assets can move into a future shared Deucarian Editor asset location without creating a second long-term icon system.
+
+## Architecture / Contributor Notes
+
+- [AGENTS.md](AGENTS.md) contains repository-specific ownership and Codex guidance.
+- Deucarian architecture rules live in [Package Registry](https://github.com/Deucarian/Package-Registry/blob/develop/ARCHITECTURE.md).
+- Capability ownership is tracked in [CAPABILITY_OWNERSHIP.md](https://github.com/Deucarian/Package-Registry/blob/develop/CAPABILITY_OWNERSHIP.md).
