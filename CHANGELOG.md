@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 - 2026-06-23
+
+- Copied the Deucarian wallpaper, Package Installer hero, logo, and icon assets into Bootstrap-owned paths.
+- Rebalanced the Bootstrap window around a larger minimum size, compact hero, 2x2 status grid, and aligned channel selector.
+- Reworked major panels, details rows, status cards, and footer into a darker frosted-glass visual treatment with procedural fallbacks.
+- Kept Git-channel setup logic intact with Stable using Package Installer `#main` and Development using `#develop`.
+
 ## 1.1.0 - 2026-06-23
 
 - Changed the primary setup flow to install Package Installer and setup dependencies from selected Git channel URLs.

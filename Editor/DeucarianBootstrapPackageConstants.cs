@@ -4,7 +4,7 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
         public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
         public const string LegacyPackageInstallerMenuPath = "Deucarian/Package Installer";
@@ -14,10 +14,14 @@ namespace Deucarian.Bootstrap.Editor
         public const string ScopedRegistryUrl = "https://registry.npmjs.org";
         public const string ScopedRegistryScope = "com.deucarian";
         public const string FallbackCatalogRelativePath = "Editor/PackageCatalogFallback.json";
-        public const string LogoAssetRelativePath = "Editor/Assets/DeucarianBootstrapLogo.png";
-        public const string LogoAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/DeucarianBootstrapLogo.png";
-        public const string HeroBackgroundAssetRelativePath = "Editor/Assets/DeucarianBootstrapHeroBackground.png";
-        public const string HeroBackgroundAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/DeucarianBootstrapHeroBackground.png";
+        public const string LogoAssetRelativePath = "Editor/Assets/Logos/DeucarianBootstrapLogo.png";
+        public const string LogoAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Logos/DeucarianBootstrapLogo.png";
+        public const string WallpaperAssetRelativePath = "Editor/Assets/Images/DeucarianInstallerBackground.png";
+        public const string WallpaperAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Images/DeucarianInstallerBackground.png";
+        public const string HeroBackgroundAssetRelativePath = "Editor/Assets/Images/DeucarianPackageInstallerHero.png";
+        public const string HeroBackgroundAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Images/DeucarianPackageInstallerHero.png";
+        public const string PackageIconAssetRelativePath = "Editor/Assets/Icons/DeucarianPackagePlaceholderIcon.png";
+        public const string PackageIconAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Icons/DeucarianPackagePlaceholderIcon.png";
         public const string GitHubUrl = "https://github.com/Deucarian/Bootstrap";
         public const string DocumentationUrl = "https://github.com/Deucarian/Bootstrap#readme";
 

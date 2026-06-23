@@ -4,8 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using UnityEditor.PackageManager;
+using UnityEditor;
 using UnityEngine;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Deucarian.Bootstrap.Editor.Tests
 {
@@ -44,9 +45,18 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string backgroundPath = Path.Combine(
                 packageInfo.resolvedPath,
                 DeucarianBootstrapPackageConstants.HeroBackgroundAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string wallpaperPath = Path.Combine(
+                packageInfo.resolvedPath,
+                DeucarianBootstrapPackageConstants.WallpaperAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string iconPath = Path.Combine(
+                packageInfo.resolvedPath,
+                DeucarianBootstrapPackageConstants.PackageIconAssetRelativePath.Replace('/', Path.DirectorySeparatorChar));
 
             Assert.True(File.Exists(logoPath), logoPath);
             Assert.True(File.Exists(backgroundPath), backgroundPath);
+            Assert.True(File.Exists(wallpaperPath), wallpaperPath);
+            Assert.True(File.Exists(iconPath), iconPath);
+            Assert.True(DeucarianBootstrapWindow.ArePackageVisualAssetsAvailable());
         }
 
         [Test]
@@ -58,6 +68,12 @@ namespace Deucarian.Bootstrap.Editor.Tests
             StringAssert.StartsWith(
                 "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
                 DeucarianBootstrapPackageConstants.HeroBackgroundAssetPath);
+            StringAssert.StartsWith(
+                "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
+                DeucarianBootstrapPackageConstants.WallpaperAssetPath);
+            StringAssert.StartsWith(
+                "Packages/" + DeucarianBootstrapPackageConstants.PackageName + "/",
+                DeucarianBootstrapPackageConstants.PackageIconAssetPath);
             StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.GitHubUrl);
             StringAssert.Contains("github.com/Deucarian/Bootstrap", DeucarianBootstrapPackageConstants.DocumentationUrl);
         }
@@ -79,10 +95,12 @@ namespace Deucarian.Bootstrap.Editor.Tests
             StringAssert.Contains("Setup progress", windowSource);
             StringAssert.Contains("Package Installer is installed and matches the selected channel.", windowSource);
             StringAssert.Contains("Show Bootstrap on startup", windowSource);
-            StringAssert.Contains("Registry source, package IDs, install plan, and diagnostics are available here when needed.", windowSource);
+            StringAssert.Contains("Full Git URLs, install plan, status log, and deferred scoped-registry diagnostics are available here.", windowSource);
             StringAssert.Contains("Stable: Git #main", windowSource);
             StringAssert.Contains("Development: Git #develop", windowSource);
             StringAssert.Contains("Deferred. Git URLs are the supported distribution path for now.", windowSource);
+            StringAssert.Contains("DrawStatusCard", windowSource);
+            StringAssert.Contains("GUILayout.Width(300f)", windowSource);
             Assert.False(windowSource.Contains("Recommended. Uses npmjs scoped registry"));
             Assert.False(windowSource.Contains("\"Repair Registry\""));
 
@@ -99,18 +117,127 @@ namespace Deucarian.Bootstrap.Editor.Tests
         public void BootstrapWindowSizingDefaultsFitSetupHub()
         {
             Assert.AreEqual("Tools/Deucarian/Bootstrap/Open Bootstrapper", DeucarianBootstrapPackageConstants.MenuPath);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, 760f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, 860f);
-            Assert.GreaterOrEqual(
-                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
-                0.60f);
-            Assert.LessOrEqual(
-                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
-                0.70f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 740f);
-            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 720f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowWidth, 1080f);
+            Assert.GreaterOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 760f);
+            Assert.LessOrEqual(DeucarianBootstrapWindow.MinWindowHeight, 820f);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowWidth, DeucarianBootstrapWindow.MinWindowWidth);
             Assert.GreaterOrEqual(DeucarianBootstrapWindow.PreferredWindowHeight, DeucarianBootstrapWindow.MinWindowHeight);
+            Assert.LessOrEqual(
+                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
+                0.42f);
+            Assert.GreaterOrEqual(
+                DeucarianBootstrapWindow.HeroCardHeight / DeucarianBootstrapWindow.PreferredWindowHeight,
+                0.34f);
+            Assert.AreEqual(154f, DeucarianBootstrapWindow.StatusGridHeight);
+        }
+
+        [Test]
+        public void BootstrapWindowOpensAtMinimumAndLargerSizes()
+        {
+            DeucarianBootstrapWindow window = EditorWindow.GetWindow<DeucarianBootstrapWindow>(
+                false,
+                "Bootstrap Visual Test",
+                false);
+
+            try
+            {
+                Assert.NotNull(window);
+                Assert.GreaterOrEqual(window.minSize.x, DeucarianBootstrapWindow.MinWindowWidth);
+                Assert.GreaterOrEqual(window.minSize.y, DeucarianBootstrapWindow.MinWindowHeight);
+
+                window.position = new Rect(
+                    100f,
+                    100f,
+                    DeucarianBootstrapWindow.MinWindowWidth,
+                    DeucarianBootstrapWindow.MinWindowHeight);
+                Assert.GreaterOrEqual(window.position.width, DeucarianBootstrapWindow.MinWindowWidth);
+                Assert.GreaterOrEqual(window.position.height, DeucarianBootstrapWindow.MinWindowHeight);
+
+                window.position = new Rect(
+                    100f,
+                    100f,
+                    DeucarianBootstrapWindow.PreferredWindowWidth,
+                    DeucarianBootstrapWindow.PreferredWindowHeight);
+                Assert.GreaterOrEqual(window.position.width, DeucarianBootstrapWindow.PreferredWindowWidth);
+                Assert.GreaterOrEqual(window.position.height, DeucarianBootstrapWindow.PreferredWindowHeight);
+            }
+            finally
+            {
+                if (window != null)
+                {
+                    window.Close();
+                }
+            }
+        }
+
+        [Test]
+        public void HeroSummaryUsesShortTargetText()
+        {
+            string stableSummary = DeucarianBootstrapWindow.GetHeroShortTargetText(BootstrapChannel.Stable);
+            string developmentSummary = DeucarianBootstrapWindow.GetHeroShortTargetText(BootstrapChannel.Development);
+
+            Assert.AreEqual("Stable - Package Installer #main", stableSummary);
+            Assert.AreEqual("Development - Package Installer #develop", developmentSummary);
+            Assert.False(stableSummary.Contains("github.com"));
+            Assert.False(developmentSummary.Contains("github.com"));
+        }
+
+        [Test]
+        public void VisualFallbackTexturesDoNotThrow()
+        {
+            Texture2D logo = BootstrapVisualResources.CreateFallbackLogoTexture();
+            Texture2D wallpaper = BootstrapVisualResources.CreateFallbackWallpaperTexture();
+
+            Assert.NotNull(logo);
+            Assert.NotNull(wallpaper);
+            Assert.GreaterOrEqual(logo.width, 32);
+            Assert.GreaterOrEqual(wallpaper.width, 64);
+        }
+
+        [Test]
+        public void StatusCardsProvideCompactLabelValueAndSubtext()
+        {
+            DeucarianBootstrapWindow window = ScriptableObject.CreateInstance<DeucarianBootstrapWindow>();
+
+            try
+            {
+                SetInstalledPackages(
+                    window,
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
+                SetInstalledPackageInfo(
+                    window,
+                    new BootstrapInstalledPackageInfo(
+                        DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                        "1.1.58",
+                        "Git",
+                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
+                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl));
+                SetField(window, "_catalogLoaded", true);
+                SetField(window, "_registrySource", "Remote: " + DeucarianBootstrapPackageConstants.StableRegistryCatalogUrl);
+                SetField(window, "_targetPackageInstallerVersion", "1.1.58");
+
+                DeucarianBootstrapWindow.BootstrapStatusCardModel[] cards = window.BuildStatusCards();
+
+                Assert.AreEqual(4, cards.Length);
+                Assert.AreEqual("Registry", cards[0].Label);
+                Assert.AreEqual("Remote", cards[0].Value);
+                Assert.AreEqual("Package Registry #main", cards[0].Subtext);
+                Assert.AreEqual("Setup packages", cards[1].Label);
+                Assert.AreEqual("Ready", cards[1].Value);
+                Assert.AreEqual("Editor + Logging", cards[1].Subtext);
+                Assert.AreEqual("Package Installer", cards[2].Label);
+                Assert.AreEqual("Healthy", cards[2].Value);
+                Assert.AreEqual("1.1.58 - Git #main", cards[2].Subtext);
+                Assert.AreEqual("Startup", cards[3].Label);
+                Assert.IsNotEmpty(cards[3].Value);
+                Assert.IsNotEmpty(cards[3].Subtext);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(window);
+            }
         }
 
         [Test]

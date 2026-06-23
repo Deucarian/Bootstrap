@@ -6,7 +6,7 @@ Deucarian Bootstrap is the official first-time setup and repair entry point for 
 
 It is intentionally small, editor-only, and self-contained. It does not depend on `com.deucarian.editor`, `com.deucarian.package-installer`, `com.deucarian.logging`, or any other Deucarian package.
 
-Current package version: `1.1.0`.
+Current package version: `1.1.1`.
 
 ## Installation
 
@@ -114,11 +114,15 @@ Confirm the selected channel and target Git URL in Setup Details, then run the s
 Bootstrap keeps its visual assets package-local:
 
 ```text
-Editor/Assets/DeucarianBootstrapLogo.png
-Editor/Assets/DeucarianBootstrapHeroBackground.png
+Editor/Assets/Logos/DeucarianBootstrapLogo.png
+Editor/Assets/Logos/DeucarianPackageInstallerLogo.png
+Editor/Assets/Images/DeucarianInstallerBackground.png
+Editor/Assets/Images/DeucarianPackageInstallerHero.png
+Editor/Assets/Images/DeucarianBootstrapHeroBackground.png
+Editor/Assets/Icons/DeucarianPackagePlaceholderIcon.png
 ```
 
-Replace these PNGs with the final Deucarian mark and hero artwork when they are ready. Keep the file names and `.meta` files if possible so existing package references stay stable. If the assets move later, update `DeucarianBootstrapPackageConstants.LogoAssetRelativePath`, `LogoAssetPath`, `HeroBackgroundAssetRelativePath`, and `HeroBackgroundAssetPath`.
+The wallpaper, Package Installer hero, logo, and package icon are copied package-locally so Bootstrap can use the Deucarian premium visual family without depending on `com.deucarian.editor` or `com.deucarian.package-installer`. If the assets move later, update `DeucarianBootstrapPackageConstants.LogoAssetRelativePath`, `LogoAssetPath`, `WallpaperAssetRelativePath`, `WallpaperAssetPath`, `HeroBackgroundAssetRelativePath`, `HeroBackgroundAssetPath`, `PackageIconAssetRelativePath`, and `PackageIconAssetPath`.
 
 These assets are intentionally package-local while Bootstrap remains self-contained. Shared editor icons currently live in `com.deucarian.editor` as `Editor/DeucarianEditorIcons.cs`, which resolves Unity built-in icons and generates fallback textures in code. Bootstrap mirrors the clear package-local naming style now so the assets can move into a future shared Deucarian Editor asset location without creating a second long-term icon system.
 
