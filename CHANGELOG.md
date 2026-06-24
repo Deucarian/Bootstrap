@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Moved selected stable/development channel persistence to the shared project-scoped package-management preference used by Package Installer.
+- Removed the legacy fallback launcher for the old top-level Package Installer menu path.
+- Replaced unsupported IMGUI text clipping values so Bootstrap compiles on the declared Unity version line.
+
 ## 1.1.1 - 2026-06-23
 
 - Copied the Deucarian wallpaper, Package Installer hero, logo, and icon assets into Bootstrap-owned paths.

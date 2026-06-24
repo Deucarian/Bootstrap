@@ -24,7 +24,6 @@ namespace Deucarian.Bootstrap.Editor
         private const string InterruptedKey = "Deucarian.Bootstrap.Interrupted";
         private const string StartupShownThisSessionKey = "Deucarian.Bootstrap.StartupShownThisSession";
         private const string ShowOnStartupPreferencePrefix = "Deucarian.Bootstrap.ShowOnStartup.";
-        private const string ChannelPreferencePrefix = "Deucarian.Bootstrap.Channel.";
         private const string SetupDetailsExpandedKey = "Deucarian.Bootstrap.SetupDetailsExpanded";
         private const char PlanSeparator = '|';
 
@@ -235,6 +234,11 @@ namespace Deucarian.Bootstrap.Editor
             RefreshScopedRegistryStatus();
             EditorApplication.delayCall -= HandleDelayedEnable;
             EditorApplication.delayCall += HandleDelayedEnable;
+        }
+
+        private void OnFocus()
+        {
+            RefreshPersistedChannelIfIdle();
         }
 
         private void RestoreStateForEnable()
@@ -1872,6 +1876,7 @@ namespace Deucarian.Bootstrap.Editor
             _packageListRetryCount = 0;
             _stepIndex = Mathf.Clamp(_stepIndex, 0, _installPlan.Count);
             _packageInstallerOpenMessage = string.Empty;
+            _selectedChannel = GetPersistedChannel();
             RefreshScopedRegistryStatus();
 
             ReloadCatalog();
@@ -2784,10 +2789,13 @@ namespace Deucarian.Bootstrap.Editor
             _packageListRetryCount = SessionState.GetInt(PackageListRetryCountKey, 0);
             _setupInterrupted = SessionState.GetBool(InterruptedKey, false);
             _savedPlanPackageIds = ParseSavedPlan(SessionState.GetString(PlanKey, string.Empty));
-            _selectedChannel = (BootstrapChannel)Mathf.Clamp(
-                SessionState.GetInt(ChannelKey, (int)GetPersistedChannel()),
-                (int)BootstrapChannel.Stable,
-                (int)BootstrapChannel.Development);
+            BootstrapChannel persistedChannel = GetPersistedChannel();
+            _selectedChannel = _setupActive
+                ? (BootstrapChannel)Mathf.Clamp(
+                    SessionState.GetInt(ChannelKey, (int)persistedChannel),
+                    (int)BootstrapChannel.Stable,
+                    (int)BootstrapChannel.Development)
+                : persistedChannel;
             if (string.IsNullOrWhiteSpace(_pendingPackageId))
             {
                 _waitingForPackageRefresh = false;
@@ -2812,6 +2820,23 @@ namespace Deucarian.Bootstrap.Editor
             SessionState.SetBool(WaitingForPackageRefreshKey, _waitingForPackageRefresh);
             SessionState.SetInt(PackageListRetryCountKey, _packageListRetryCount);
             SessionState.SetBool(InterruptedKey, _setupInterrupted);
+        }
+
+        private void RefreshPersistedChannelIfIdle()
+        {
+            if (_setupActive || IsRequestActive)
+            {
+                return;
+            }
+
+            BootstrapChannel persistedChannel = GetPersistedChannel();
+
+            if (persistedChannel == _selectedChannel)
+            {
+                return;
+            }
+
+            SetChannel(persistedChannel);
         }
 
         private string GetPlanPackageIdsForState()
@@ -2883,12 +2908,6 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             if (EditorApplication.ExecuteMenuItem(DeucarianBootstrapPackageConstants.PackageInstallerMenuPath))
-            {
-                _packageInstallerOpenMessage = string.Empty;
-                return;
-            }
-
-            if (EditorApplication.ExecuteMenuItem(DeucarianBootstrapPackageConstants.LegacyPackageInstallerMenuPath))
             {
                 _packageInstallerOpenMessage = string.Empty;
                 return;
@@ -3036,17 +3055,12 @@ namespace Deucarian.Bootstrap.Editor
 
         internal static BootstrapChannel GetPersistedChannel()
         {
-            return (BootstrapChannel)Mathf.Clamp(
-                EditorPrefs.GetInt(GetProjectChannelPreferenceKey(), (int)BootstrapChannel.Stable),
-                (int)BootstrapChannel.Stable,
-                (int)BootstrapChannel.Development);
+            return BootstrapPackageInstallerStateRepository.GetProjectChannel();
         }
 
         internal static void SetPersistedChannel(BootstrapChannel channel)
         {
-            EditorPrefs.SetInt(
-                GetProjectChannelPreferenceKey(),
-                Mathf.Clamp((int)channel, (int)BootstrapChannel.Stable, (int)BootstrapChannel.Development));
+            BootstrapPackageInstallerStateRepository.SetProjectChannel(channel);
         }
 
         internal static string GetProjectShowOnStartupPreferenceKey()
@@ -3087,12 +3101,7 @@ namespace Deucarian.Bootstrap.Editor
 
         internal static string GetProjectChannelPreferenceKey(string projectRoot)
         {
-            string normalizedProjectRoot = (projectRoot ?? string.Empty)
-                .Replace('\\', '/')
-                .TrimEnd('/')
-                .ToLowerInvariant();
-
-            return ChannelPreferencePrefix + ComputeStableHash(normalizedProjectRoot);
+            return BootstrapPackageInstallerStateRepository.GetProjectChannelPreferenceKeyForTests(projectRoot);
         }
 
         private static string ComputeStableHash(string value)
@@ -3367,12 +3376,12 @@ namespace Deucarian.Bootstrap.Editor
 
             _productStatusStyle = CopyStyle(() => EditorStyles.miniBoldLabel);
             _productStatusStyle.alignment = TextAnchor.MiddleLeft;
-            _productStatusStyle.clipping = TextClipping.Ellipsis;
+            _productStatusStyle.clipping = TextClipping.Clip;
             _productStatusStyle.normal.textColor = Color.white;
 
             _productStatusDetailStyle = CopyStyle(() => EditorStyles.miniLabel);
             _productStatusDetailStyle.alignment = TextAnchor.MiddleLeft;
-            _productStatusDetailStyle.clipping = TextClipping.Ellipsis;
+            _productStatusDetailStyle.clipping = TextClipping.Clip;
             _productStatusDetailStyle.normal.textColor = new Color(0.82f, 0.91f, 0.94f, 0.92f);
 
             _statusIconStyle = CopyStyle(() => EditorStyles.miniBoldLabel);
@@ -3382,24 +3391,24 @@ namespace Deucarian.Bootstrap.Editor
             _statusIconStyle.padding = new RectOffset(0, 0, 0, 1);
 
             _statusLabelStyle = CopyStyle(() => EditorStyles.label);
-            _statusLabelStyle.clipping = TextClipping.Ellipsis;
+            _statusLabelStyle.clipping = TextClipping.Clip;
             _statusLabelStyle.normal.textColor = _bodyTextColor;
 
             _statusDetailStyle = CopyStyle(() => EditorStyles.miniLabel);
-            _statusDetailStyle.clipping = TextClipping.Ellipsis;
+            _statusDetailStyle.clipping = TextClipping.Clip;
             _statusDetailStyle.normal.textColor = _mutedTextColor;
 
             _summaryValueStyle = CopyStyle(() => EditorStyles.boldLabel);
             _summaryValueStyle.fontSize = 13;
-            _summaryValueStyle.clipping = TextClipping.Ellipsis;
+            _summaryValueStyle.clipping = TextClipping.Clip;
             _summaryValueStyle.normal.textColor = _titleTextColor;
 
             _summaryLabelStyle = CopyStyle(() => EditorStyles.miniLabel);
-            _summaryLabelStyle.clipping = TextClipping.Ellipsis;
+            _summaryLabelStyle.clipping = TextClipping.Clip;
             _summaryLabelStyle.normal.textColor = _mutedTextColor;
 
             _summarySubtextStyle = CopyStyle(() => EditorStyles.miniLabel);
-            _summarySubtextStyle.clipping = TextClipping.Ellipsis;
+            _summarySubtextStyle.clipping = TextClipping.Clip;
             _summarySubtextStyle.normal.textColor = _mutedTextColor;
 
             _timelineLabelStyle = CopyStyle(() => EditorStyles.miniBoldLabel);
@@ -3424,7 +3433,7 @@ namespace Deucarian.Bootstrap.Editor
             _secondaryButtonStyle = CopyStyle(() => GUI.skin.button);
             _secondaryButtonStyle.alignment = TextAnchor.MiddleCenter;
             _secondaryButtonStyle.normal.textColor = _bodyTextColor;
-            _secondaryButtonStyle.clipping = TextClipping.Ellipsis;
+            _secondaryButtonStyle.clipping = TextClipping.Clip;
 
             _utilityButtonStyle = CopyStyle(() => EditorStyles.miniButton);
             _utilityButtonStyle.alignment = TextAnchor.MiddleCenter;

@@ -40,6 +40,7 @@ Bootstrap has a `Channel` dropdown.
 - Development: `For testing current package work. Installs from Git #develop.`
 
 Changing the channel refreshes the Package Registry catalog, recomputes the setup plan, recomputes the Package Installer target version, refreshes installed status, and updates the action button. It does not install anything.
+The selected channel is stored in the shared project-scoped Deucarian package-management preference, so Package Installer and Bootstrap read the same stable/development state when opened or refreshed.
 
 Stable uses:
 

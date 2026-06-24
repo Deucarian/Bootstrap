@@ -6,6 +6,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Deucarian.Bootstrap.Editor.Tests
@@ -181,6 +182,11 @@ namespace Deucarian.Bootstrap.Editor.Tests
         [Test]
         public void BootstrapWindowOpensAtMinimumAndLargerSizes()
         {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+            {
+                Assert.Ignore("Window opening requires a graphics device.");
+            }
+
             DeucarianBootstrapWindow window = EditorWindow.GetWindow<DeucarianBootstrapWindow>(
                 false,
                 "Bootstrap Visual Test",
@@ -397,9 +403,36 @@ namespace Deucarian.Bootstrap.Editor.Tests
             string firstKeyWithSlashes = DeucarianBootstrapWindow.GetProjectChannelPreferenceKey("C:\\Projects\\First\\");
             string secondKey = DeucarianBootstrapWindow.GetProjectChannelPreferenceKey("C:/Projects/Second");
 
-            StringAssert.StartsWith("Deucarian.Bootstrap.Channel.", firstKey);
+            StringAssert.StartsWith(BootstrapPackageInstallerStateRepository.ProjectChannelPreferencePrefix, firstKey);
             Assert.AreEqual(firstKey, firstKeyWithSlashes);
             Assert.AreNotEqual(firstKey, secondKey);
+        }
+
+        [Test]
+        public void ChannelPreferenceReadsLegacyBootstrapKeyUntilSharedKeyExists()
+        {
+            const string projectRoot = "C:/Projects/LegacyBootstrapChannel";
+
+            try
+            {
+                BootstrapPackageInstallerStateRepository.DeleteProjectChannelForTests(projectRoot);
+                string legacyKey = BootstrapPackageInstallerStateRepository.GetLegacyBootstrapChannelPreferenceKeyForTests(projectRoot);
+                EditorPrefs.SetInt(legacyKey, (int)BootstrapChannel.Development);
+
+                Assert.AreEqual(
+                    BootstrapChannel.Development,
+                    BootstrapPackageInstallerStateRepository.GetProjectChannelForTests(projectRoot));
+
+                BootstrapPackageInstallerStateRepository.SetProjectChannelForTests(projectRoot, BootstrapChannel.Stable);
+
+                Assert.AreEqual(
+                    BootstrapChannel.Stable,
+                    BootstrapPackageInstallerStateRepository.GetProjectChannelForTests(projectRoot));
+            }
+            finally
+            {
+                BootstrapPackageInstallerStateRepository.DeleteProjectChannelForTests(projectRoot);
+            }
         }
 
         [Test]
