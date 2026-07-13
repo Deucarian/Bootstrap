@@ -6,7 +6,7 @@
 
 It is intentionally small, editor-only, and self-contained. It does not depend on `com.deucarian.editor`, `com.deucarian.package-installer`, `com.deucarian.logging`, or any other Deucarian package.
 
-Current package version: `1.1.1`.
+Current package version: `1.1.2`.
 
 ## When to use it
 
@@ -84,7 +84,7 @@ Bootstrap has a `Channel` dropdown.
 - Stable: `Recommended. Installs Deucarian packages from Git #main.`
 - Development: `For testing current package work. Installs from Git #develop.`
 
-Changing the channel refreshes the Package Registry catalog, recomputes the setup plan, recomputes the Package Installer target version, refreshes installed status, and updates the action button. It does not install anything.
+Changing the channel refreshes the Package Registry catalog, recomputes the setup plan, resolves the selected Package Installer branch revision and informational package version, refreshes installed status, and updates the action button. It does not install anything.
 
 The selected channel is stored in the shared project-scoped Deucarian package-management preference, so Package Installer and Bootstrap read the same stable/development state when opened or refreshed.
 
@@ -116,33 +116,33 @@ Development Package Installer target:
 https://github.com/Deucarian/Package-Installer.git#develop
 ```
 
-Bootstrap resolves dependencies first, installs Package Installer last, avoids duplicate plan entries, detects missing dependency entries, detects dependency cycles, and stores in-progress setup state so it can continue after Unity domain reloads.
+Bootstrap resolves dependencies first, installs Package Installer last, avoids duplicate plan entries, detects missing dependency entries, detects dependency cycles, and stores in-progress setup state so it can continue after Unity domain reloads. Hot-reloaded Package Manager request wrappers are discarded; Bootstrap resumes from persisted progress and a fresh package list. Every fresh repair resolves Editor and then Logging once from the selected Git URLs even when those package ids were already present; persisted completion markers prevent either step from repeating after a reload. Only Package Installer is removed during source migration. The bundled fallback contains only the exact setup closure: Deucarian Editor, Deucarian Logging, and Package Installer. It deliberately carries no moving version claims.
 
 ## Scoped registry
 
-npm/scoped registry distribution is deferred.
+npm/scoped registry distribution is legacy and unsupported by Bootstrap's setup flow.
 
-Scoped registry support remains only as deferred, advanced, legacy manifest tooling. Git URLs are the supported distribution path for now. Bootstrap does not configure the scoped registry automatically during normal setup and does not install `com.deucarian.package-installer` by package name in the primary flow.
+Bootstrap may detect an existing Deucarian scoped-registry entry to explain an older installation, but that inspection is read-only. Bootstrap never adds, repairs, removes, or otherwise changes `scopedRegistries`, and it never installs `com.deucarian.package-installer` by package name. Repair migrates an old registry-installed Package Installer to the selected Git channel while preserving unrelated manifest configuration.
 
 ## Status detection
 
-Bootstrap detects Package Installer with Unity Package Manager package data and, when available, `Packages/packages-lock.json`.
+Bootstrap detects Package Installer with Unity Package Manager package data and `Packages/packages-lock.json`. For Git installs it compares the installed lockfile `hash` with the latest commit returned for the selected Package Installer branch. The version read from Package Installer's `package.json` is informational and does not decide health.
 
 Setup can report:
 
 - Missing: Package Installer is not installed.
-- Outdated: Package Installer is installed, but an update is available for the selected channel.
+- Outdated: Package Installer is on the selected Git channel, but its lock revision differs from the selected remote branch revision.
 - Wrong channel: Package Installer is installed from a different Git channel or from scoped registry.
-- Healthy: Package Installer is installed and matches the selected channel.
-- Review required: Package Installer is installed, but the source cannot be trusted.
+- Healthy: Package Installer is on the selected Git channel and its installed lock revision equals the selected remote branch revision.
+- Review required: Package Installer is installed, but its Git source, installed lock revision, or selected remote branch revision cannot be verified.
 
-If the remote Package Registry cannot be loaded, Bootstrap uses the bundled fallback catalog. If the target Package Installer version cannot be read, Bootstrap still installs or repairs using the selected Git URL and shows `Target version unknown`.
+If the remote Package Registry cannot be loaded, Bootstrap uses the bundled three-package fallback closure. If the target Package Installer version cannot be read, Bootstrap can still report Healthy when the Git channel and revisions match. If the remote target revision cannot be resolved for an existing Git install, Bootstrap reports Review required and offers Refresh Status instead of reinstalling. A legacy registry install may still migrate once through the bundled Git fallback; after migration it stops at Review required until the remote revision can be refreshed.
 
 ## Troubleshooting
 
 Old scoped-registry Package Installer installed:
 
-Use Bootstrap repair. It switches Package Installer to the selected Git channel.
+Use `Migrate Package Installer to Git`. Bootstrap removes Package Installer first and then installs the selected Git URL; existing `scopedRegistries` remain untouched.
 
 Wrong channel installed:
 
@@ -155,6 +155,14 @@ Bootstrap shows `Using bundled fallback catalog because the remote Package Regis
 Bundled fallback catalog used:
 
 Confirm the selected channel and target Git URL in Setup Details, then run the setup action.
+
+Target revision unavailable:
+
+Bootstrap reports `Review required`. Restore network/Git access and refresh status; it will not report Healthy solely from the selected URL or informational version.
+
+Compile-blocked first self-update from Package Installer 1.1.60:
+
+The embedded assembly MVID and `Reload pending` recovery UI first ship in Package Installer `1.1.61`. An editor still executing `1.1.60` cannot gain that behavior before its first successful script reload. If the `1.1.60 -> 1.1.61` hop resolves in UPM but compilation blocks the reload, fix the compiler error and use Bootstrap or manually select the Package Installer Git URL for recovery. The same limitation applies to the legacy npm `1.1.12` assembly; migrate it through Bootstrap or a manual Git manifest change.
 
 ## Assets
 
@@ -182,6 +190,8 @@ python C:/Repositories/Package-Registry/Tools/deucarian_package_validator.py --r
 ```
 
 Run existing Unity EditMode tests after code or assembly definition changes.
+
+CI also calls the Package Registry's reusable Bootstrap projection check, which verifies that the bundled fallback remains the canonical Editor + Logging + Package Installer setup closure.
 
 Documentation-only updates should still pass:
 

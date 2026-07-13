@@ -21,8 +21,6 @@ namespace Deucarian.Bootstrap.Editor
         public string description;
         public string stableUrl;
         public string developmentUrl;
-        public string stableVersion;
-        public string developmentVersion;
         public string[] dependencies;
     }
 
@@ -147,18 +145,6 @@ namespace Deucarian.Bootstrap.Editor
             return channel == BootstrapChannel.Development
                 ? package.developmentUrl
                 : package.stableUrl;
-        }
-
-        public static string GetVersionForChannel(BootstrapPackageDefinition package, BootstrapChannel channel)
-        {
-            if (package == null)
-            {
-                return string.Empty;
-            }
-
-            return channel == BootstrapChannel.Development
-                ? package.developmentVersion
-                : package.stableVersion;
         }
 
         private static bool Visit(
