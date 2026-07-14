@@ -14,7 +14,7 @@ The reviewed `package.json` declares no direct package dependencies. Bootstrap i
 
 ## Included visual assets
 
-The distribution includes six PNG assets under `Editor/Assets`. Repository history records them in commits authored by the repository owner, and no separate third-party license or attribution marker accompanies them.
+The distribution includes six PNG assets under `Editor/Assets`. Repository history records their addition under the repository owner's identity, and no separate third-party license or attribution marker accompanies them.
 
 | Content | SHA-256 / evidence |
 |---|---|
@@ -25,7 +25,7 @@ The distribution includes six PNG assets under `Editor/Assets`. Repository histo
 | `Logos/DeucarianBootstrapLogo.png` | `423398b7081e97532454a07d04145770ff707b19aa96202495bcd5906a58718b` |
 | `Logos/DeucarianPackageInstallerLogo.png` | `aa5df75de81ff70c4fdf69eb94b8d9c316ab8786a1d3483ce72a19a968c0f43f` |
 
-The identical hashes shared with Editor trace to the Deucarian editor asset set. On this evidence the assets are classified as Deucarian package content, not third-party components. This classification should be revisited when final brand assets replace the placeholders.
+The identical hashes shared with Editor trace to the same editor asset set. The repository does not contain independent source files, purchase records, or a provenance declaration proving how the PNGs were created, so this notice does not claim conclusive third-party-free provenance. Owner confirmation or replacement with approved final brand assets remains a publication and commercial-reuse gate.
 
 ## Host platform
 
