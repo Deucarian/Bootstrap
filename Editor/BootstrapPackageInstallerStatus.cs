@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 
 namespace Deucarian.Bootstrap.Editor
 {
@@ -19,13 +18,15 @@ namespace Deucarian.Bootstrap.Editor
             string version,
             string source,
             string packageReference,
-            string lockGitUrl)
+            string lockGitUrl,
+            string lockRevision)
         {
             PackageId = packageId ?? string.Empty;
             Version = version ?? string.Empty;
             Source = source ?? string.Empty;
             PackageReference = packageReference ?? string.Empty;
             LockGitUrl = lockGitUrl ?? string.Empty;
+            LockRevision = lockRevision ?? string.Empty;
         }
 
         public string PackageId { get; }
@@ -37,6 +38,8 @@ namespace Deucarian.Bootstrap.Editor
         public string PackageReference { get; }
 
         public string LockGitUrl { get; }
+
+        public string LockRevision { get; }
 
         public string BestReference
         {
@@ -80,17 +83,12 @@ namespace Deucarian.Bootstrap.Editor
         public static BootstrapPackageInstallerSetupState Evaluate(
             BootstrapChannel selectedChannel,
             BootstrapInstalledPackageInfo installedPackage,
-            string targetVersion)
+            string targetRevision)
         {
             if (installedPackage == null)
             {
                 return BootstrapPackageInstallerSetupState.Missing;
             }
-
-            bool targetVersionKnown = !string.IsNullOrWhiteSpace(targetVersion);
-            bool installedVersionKnown = !string.IsNullOrWhiteSpace(installedPackage.Version);
-            bool versionBehind = targetVersionKnown &&
-                (!installedVersionKnown || CompareVersions(installedPackage.Version, targetVersion) < 0);
 
             if (installedPackage.IsRegistry)
             {
@@ -99,16 +97,12 @@ namespace Deucarian.Bootstrap.Editor
 
             if (!installedPackage.IsGit)
             {
-                return versionBehind
-                    ? BootstrapPackageInstallerSetupState.WrongChannel
-                    : BootstrapPackageInstallerSetupState.UnknownReviewRequired;
+                return BootstrapPackageInstallerSetupState.UnknownReviewRequired;
             }
 
             if (!installedPackage.TryGetGitChannel(out BootstrapChannel installedChannel))
             {
-                return versionBehind
-                    ? BootstrapPackageInstallerSetupState.Outdated
-                    : BootstrapPackageInstallerSetupState.UnknownReviewRequired;
+                return BootstrapPackageInstallerSetupState.UnknownReviewRequired;
             }
 
             if (installedChannel != selectedChannel)
@@ -116,59 +110,18 @@ namespace Deucarian.Bootstrap.Editor
                 return BootstrapPackageInstallerSetupState.WrongChannel;
             }
 
-            if (versionBehind)
+            if (string.IsNullOrWhiteSpace(installedPackage.LockRevision) ||
+                string.IsNullOrWhiteSpace(targetRevision))
             {
-                return BootstrapPackageInstallerSetupState.Outdated;
+                return BootstrapPackageInstallerSetupState.UnknownReviewRequired;
             }
 
-            return BootstrapPackageInstallerSetupState.Healthy;
-        }
-
-        public static int CompareVersions(string left, string right)
-        {
-            Version leftVersion = ParseVersion(left);
-            Version rightVersion = ParseVersion(right);
-
-            if (leftVersion != null && rightVersion != null)
-            {
-                return leftVersion.CompareTo(rightVersion);
-            }
-
-            return string.Compare(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static Version ParseVersion(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
-            string[] pieces = value.Trim().Split('.');
-            int[] numeric = new int[4];
-
-            for (int i = 0; i < numeric.Length; i++)
-            {
-                if (i >= pieces.Length)
-                {
-                    numeric[i] = 0;
-                    continue;
-                }
-
-                string piece = pieces[i];
-                int suffix = piece.IndexOfAny(new[] { '-', '+' });
-                if (suffix >= 0)
-                {
-                    piece = piece.Substring(0, suffix);
-                }
-
-                if (!int.TryParse(piece, NumberStyles.Integer, CultureInfo.InvariantCulture, out numeric[i]))
-                {
-                    return null;
-                }
-            }
-
-            return new Version(numeric[0], numeric[1], numeric[2], numeric[3]);
+            return string.Equals(
+                installedPackage.LockRevision.Trim(),
+                targetRevision.Trim(),
+                StringComparison.OrdinalIgnoreCase)
+                ? BootstrapPackageInstallerSetupState.Healthy
+                : BootstrapPackageInstallerSetupState.Outdated;
         }
     }
 }

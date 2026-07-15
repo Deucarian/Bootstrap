@@ -2,9 +2,20 @@
 
 ## Unreleased
 
+## 1.1.2 - 2026-07-13
+
 - Moved selected stable/development channel persistence to the shared project-scoped package-management preference used by Package Installer.
 - Removed the legacy fallback launcher for the old top-level Package Installer menu path.
 - Replaced unsupported IMGUI text clipping values so Bootstrap compiles on the declared Unity version line.
+- Changed Package Installer health to compare the installed package-lock revision with the selected remote Git branch revision; unknown target or lock revisions now require review.
+- Kept Package Installer package.json version lookup informational so a matching Git revision can still be healthy when version metadata is unavailable.
+- Removed all Bootstrap manifest-writing and scoped-registry install paths while retaining read-only detection for legacy projects.
+- Reduced the bundled fallback catalog to the exact Editor, Logging, and Package Installer setup closure with no moving version claims.
+- Added the reusable Package Registry Bootstrap projection check as a separate validation job.
+- Made every repair resolve Editor and Logging once from the selected Git channel before Package Installer, with completed steps persisted across domain reloads and removal restricted to Package Installer.
+- Discarded hot-reloaded UPM request wrappers so repair continuation is rebuilt from persisted progress and a fresh package list instead of failing on stale request objects.
+- Made an unavailable remote Package Installer revision a refresh-only review state, while still allowing legacy registry installs to migrate once and then stop at Review required.
+- Documented that Package Installer's MVID-based reload-pending recovery begins in `1.1.61`; an already-running `1.1.60` or legacy npm `1.1.12` assembly needs Bootstrap or manual Git recovery for its first compile-blocked hop.
 
 ## 1.1.1 - 2026-06-23
 
