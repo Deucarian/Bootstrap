@@ -505,25 +505,34 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void FallbackCatalogIncludesCommonAndRuntimeConsumerDependencies()
+        public void FallbackCatalogContainsOnlyExactSetupClosureWithoutMovingVersionClaims()
         {
             PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
             string fallbackPath = Path.Combine(packageInfo.resolvedPath, DeucarianBootstrapPackageConstants.FallbackCatalogRelativePath);
-            BootstrapPackageCatalog catalog = ParseCatalog(File.ReadAllText(fallbackPath));
+            string fallbackJson = File.ReadAllText(fallbackPath);
+            BootstrapPackageCatalog catalog = ParseCatalog(fallbackJson);
 
-            BootstrapPackageDefinition common = catalog.packages.Single(package => package.id == "com.deucarian.common");
-            Assert.AreEqual("Deucarian Common", common.displayName);
-            Assert.AreEqual("Core", common.category);
-            Assert.IsEmpty(common.dependencies);
-
-            BootstrapPackageDefinition objectLoading = catalog.packages.Single(package => package.id == "com.deucarian.object-loading");
-            BootstrapPackageDefinition uiBinding = catalog.packages.Single(package => package.id == "com.deucarian.ui-binding");
-            BootstrapPackageDefinition uiFlow = catalog.packages.Single(package => package.id == "com.deucarian.ui-flow");
-
-            CollectionAssert.Contains(objectLoading.dependencies, "com.deucarian.common");
-            CollectionAssert.Contains(uiBinding.dependencies, "com.deucarian.common");
-            CollectionAssert.Contains(uiFlow.dependencies, "com.deucarian.common");
-            CollectionAssert.Contains(uiFlow.dependencies, "com.deucarian.logging");
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId
+                },
+                catalog.packages.Select(package => package.id).ToArray());
+            Assert.IsEmpty(catalog.packages[0].dependencies);
+            CollectionAssert.AreEqual(
+                new[] { DeucarianBootstrapPackageConstants.EditorPackageId },
+                catalog.packages[1].dependencies);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageId
+                },
+                catalog.packages[2].dependencies);
+            Assert.False(fallbackJson.Contains("stableVersion"));
+            Assert.False(fallbackJson.Contains("developmentVersion"));
         }
 
         [Test]
