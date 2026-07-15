@@ -7,11 +7,12 @@ namespace Deucarian.Bootstrap.Editor
 {
     internal sealed class BootstrapPackageLockEntry
     {
-        public BootstrapPackageLockEntry(string packageId, string source, string versionReference)
+        public BootstrapPackageLockEntry(string packageId, string source, string versionReference, string revisionHash)
         {
             PackageId = packageId ?? string.Empty;
             Source = source ?? string.Empty;
             VersionReference = versionReference ?? string.Empty;
+            RevisionHash = revisionHash ?? string.Empty;
         }
 
         public string PackageId { get; }
@@ -19,6 +20,8 @@ namespace Deucarian.Bootstrap.Editor
         public string Source { get; }
 
         public string VersionReference { get; }
+
+        public string RevisionHash { get; }
 
         public string GitUrl
         {
@@ -79,8 +82,9 @@ namespace Deucarian.Bootstrap.Editor
             string packageObject = packageLockJson.Substring(objectStart, objectEnd - objectStart + 1);
             string source = ReadJsonStringProperty(packageObject, "source");
             string version = ReadJsonStringProperty(packageObject, "version");
+            string revisionHash = ReadJsonStringProperty(packageObject, "hash");
 
-            entry = new BootstrapPackageLockEntry(packageId, source, version);
+            entry = new BootstrapPackageLockEntry(packageId, source, version, revisionHash);
             return true;
         }
 
