@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.1.3 - 2026-07-16
+
+- Refreshed the generated fallback catalog metadata after registering Deucarian Build Pipeline.
+
 ## 1.1.2 - 2026-07-13
 
 - Moved selected stable/development channel persistence to the shared project-scoped package-management preference used by Package Installer.
