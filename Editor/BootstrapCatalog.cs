@@ -9,7 +9,26 @@ namespace Deucarian.Bootstrap.Editor
     {
         public int schemaVersion;
         public string updatedAt;
+        public BootstrapPackageGroup[] groups;
         public BootstrapPackageDefinition[] packages;
+    }
+
+    [Serializable]
+    internal sealed class BootstrapPackageGroup
+    {
+        public string id;
+        public string displayName;
+        public string parentGroupId;
+        public int sortOrder;
+    }
+
+    internal enum BootstrapPackageKind
+    {
+        Library,
+        Tool,
+        Integration,
+        Suite,
+        Template
     }
 
     [Serializable]
@@ -17,11 +36,18 @@ namespace Deucarian.Bootstrap.Editor
     {
         public string id;
         public string displayName;
+        public string kind;
+        public string groupId;
         public string category;
+        public string type;
+        public string ecosystemGroup;
         public string description;
         public string stableUrl;
         public string developmentUrl;
         public string[] dependencies;
+
+        [NonSerialized]
+        public BootstrapPackageKind resolvedKind;
     }
 
     internal static class BootstrapCatalogParser
@@ -53,7 +79,7 @@ namespace Deucarian.Bootstrap.Editor
                 return false;
             }
 
-            if (catalog.schemaVersion != 1)
+            if (catalog.schemaVersion != 1 && catalog.schemaVersion != 2)
             {
                 errorMessage = "Unsupported catalog schema version " + catalog.schemaVersion + ".";
                 return false;
@@ -65,7 +91,77 @@ namespace Deucarian.Bootstrap.Editor
                 return false;
             }
 
+            HashSet<string> groupIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (BootstrapPackageGroup group in catalog.groups ?? Array.Empty<BootstrapPackageGroup>())
+            {
+                if (group == null || string.IsNullOrWhiteSpace(group.id) || !groupIds.Add(group.id))
+                {
+                    errorMessage = "Catalog contains an invalid or duplicate group id.";
+                    return false;
+                }
+            }
+
+            foreach (BootstrapPackageDefinition package in catalog.packages)
+            {
+                if (package == null)
+                {
+                    errorMessage = "Catalog contains an empty package entry.";
+                    return false;
+                }
+
+                if (catalog.schemaVersion == 2)
+                {
+                    if (!TryParseKind(package.kind, out package.resolvedKind))
+                    {
+                        errorMessage = "Package " + (package.id ?? "<unknown>") + " has unsupported kind " + (package.kind ?? "<empty>") + ".";
+                        return false;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(package.groupId))
+                    {
+                        errorMessage = "Package " + (package.id ?? "<unknown>") + " does not define groupId.";
+                        return false;
+                    }
+
+                    if (groupIds.Count > 0 && !groupIds.Contains(package.groupId))
+                    {
+                        errorMessage = "Package " + (package.id ?? "<unknown>") + " references unknown groupId " + package.groupId + ".";
+                        return false;
+                    }
+                }
+                else
+                {
+                    package.resolvedKind = ResolveLegacyKind(package.type, package.category);
+                }
+            }
+
             return true;
+        }
+
+        private static bool TryParseKind(string value, out BootstrapPackageKind kind)
+        {
+            return Enum.TryParse(value, false, out kind) && Enum.IsDefined(typeof(BootstrapPackageKind), kind);
+        }
+
+        private static BootstrapPackageKind ResolveLegacyKind(string type, string category)
+        {
+            if (string.Equals(type, "Tool", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Tools", StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapPackageKind.Tool;
+            }
+            if (string.Equals(type, "Integration", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Integration", StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapPackageKind.Integration;
+            }
+            if (string.Equals(type, "Suite", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Suites", StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapPackageKind.Suite;
+            }
+            if (string.Equals(type, "Template", StringComparison.OrdinalIgnoreCase) || string.Equals(category, "Templates", StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapPackageKind.Template;
+            }
+            return BootstrapPackageKind.Library;
         }
     }
 

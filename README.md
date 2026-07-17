@@ -6,7 +6,7 @@
 
 It is intentionally small, editor-only, and self-contained. It does not depend on `com.deucarian.editor`, `com.deucarian.package-installer`, `com.deucarian.logging`, or any other Deucarian package.
 
-Current package version: `1.1.2`.
+Current package version: `1.1.4`.
 
 ## When to use it
 
@@ -59,7 +59,7 @@ Bootstrap can open automatically on editor startup or project load, but it does 
 - `Tools/Deucarian/Bootstrap/Open Bootstrapper`: Unity menu entry declared by the Bootstrap window.
 - `DeucarianBootstrapPackageConstants`: package-local paths, URLs, and setup identifiers.
 - `BootstrapPackageInstallerStateRepository`: project-scoped stable/development channel state shared with Package Installer.
-- Bundled fallback catalog assets: package-local registry metadata used when the remote registry cannot be loaded.
+- Bundled fallback catalog assets: schema-v2 package kinds, functional groups, and dependency metadata used when the remote registry cannot be loaded.
 
 ## Integrations
 
@@ -207,4 +207,4 @@ git diff --check
 
 ## License
 
-MIT. See [LICENSE.md](LICENSE.md).
+See [LICENSE.md](LICENSE.md).
