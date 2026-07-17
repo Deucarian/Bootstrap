@@ -712,6 +712,46 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
+        public void LegacyCatalogDerivesArtifactKindFromLegacyFields()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":1,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"category\":\"Tools\",\"stableUrl\":\"https://example.com/installer.git\",\"dependencies\":[]}]}");
+
+            Assert.AreEqual(BootstrapPackageKind.Tool, catalog.packages[0].resolvedKind);
+        }
+
+        [Test]
+        public void BridgedSchemaV2PrefersCanonicalKindOverLegacyFields()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":2,\"groups\":[{\"id\":\"tools-quality\",\"displayName\":\"Tools & Quality\",\"sortOrder\":50}],\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"kind\":\"Tool\",\"groupId\":\"tools-quality\",\"category\":\"Core\",\"type\":\"Core\",\"stableUrl\":\"https://example.com/installer.git\",\"dependencies\":[]}]}");
+
+            Assert.AreEqual(BootstrapPackageKind.Tool, catalog.packages[0].resolvedKind);
+            Assert.AreEqual("tools-quality", catalog.packages[0].groupId);
+        }
+
+        [Test]
+        public void SchemaV2AcceptsCanonicalFieldsWithoutLegacyProjection()
+        {
+            BootstrapPackageCatalog catalog = ParseCatalog(
+                "{\"schemaVersion\":2,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"displayName\":\"Installer\",\"kind\":\"Tool\",\"groupId\":\"tools-quality\",\"stableUrl\":\"https://example.com/installer.git\",\"dependencies\":[]}]}");
+
+            Assert.AreEqual(BootstrapPackageKind.Tool, catalog.packages[0].resolvedKind);
+        }
+
+        [Test]
+        public void SchemaV2RejectsUnknownArtifactKind()
+        {
+            bool parsed = BootstrapCatalogParser.TryParse(
+                "{\"schemaVersion\":2,\"packages\":[{\"id\":\"com.deucarian.package-installer\",\"kind\":\"Core\",\"groupId\":\"tools-quality\",\"dependencies\":[]}]}",
+                out BootstrapPackageCatalog _,
+                out string errorMessage);
+
+            Assert.False(parsed);
+            StringAssert.Contains("unsupported kind Core", errorMessage);
+        }
+
+        [Test]
         public void FallbackCatalogContainsOnlyExactSetupClosureWithoutMovingVersionClaims()
         {
             PackageInfo packageInfo = PackageInfo.FindForAssembly(typeof(DeucarianBootstrapWindow).Assembly);
@@ -740,6 +780,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 catalog.packages[2].dependencies);
             Assert.False(fallbackJson.Contains("stableVersion"));
             Assert.False(fallbackJson.Contains("developmentVersion"));
+            Assert.AreEqual(2, catalog.schemaVersion);
+            Assert.True(catalog.groups.Length > 0);
+            Assert.True(catalog.packages.All(package => !string.IsNullOrWhiteSpace(package.kind)));
+            Assert.True(catalog.packages.All(package => !string.IsNullOrWhiteSpace(package.groupId)));
         }
 
         [Test]
