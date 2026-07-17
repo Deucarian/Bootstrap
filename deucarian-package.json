@@ -15,5 +15,6 @@
   "allowedDirectDebugCalls": [],
   "allowedDirectUnityObjectLifetimeCalls": [],
   "expectedSamplesRoot": "",
+  "samplePolicy": "tool",
   "selfContainedException": "First-time bootstrap package intentionally has no Deucarian package dependencies and uses bundled fallback catalog."
 }

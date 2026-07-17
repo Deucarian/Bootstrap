@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.1.4 - 2026-07-17
+
+- Added Package Registry schema-v2 parsing with canonical artifact kinds and functional groups while retaining schema-v1 compatibility for one release.
+- Refreshed the generated fallback catalog from the canonical domain-first registry.
+
+## 1.1.3 - 2026-07-16
+
+- Refreshed the generated fallback catalog metadata after registering Deucarian Build Pipeline.
+
 ## 1.1.2 - 2026-07-13
 
 - Moved selected stable/development channel persistence to the shared project-scoped package-management preference used by Package Installer.
