@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.1.5 - 2026-07-22
+
+- Refreshed the generated setup fallback from canonical Package Registry metadata, including the current Lucide group icon keys.
+
 ## 1.1.4 - 2026-07-17
 
 - Added Package Registry schema-v2 parsing with canonical artifact kinds and functional groups while retaining schema-v1 compatibility for one release.
