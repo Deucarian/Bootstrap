@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.5 - 2026-07-23
+
+- Refreshed the generated fallback catalog timestamp after registering the
+  Camera Navigation Input System Integration package.
+
 ## 1.1.4 - 2026-07-17
 
 - Added Package Registry schema-v2 parsing with canonical artifact kinds and functional groups while retaining schema-v1 compatibility for one release.
