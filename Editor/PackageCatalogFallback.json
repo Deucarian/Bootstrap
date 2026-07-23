@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-17",
+  "updatedAt": "2026-07-22",
   "groups": [
     {
       "id": "infrastructure",
@@ -8,7 +8,7 @@
       "parentGroupId": "",
       "sortOrder": 10,
       "description": "Cross-cutting shared infrastructure used by multiple Deucarian packages.",
-      "iconKey": "editor",
+      "iconKey": "network",
       "styleKey": "infrastructure"
     },
     {
@@ -17,7 +17,7 @@
       "parentGroupId": "",
       "sortOrder": 20,
       "description": "Generic state, data, repository, and selection primitives.",
-      "iconKey": "core-state",
+      "iconKey": "database",
       "styleKey": "state-data"
     },
     {
@@ -26,7 +26,7 @@
       "parentGroupId": "",
       "sortOrder": 30,
       "description": "Application-facing runtime API, session, and loading services.",
-      "iconKey": "object-loading",
+      "iconKey": "server-cog",
       "styleKey": "runtime-services"
     },
     {
@@ -35,7 +35,7 @@
       "parentGroupId": "",
       "sortOrder": 40,
       "description": "UI, presentation, interaction, selection, and user/world experience systems.",
-      "iconKey": "generic-ui-items",
+      "iconKey": "mouse-pointer-click",
       "styleKey": "experience-interaction"
     },
     {
@@ -44,7 +44,7 @@
       "parentGroupId": "experience-interaction",
       "sortOrder": 41,
       "description": "User interface binding, flow, and presentation systems.",
-      "iconKey": "generic-ui-items",
+      "iconKey": "panels-top-left",
       "styleKey": "ui-presentation"
     },
     {
@@ -53,7 +53,7 @@
       "parentGroupId": "experience-interaction",
       "sortOrder": 42,
       "description": "World-object interaction, selection, XR controls, and input-facing systems.",
-      "iconKey": "selection",
+      "iconKey": "scan",
       "styleKey": "world-interaction"
     },
     {
@@ -62,7 +62,7 @@
       "parentGroupId": "",
       "sortOrder": 50,
       "description": "Installer, diagnostics, and development quality tooling.",
-      "iconKey": "package-installer",
+      "iconKey": "wrench",
       "styleKey": "tools"
     },
     {
@@ -71,7 +71,7 @@
       "parentGroupId": "",
       "sortOrder": 60,
       "description": "Reusable gameplay foundations, systems, simulation modules, and genre frameworks.",
-      "iconKey": "gameplay-foundation",
+      "iconKey": "gamepad-2",
       "styleKey": "gameplay"
     },
     {
@@ -80,7 +80,7 @@
       "parentGroupId": "gameplay",
       "sortOrder": 61,
       "description": "Low-level gameplay primitives and deterministic foundation types.",
-      "iconKey": "gameplay-foundation",
+      "iconKey": "blocks",
       "styleKey": "gameplay"
     },
     {
@@ -89,7 +89,7 @@
       "parentGroupId": "gameplay",
       "sortOrder": 62,
       "description": "Reusable progression, upgrade, and idle-calculation systems.",
-      "iconKey": "progression",
+      "iconKey": "trending-up",
       "styleKey": "gameplay"
     },
     {
@@ -98,7 +98,7 @@
       "parentGroupId": "gameplay",
       "sortOrder": 63,
       "description": "Combat, attack, projectile, and weapon simulation modules.",
-      "iconKey": "combat",
+      "iconKey": "swords",
       "styleKey": "simulation"
     },
     {
@@ -107,7 +107,7 @@
       "parentGroupId": "gameplay",
       "sortOrder": 64,
       "description": "Encounter orchestration, world spawning, and gameplay navigation modules.",
-      "iconKey": "world-spawning",
+      "iconKey": "map-pinned",
       "styleKey": "simulation"
     },
     {
@@ -116,7 +116,7 @@
       "parentGroupId": "gameplay",
       "sortOrder": 65,
       "description": "Higher-level genre composition packages built on gameplay foundations and systems.",
-      "iconKey": "auto-defense",
+      "iconKey": "puzzle",
       "styleKey": "gameplay"
     },
     {
@@ -125,7 +125,7 @@
       "parentGroupId": "",
       "sortOrder": 70,
       "description": "Starter project templates and sample game foundations.",
-      "iconKey": "selection",
+      "iconKey": "layout-template",
       "styleKey": "template"
     },
     {
@@ -134,7 +134,7 @@
       "parentGroupId": "templates",
       "sortOrder": 71,
       "description": "Playable starter game templates.",
-      "iconKey": "auto-defense",
+      "iconKey": "gamepad-2",
       "styleKey": "template"
     }
   ],
