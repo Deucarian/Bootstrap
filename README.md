@@ -6,7 +6,7 @@
 
 It is intentionally small, editor-only, and self-contained. It does not depend on `com.deucarian.editor`, `com.deucarian.package-installer`, `com.deucarian.logging`, or any other Deucarian package.
 
-Current package version: `1.1.5`.
+Current package version: `1.1.6`.
 
 ## When to use it
 
