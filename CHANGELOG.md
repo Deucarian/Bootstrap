@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.6 - 2026-07-24
+
+- Refreshed the generated fallback catalog after registering Command Routing
+  and its UDP transport integration.
+
 ## 1.1.5 - 2026-07-23
 
 - Refreshed the generated fallback catalog timestamp after registering the
