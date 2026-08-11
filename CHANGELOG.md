@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 1.2.0 - 2026-08-11
+
+- Rebuilt Bootstrap as a self-contained first-time setup and repair state
+  machine with injected Registry, Package Manager, lock inspection, revision,
+  persistence, and handoff boundaries.
+- Persisted authoritative package references and add/remove/list/verification
+  phases so domain reloads resume deterministically and idempotently at every
+  operation step.
+- Added exact setup-closure validation, fallback preservation for unavailable
+  or invalid remote Registry data, and source/channel/revision-aware Package
+  Installer health evaluation.
+- Added the shared Package Installer channel-change timestamp while preserving
+  the project-scoped channel key and legacy Bootstrap read fallback.
+- Replaced the fixed 1180 x 820 wallpaper-driven IMGUI window with a responsive
+  UI Toolkit setup surface for Narrow, Compact, and Wide layouts. The final
+  destination-first surface uses a 560 x 820 hero default, open implied
+  containers, three transforming requirement/destination items, a quiet healthy
+  receipt, a conditional single-action dock, light/dark Tideline-compatible
+  tokens, wrapped copy, keyboard focus treatment, and package-local
+  Lucide-derived icons.
+- Updated the Package Installer handoff to its canonical
+  `Tools/Deucarian/Tools and Quality/Package Installer` menu contract. A
+  successful handoff now closes only Bootstrap; a failed handoff remains open
+  with actionable recovery guidance.
+- Retired the project-scoped automatic welcome only after authoritative healthy
+  verification, while keeping manual menu access and active-operation reload
+  recovery independent of that preference.
+- Reduced legacy scoped-registry handling to a narrow read-only inspector and
+  kept migration limited to removing Package Installer before its selected Git
+  installation.
+- Expanded EditMode coverage for clean setup, health and repair states,
+  fallback behavior, Package Manager failures, reload continuation,
+  idempotence, channel synchronization, handoff, and responsive layout
+  contracts.
+
 ## 1.1.6 - 2026-07-24
 
 - Refreshed the generated fallback catalog after registering Command Routing
