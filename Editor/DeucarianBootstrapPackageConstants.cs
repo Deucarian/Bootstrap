@@ -4,9 +4,10 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "1.1.6";
+        public const string Version = "1.2.0";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
-        public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
+        public const string PackageInstallerMenuPath =
+            "Tools/Deucarian/Tools and Quality/Package Installer";
         public const string StableRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json";
         public const string DevelopmentRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/develop/packages.json";
         public const string ScopedRegistryName = "Deucarian";
@@ -21,6 +22,10 @@ namespace Deucarian.Bootstrap.Editor
         public const string HeroBackgroundAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Images/DeucarianPackageInstallerHero.png";
         public const string PackageIconAssetRelativePath = "Editor/Assets/Icons/DeucarianPackagePlaceholderIcon.png";
         public const string PackageIconAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Icons/DeucarianPackagePlaceholderIcon.png";
+        public const string StyleTokensAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Styles/DeucarianBootstrapTokens.uss";
+        public const string StyleShellAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Styles/DeucarianBootstrapShell.uss";
+        public const string StyleComponentsAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Styles/DeucarianBootstrapComponents.uss";
+        public const string StyleResponsiveAssetPath = "Packages/com.deucarian.bootstrap/Editor/Assets/Styles/DeucarianBootstrapResponsive.uss";
         public const string GitHubUrl = "https://github.com/Deucarian/Bootstrap";
         public const string DocumentationUrl = "https://github.com/Deucarian/Bootstrap#readme";
 
