@@ -7,6 +7,7 @@ namespace Deucarian.Bootstrap.Editor
         Missing,
         Outdated,
         WrongChannel,
+        WrongSource,
         Healthy,
         UnknownReviewRequired
     }
@@ -85,6 +86,19 @@ namespace Deucarian.Bootstrap.Editor
             BootstrapInstalledPackageInfo installedPackage,
             string targetRevision)
         {
+            return Evaluate(
+                selectedChannel,
+                installedPackage,
+                BootstrapChannelUtility.GetPackageInstallerGitUrl(selectedChannel),
+                targetRevision);
+        }
+
+        public static BootstrapPackageInstallerSetupState Evaluate(
+            BootstrapChannel selectedChannel,
+            BootstrapInstalledPackageInfo installedPackage,
+            string targetGitUrl,
+            string targetRevision)
+        {
             if (installedPackage == null)
             {
                 return BootstrapPackageInstallerSetupState.Missing;
@@ -110,6 +124,15 @@ namespace Deucarian.Bootstrap.Editor
                 return BootstrapPackageInstallerSetupState.WrongChannel;
             }
 
+            if (string.IsNullOrWhiteSpace(targetGitUrl) ||
+                !string.Equals(
+                    NormalizeGitReference(installedPackage.BestReference),
+                    NormalizeGitReference(targetGitUrl),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return BootstrapPackageInstallerSetupState.WrongSource;
+            }
+
             if (string.IsNullOrWhiteSpace(installedPackage.LockRevision) ||
                 string.IsNullOrWhiteSpace(targetRevision))
             {
@@ -122,6 +145,20 @@ namespace Deucarian.Bootstrap.Editor
                 StringComparison.OrdinalIgnoreCase)
                 ? BootstrapPackageInstallerSetupState.Healthy
                 : BootstrapPackageInstallerSetupState.Outdated;
+        }
+
+        private static string NormalizeGitReference(string reference)
+        {
+            string normalized = (reference ?? string.Empty).Trim().Replace('\\', '/');
+            int packagePrefix = normalized.IndexOf("@http", StringComparison.OrdinalIgnoreCase);
+            if (packagePrefix > 0)
+            {
+                normalized = normalized.Substring(packagePrefix + 1);
+            }
+
+            return normalized.StartsWith("git+", StringComparison.OrdinalIgnoreCase)
+                ? normalized.Substring("git+".Length)
+                : normalized;
         }
     }
 }

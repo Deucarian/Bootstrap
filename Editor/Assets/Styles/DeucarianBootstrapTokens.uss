@@ -1,0 +1,76 @@
+/*
+ * Bootstrap owns only these setup-specific primitives. The token names and
+ * measurements intentionally follow the Deucarian Tideline workbench rhythm
+ * without copying the general-purpose Editor framework.
+ */
+.deucarian-bootstrap,
+.deucarian-bootstrap--dark {
+    --bootstrap-space-1: 4px;
+    --bootstrap-space-2: 8px;
+    --bootstrap-space-3: 12px;
+    --bootstrap-space-4: 16px;
+    --bootstrap-space-6: 24px;
+    --bootstrap-radius: 8px;
+
+    --bootstrap-bg: #0d1218;
+    --bootstrap-surface: rgba(23, 32, 39, 0.92);
+    --bootstrap-surface-soft: rgba(32, 47, 56, 0.72);
+    --bootstrap-surface-strong: rgba(35, 52, 61, 0.88);
+    --bootstrap-surface-raised: rgba(14, 25, 34, 0.96);
+    --bootstrap-border: rgba(90, 111, 160, 0.38);
+    --bootstrap-border-soft: rgba(90, 111, 160, 0.24);
+    --bootstrap-border-active: rgba(59, 166, 154, 0.72);
+    --bootstrap-text: #e7edf0;
+    --bootstrap-text-muted: #9aa8b1;
+    --bootstrap-text-faint: #778791;
+    --bootstrap-accent: #3ba69a;
+    --bootstrap-accent-hover: #46b8ab;
+    --bootstrap-accent-active: #318d84;
+    --bootstrap-on-accent: #071211;
+    --bootstrap-info: #6791bd;
+    --bootstrap-success: #5fbf86;
+    --bootstrap-warning: #d99d48;
+    --bootstrap-error: #d36a68;
+    --bootstrap-neutral: #80919b;
+    --bootstrap-focus: #67dfd1;
+    --bootstrap-accent-wash: rgba(59, 166, 154, 0.10);
+    --bootstrap-info-wash: rgba(103, 145, 189, 0.10);
+    --bootstrap-success-wash: rgba(95, 191, 134, 0.10);
+    --bootstrap-warning-wash: rgba(217, 157, 72, 0.10);
+    --bootstrap-error-wash: rgba(211, 106, 104, 0.10);
+
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 0;
+    background-color: var(--bootstrap-bg);
+    color: var(--bootstrap-text);
+}
+
+.deucarian-bootstrap--light {
+    --bootstrap-bg: #e9eff2;
+    --bootstrap-surface: rgba(250, 252, 253, 0.96);
+    --bootstrap-surface-soft: rgba(229, 238, 241, 0.96);
+    --bootstrap-surface-strong: rgba(218, 230, 234, 0.98);
+    --bootstrap-surface-raised: rgba(255, 255, 255, 0.98);
+    --bootstrap-border: rgba(73, 101, 119, 0.42);
+    --bootstrap-border-soft: rgba(73, 101, 119, 0.24);
+    --bootstrap-border-active: rgba(35, 126, 121, 0.74);
+    --bootstrap-text: #1f2b32;
+    --bootstrap-text-muted: #53636d;
+    --bootstrap-text-faint: #596770;
+    --bootstrap-accent: #1f6f6a;
+    --bootstrap-accent-hover: #1f746f;
+    --bootstrap-accent-active: #1e6e69;
+    --bootstrap-on-accent: #ffffff;
+    --bootstrap-info: #3f6f9d;
+    --bootstrap-success: #397853;
+    --bootstrap-warning: #8c5b18;
+    --bootstrap-error: #a24747;
+    --bootstrap-neutral: #5c6e77;
+    --bootstrap-focus: #126f6a;
+    --bootstrap-accent-wash: rgba(37, 127, 121, 0.09);
+    --bootstrap-info-wash: rgba(63, 111, 157, 0.09);
+    --bootstrap-success-wash: rgba(57, 120, 83, 0.09);
+    --bootstrap-warning-wash: rgba(149, 99, 29, 0.09);
+    --bootstrap-error-wash: rgba(162, 71, 71, 0.09);
+}
