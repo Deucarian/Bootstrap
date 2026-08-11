@@ -42,17 +42,15 @@ namespace Deucarian.Bootstrap.Editor
         private Label _statusText;
         private VisualElement _offlineStrip;
         private Label _offlineText;
-        private VisualElement _progressSection;
-        private Label _progressOperation;
-        private Label _progressDetail;
-        private ProgressBar _progressBar;
+        private Label _progressMeta;
+        private VisualElement _planSection;
         private VisualElement _stepsContainer;
         private Foldout _detailsFoldout;
         private VisualElement _detailsContent;
+        private VisualElement _detailsRows;
         private Toggle _startupToggle;
-        private Label _actionSummary;
-        private Label _actionDetail;
         private Button _refreshButton;
+        private VisualElement _actionBar;
         private Button _primaryButton;
         private VisualElement _primaryIcon;
         private Label _primaryLabel;
@@ -97,11 +95,11 @@ namespace Deucarian.Bootstrap.Editor
 
             VisualElement content = Element("bootstrap-content", "bootstrap-content");
             ContentScroll.Add(content);
-            content.Add(BuildSummarySection());
-            content.Add(BuildProgressSection());
+            content.Add(BuildHero());
             content.Add(BuildStepsSection());
             content.Add(BuildDetailsSection());
-            shell.Add(BuildActionBar());
+            _actionBar = BuildActionBar();
+            shell.Add(_actionBar);
 
             _root.RegisterCallback<GeometryChangedEvent>(evt =>
                 ApplyResponsiveLayout(evt.newRect.width, evt.newRect.height));
@@ -121,42 +119,46 @@ namespace Deucarian.Bootstrap.Editor
             _channelField.SetValueWithoutNotify(BootstrapChannelUtility.GetDisplayName(model.Channel));
             _suppressChannelCallback = false;
             _channelField.SetEnabled(model.ChannelEnabled);
-            _channelDescription.text = BootstrapChannelUtility.GetDescription(model.Channel);
+            _channelDescription.text = "#" + BootstrapChannelUtility.GetGitBranch(model.Channel);
 
-            _summaryTitle.text = model.StateTitle;
+            _summaryTitle.text = BootstrapViewContentPolicy.GetHeroTitle(model);
             _summaryMessage.text = model.StateMessage;
-            _statusText.text = model.StatusText;
             SetIconClass(_summaryIcon, model.IconClass);
+
+            string contextText = BootstrapViewContentPolicy.GetContextText(model);
+            bool showContext = !string.IsNullOrWhiteSpace(contextText);
+            _statusStrip.style.display = showContext ? DisplayStyle.Flex : DisplayStyle.None;
+            _statusText.text = contextText;
             SetToneClass(_statusStrip, model.Tone);
+
+            bool showProgress = BootstrapViewContentPolicy.IsBusyPhase(model.Phase) &&
+                                model.Steps.Count > 0;
+            _progressMeta.style.display = showProgress ? DisplayStyle.Flex : DisplayStyle.None;
+            _progressMeta.text = showProgress
+                ? BootstrapViewContentPolicy.GetProgressText(model)
+                : string.Empty;
 
             bool showOffline = !string.IsNullOrWhiteSpace(model.OfflineNotice);
             _offlineStrip.style.display = showOffline ? DisplayStyle.Flex : DisplayStyle.None;
             _offlineText.text = model.OfflineNotice;
 
-            bool showProgress = model.Phase == BootstrapSetupPhase.Installing ||
-                                model.Phase == BootstrapSetupPhase.WaitingForUnity ||
-                                model.Phase == BootstrapSetupPhase.Verifying;
-            _progressSection.style.display = showProgress ? DisplayStyle.Flex : DisplayStyle.None;
-            _progressOperation.text = model.StatusText;
-            _progressDetail.text = model.CompletedStepCount + " of " + model.Steps.Count + " durable steps completed";
-            _progressBar.highValue = Math.Max(1, model.Steps.Count);
-            _progressBar.value = model.CompletedStepCount;
-            _progressBar.title = model.CompletedStepCount + " / " + model.Steps.Count;
-
+            bool showPlan = BootstrapViewContentPolicy.ShouldShowPlan(model);
+            _planSection.style.display = showPlan ? DisplayStyle.Flex : DisplayStyle.None;
             RenderSteps(model.Steps);
             RenderDetails(model.Details);
             _startupToggle.SetValueWithoutNotify(BootstrapStartupPreferences.ShouldShow());
 
-            _actionSummary.text = model.ActionSummary;
-            _actionDetail.text = model.ActionDetail;
             bool showQuietRefresh = model.ChannelEnabled &&
                                     model.PrimaryAction != BootstrapSetupAction.Refresh;
             _refreshButton.style.display = showQuietRefresh ? DisplayStyle.Flex : DisplayStyle.None;
             _refreshButton.SetEnabled(showQuietRefresh);
+            bool showPrimaryAction = model.PrimaryAction != BootstrapSetupAction.None &&
+                                     model.PrimaryActionEnabled;
+            _actionBar.style.display = showPrimaryAction ? DisplayStyle.Flex : DisplayStyle.None;
             _primaryButton.SetEnabled(model.PrimaryActionEnabled);
             _primaryButton.tooltip = model.PrimaryActionTooltip;
             _primaryLabel.text = model.PrimaryActionLabel;
-            SetIconClass(_primaryIcon, GetActionIconClass(model.PrimaryAction));
+            SetIconClass(_primaryIcon, BootstrapViewContentPolicy.GetActionIconClass(model.PrimaryAction));
         }
 
         public void ApplyResponsiveLayout(float width, float height)
@@ -205,14 +207,12 @@ namespace Deucarian.Bootstrap.Editor
             brand.Add(logo);
 
             VisualElement copy = Element("bootstrap-header-copy", "bootstrap-header__copy");
-            copy.Add(Label("DEUCARIAN SETUP", "bootstrap-header__eyebrow"));
             copy.Add(Label("Bootstrap", "bootstrap-header__title"));
-            copy.Add(Label("First-time setup and repair", "bootstrap-header__subtitle"));
+            copy.Add(Label("Setup & repair", "bootstrap-header__subtitle"));
             brand.Add(copy);
 
             VisualElement channel = Element("bootstrap-channel", "bootstrap-channel");
             channel.tooltip = "Select the project-wide package-management channel. Changing it never installs packages.";
-            channel.Add(Label("CHANNEL", "bootstrap-channel__label"));
             _channelField = new PopupField<string>(
                 new List<string> { "Stable", "Development" },
                 0)
@@ -237,12 +237,9 @@ namespace Deucarian.Bootstrap.Editor
             return header;
         }
 
-        private VisualElement BuildSummarySection()
+        private VisualElement BuildHero()
         {
-            VisualElement section = Section("Setup status");
-            VisualElement surface = Element("bootstrap-summary-surface", "bootstrap-surface");
-            surface.AddToClassList("bootstrap-surface--raised");
-            section.Add(surface);
+            VisualElement hero = Element("bootstrap-hero", "bootstrap-hero", "bootstrap-surface");
 
             VisualElement summary = Element("bootstrap-summary", "bootstrap-summary");
             _summaryIcon = Element("bootstrap-summary-icon", "bootstrap-summary__icon", "bootstrap-icon");
@@ -253,46 +250,36 @@ namespace Deucarian.Bootstrap.Editor
             _summaryMessage = Label(string.Empty, "bootstrap-summary__message");
             copy.Add(_summaryTitle);
             copy.Add(_summaryMessage);
+            _progressMeta = Label(string.Empty, "bootstrap-progress-meta");
+            _progressMeta.style.display = DisplayStyle.None;
+            copy.Add(_progressMeta);
             summary.Add(copy);
-            surface.Add(summary);
+            hero.Add(summary);
 
             _statusStrip = Element("bootstrap-status-strip", "bootstrap-status-strip");
+            _statusStrip.style.display = DisplayStyle.None;
             _statusText = Label(string.Empty, "bootstrap-status-strip__text");
             _statusStrip.Add(_statusText);
-            surface.Add(_statusStrip);
+            hero.Add(_statusStrip);
 
             _offlineStrip = Element("bootstrap-offline-strip", "bootstrap-status-strip", "bootstrap-status--warning");
+            _offlineStrip.style.display = DisplayStyle.None;
             VisualElement warningIcon = Element("bootstrap-offline-icon", "bootstrap-icon", "bootstrap-icon--warning");
             warningIcon.pickingMode = PickingMode.Ignore;
             _offlineStrip.Add(warningIcon);
             _offlineText = Label(string.Empty, "bootstrap-status-strip__text");
             _offlineStrip.Add(_offlineText);
-            surface.Add(_offlineStrip);
-            return section;
-        }
-
-        private VisualElement BuildProgressSection()
-        {
-            _progressSection = Section("Setup progress");
-            VisualElement surface = Element("bootstrap-progress-surface", "bootstrap-surface", "bootstrap-progress");
-            VisualElement copy = Element("bootstrap-progress-copy", "bootstrap-progress__copy");
-            _progressOperation = Label(string.Empty, "bootstrap-progress__operation");
-            _progressDetail = Label(string.Empty, "bootstrap-progress__detail");
-            copy.Add(_progressOperation);
-            copy.Add(_progressDetail);
-            surface.Add(copy);
-            _progressBar = new ProgressBar { name = "bootstrap-progress-bar", lowValue = 0f, highValue = 3f };
-            surface.Add(_progressBar);
-            _progressSection.Add(surface);
-            return _progressSection;
+            hero.Add(_offlineStrip);
+            return hero;
         }
 
         private VisualElement BuildStepsSection()
         {
-            VisualElement section = Section("Setup closure");
+            _planSection = Element("bootstrap-plan", "bootstrap-plan");
+            _planSection.style.display = DisplayStyle.None;
             _stepsContainer = Element("bootstrap-steps", "bootstrap-steps");
-            section.Add(_stepsContainer);
-            return section;
+            _planSection.Add(_stepsContainer);
+            return _planSection;
         }
 
         private VisualElement BuildDetailsSection()
@@ -301,12 +288,16 @@ namespace Deucarian.Bootstrap.Editor
             _detailsFoldout = new Foldout
             {
                 name = "bootstrap-details-foldout",
-                text = "Advanced source and revision details",
+                text = "Details",
                 value = false,
                 tooltip = "Show exact Git sources, lock revisions, registry fallback state, and read-only legacy detection."
             };
             _detailsFoldout.AddToClassList("bootstrap-details__foldout");
             _detailsContent = Element("bootstrap-details-content", "bootstrap-details__content");
+            _detailsRows = Element("bootstrap-details-rows", "bootstrap-details__rows");
+            _detailsContent.Add(_detailsRows);
+
+            VisualElement controls = Element("bootstrap-details-controls", "bootstrap-details__controls");
             _detailsFoldout.Add(_detailsContent);
             section.Add(_detailsFoldout);
 
@@ -316,31 +307,26 @@ namespace Deucarian.Bootstrap.Editor
                 tooltip = "Opens this read-only setup status window on startup. It never installs packages automatically."
             };
             _startupToggle.RegisterValueChangedCallback(evt => _startupPreferenceChanged?.Invoke(evt.newValue));
-            section.Add(_startupToggle);
+            controls.Add(_startupToggle);
+
+            _refreshButton = new Button(() => _refreshInvoked?.Invoke())
+            {
+                name = "bootstrap-refresh-button",
+                text = "Refresh status",
+                tooltip = "Refresh registry, installed package, source, and revision status without changing packages."
+            };
+            _refreshButton.AddToClassList("bootstrap-button");
+            _refreshButton.AddToClassList("bootstrap-button--quiet");
+            controls.Add(_refreshButton);
+            _detailsContent.Add(controls);
             return section;
         }
 
         private VisualElement BuildActionBar()
         {
             VisualElement bar = Element("bootstrap-action-bar", "bootstrap-action-bar");
-            VisualElement summary = Element("bootstrap-action-summary", "bootstrap-action-bar__summary");
-            _actionSummary = Label(string.Empty, "bootstrap-action-bar__title");
-            _actionDetail = Label(string.Empty, "bootstrap-action-bar__detail");
-            summary.Add(_actionSummary);
-            summary.Add(_actionDetail);
-            bar.Add(summary);
-
+            bar.style.display = DisplayStyle.None;
             VisualElement actions = Element("bootstrap-action-actions", "bootstrap-action-bar__actions");
-            _refreshButton = new Button(() => _refreshInvoked?.Invoke())
-            {
-                name = "bootstrap-refresh-button",
-                text = "Refresh",
-                tooltip = "Refresh registry, installed package, source, and revision status without changing packages."
-            };
-            _refreshButton.AddToClassList("bootstrap-button");
-            _refreshButton.AddToClassList("bootstrap-button--quiet");
-            actions.Add(_refreshButton);
-
             _primaryButton = new Button(() =>
             {
                 if (_model != null)
@@ -369,20 +355,23 @@ namespace Deucarian.Bootstrap.Editor
             _stepsContainer.Clear();
             foreach (BootstrapStepPresentation step in steps ?? Array.Empty<BootstrapStepPresentation>())
             {
-                VisualElement card = Element("bootstrap-step-" + step.Number, "bootstrap-step");
-                card.AddToClassList(GetStepClass(step.State));
-                VisualElement header = Element(null, "bootstrap-step__header");
-                header.Add(Label(step.Number.ToString(), "bootstrap-step__number"));
-                header.Add(Label(step.Title, "bootstrap-step__title"));
-                card.Add(header);
-                card.Add(Label(step.Detail, "bootstrap-step__detail"));
-                _stepsContainer.Add(card);
+                VisualElement item = Element("bootstrap-step-" + step.Number, "bootstrap-step");
+                item.AddToClassList(BootstrapViewContentPolicy.GetStepClass(step.State));
+                item.tooltip = step.Detail;
+                item.Add(Label(step.Number.ToString(), "bootstrap-step__number"));
+                item.Add(Label(step.Title, "bootstrap-step__title"));
+                Label state = Label(
+                    BootstrapViewContentPolicy.GetStepStateLabel(step.State),
+                    "bootstrap-step__state");
+                state.tooltip = step.TechnicalDetail;
+                item.Add(state);
+                _stepsContainer.Add(item);
             }
         }
 
         private void RenderDetails(IReadOnlyList<BootstrapDetailPresentation> details)
         {
-            _detailsContent.Clear();
+            _detailsRows.Clear();
             foreach (BootstrapDetailPresentation detail in details ?? Array.Empty<BootstrapDetailPresentation>())
             {
                 VisualElement row = Element(null, "bootstrap-detail-row");
@@ -390,7 +379,7 @@ namespace Deucarian.Bootstrap.Editor
                 Label value = Label(detail.Value, "bootstrap-detail-row__value");
                 value.tooltip = detail.Value;
                 row.Add(value);
-                _detailsContent.Add(row);
+                _detailsRows.Add(row);
             }
         }
 
@@ -436,32 +425,6 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             element.AddToClassList("bootstrap-status--" + tone.ToString().ToLowerInvariant());
-        }
-
-        private static string GetActionIconClass(BootstrapSetupAction action)
-        {
-            if (action == BootstrapSetupAction.Install) return "bootstrap-icon--install";
-            if (action == BootstrapSetupAction.OpenPackageInstaller) return "bootstrap-icon--open";
-            if (action == BootstrapSetupAction.None || action == BootstrapSetupAction.Refresh) return "bootstrap-icon--loading";
-            return "bootstrap-icon--repair";
-        }
-
-        private static string GetStepClass(BootstrapStepPresentationState state)
-        {
-            switch (state)
-            {
-                case BootstrapStepPresentationState.Current: return "bootstrap-step--current";
-                case BootstrapStepPresentationState.Complete: return "bootstrap-step--complete";
-                case BootstrapStepPresentationState.Failed: return "bootstrap-step--failed";
-                default: return "bootstrap-step--pending";
-            }
-        }
-
-        private static VisualElement Section(string heading)
-        {
-            VisualElement section = Element(null, "bootstrap-section");
-            section.Add(Label(heading, "bootstrap-section__heading"));
-            return section;
         }
 
         private static VisualElement Element(string name, params string[] classes)

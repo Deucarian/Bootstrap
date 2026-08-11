@@ -9,11 +9,13 @@ namespace Deucarian.Bootstrap.Editor
     {
         private const string StartupShownThisSessionKey =
             "Deucarian.Bootstrap.StartupShownThisSession";
+        private const string PreferredSizeAppliedKeyPrefix =
+            "Deucarian.Bootstrap.PreferredSizeApplied.";
 
-        internal const float MinWindowWidth = 560f;
-        internal const float MinWindowHeight = 480f;
-        internal const float PreferredWindowWidth = 980f;
-        internal const float PreferredWindowHeight = 700f;
+        internal const float MinWindowWidth = 480f;
+        internal const float MinWindowHeight = 460f;
+        internal const float PreferredWindowWidth = 560f;
+        internal const float PreferredWindowHeight = 820f;
 
         private BootstrapSetupCoordinator _coordinator;
         private BootstrapPackageInstallerHandoff _handoff;
@@ -94,17 +96,29 @@ namespace Deucarian.Bootstrap.Editor
                 return;
             }
 
-            Rect current = window.position;
-            if (current.width >= MinWindowWidth && current.height >= MinWindowHeight)
+            string preferenceKey = GetPreferredSizePreferenceKey();
+            if (EditorPrefs.GetBool(preferenceKey, false))
             {
                 return;
             }
 
+            Rect current = window.position;
             window.position = new Rect(
                 current.x,
                 current.y,
-                Mathf.Max(current.width, PreferredWindowWidth),
-                Mathf.Max(current.height, PreferredWindowHeight));
+                PreferredWindowWidth,
+                PreferredWindowHeight);
+            EditorPrefs.SetBool(preferenceKey, true);
+        }
+
+        private static string GetPreferredSizePreferenceKey()
+        {
+            string projectIdentity = string.IsNullOrWhiteSpace(Application.dataPath)
+                ? "unknown-project"
+                : Application.dataPath.Replace('\\', '/').ToLowerInvariant();
+            return PreferredSizeAppliedKeyPrefix +
+                   DeucarianBootstrapPackageConstants.Version + "." +
+                   Hash128.Compute(projectIdentity);
         }
 
         private void OnEnable()

@@ -13,8 +13,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
     {
         private static readonly LayoutCase[] Cases =
         {
-            new LayoutCase("Narrow Light", 640f, 560f, false, BootstrapResponsiveMode.Narrow),
-            new LayoutCase("Narrow Dark", 640f, 560f, true, BootstrapResponsiveMode.Narrow),
+            new LayoutCase("Default Light", 560f, 820f, false, BootstrapResponsiveMode.Narrow),
+            new LayoutCase("Default Dark", 560f, 820f, true, BootstrapResponsiveMode.Narrow),
+            new LayoutCase("Minimum Light", 480f, 460f, false, BootstrapResponsiveMode.Narrow),
+            new LayoutCase("Minimum Dark", 480f, 460f, true, BootstrapResponsiveMode.Narrow),
             new LayoutCase("Compact Light", 1024f, 640f, false, BootstrapResponsiveMode.Compact),
             new LayoutCase("Compact Dark", 1024f, 640f, true, BootstrapResponsiveMode.Compact),
             new LayoutCase("Wide Light", 1280f, 720f, false, BootstrapResponsiveMode.Wide),
@@ -39,7 +41,12 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     yield return null;
 
                     VisualElement root = window.rootVisualElement;
+                    VisualElement header = root.Q<VisualElement>("bootstrap-header");
+                    VisualElement brand = root.Q<VisualElement>("bootstrap-header-brand");
+                    VisualElement channel = root.Q<VisualElement>("bootstrap-channel");
                     VisualElement scroll = root.Q<ScrollView>("bootstrap-content-scroll");
+                    VisualElement hero = root.Q<VisualElement>("bootstrap-hero");
+                    VisualElement plan = root.Q<VisualElement>("bootstrap-plan");
                     VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
                     VisualElement actions = root.Q<VisualElement>("bootstrap-action-actions");
                     Button refresh = root.Q<Button>("bootstrap-refresh-button");
@@ -47,22 +54,38 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     Label primaryLabel = primary == null
                         ? null
                         : primary.Q<Label>(className: "bootstrap-button__label");
+                    VisualElement[] steps =
+                    {
+                        root.Q<VisualElement>("bootstrap-step-1"),
+                        root.Q<VisualElement>("bootstrap-step-2"),
+                        root.Q<VisualElement>("bootstrap-step-3")
+                    };
 
                     Assert.That(window.View.ResponsiveMode, Is.EqualTo(layoutCase.Mode), layoutCase.Name);
                     Assert.That(root.ClassListContains(layoutCase.Dark
                         ? "deucarian-bootstrap--dark"
                         : "deucarian-bootstrap--light"), Is.True, layoutCase.Name);
+                    Assert.That(header, Is.Not.Null, layoutCase.Name);
+                    Assert.That(brand, Is.Not.Null, layoutCase.Name);
+                    Assert.That(channel, Is.Not.Null, layoutCase.Name);
                     Assert.That(scroll, Is.Not.Null, layoutCase.Name);
+                    Assert.That(hero, Is.Not.Null, layoutCase.Name);
+                    Assert.That(plan, Is.Not.Null, layoutCase.Name);
                     Assert.That(actionBar, Is.Not.Null, layoutCase.Name);
                     Assert.That(actions, Is.Not.Null, layoutCase.Name);
                     Assert.That(refresh, Is.Not.Null, layoutCase.Name);
                     Assert.That(primary, Is.Not.Null, layoutCase.Name);
                     Assert.That(primaryLabel, Is.Not.Null, layoutCase.Name);
+                    Assert.That(steps, Has.All.Not.Null, layoutCase.Name);
 
                     Rect rootBounds = root.worldBound;
+                    Rect headerBounds = header.worldBound;
+                    Rect brandBounds = brand.worldBound;
+                    Rect channelBounds = channel.worldBound;
+                    Rect scrollBounds = scroll.worldBound;
+                    Rect heroBounds = hero.worldBound;
                     Rect actionBounds = actionBar.worldBound;
                     Rect actionsBounds = actions.worldBound;
-                    Rect refreshBounds = refresh.worldBound;
                     Rect primaryBounds = primary.worldBound;
                     Rect labelBounds = primaryLabel.worldBound;
 
@@ -71,14 +94,26 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     Assert.That(actionBounds.height, Is.GreaterThanOrEqualTo(
                         BootstrapResponsiveLayout.Calculate(layoutCase.Width, layoutCase.Height)
                             .ActionBarMinimumHeight), layoutCase.Name);
+                    Assert.That(IsContained(headerBounds, rootBounds), Is.True, layoutCase.Name);
+                    Assert.That(IsContained(brandBounds, headerBounds), Is.True, layoutCase.Name);
+                    Assert.That(IsContained(channelBounds, headerBounds), Is.True, layoutCase.Name);
+                    Assert.That(brandBounds.Overlaps(channelBounds), Is.False, layoutCase.Name);
+                    Assert.That(IsContained(heroBounds, scrollBounds), Is.True, layoutCase.Name);
                     Assert.That(IsContained(actionBounds, rootBounds), Is.True, layoutCase.Name);
                     Assert.That(IsContained(actionsBounds, actionBounds), Is.True, layoutCase.Name);
-                    Assert.That(IsContained(refreshBounds, actionsBounds), Is.True, layoutCase.Name);
-                    Assert.That(IsContained(primaryBounds, actionsBounds), Is.True, layoutCase.Name);
+                    Assert.That(
+                        IsContained(primaryBounds, actionsBounds),
+                        Is.True,
+                        layoutCase.Name + " primary " + primaryBounds +
+                        " must remain inside actions " + actionsBounds);
                     Assert.That(IsContained(labelBounds, primaryBounds), Is.True, layoutCase.Name);
-                    Assert.That(refreshBounds.Overlaps(primaryBounds), Is.False, layoutCase.Name);
                     Assert.That(scroll.worldBound.yMax, Is.LessThanOrEqualTo(actionBounds.yMin + 0.5f),
                         layoutCase.Name);
+                    Assert.That(plan.style.display.value, Is.EqualTo(DisplayStyle.Flex),
+                        layoutCase.Name);
+                    Assert.That(refresh.style.display.value, Is.EqualTo(DisplayStyle.Flex),
+                        layoutCase.Name);
+                    AssertPairwiseNonOverlapping(steps, layoutCase.Name);
                 }
                 finally
                 {
@@ -96,6 +131,25 @@ namespace Deucarian.Bootstrap.Editor.Tests
                    inner.yMin >= outer.yMin - tolerance &&
                    inner.xMax <= outer.xMax + tolerance &&
                    inner.yMax <= outer.yMax + tolerance;
+        }
+
+        private static void AssertPairwiseNonOverlapping(
+            VisualElement[] elements,
+            string caseName)
+        {
+            for (int index = 0; index < elements.Length; index++)
+            {
+                Rect bounds = elements[index].worldBound;
+                Assert.That(bounds.width, Is.GreaterThan(0f), caseName);
+                Assert.That(bounds.height, Is.GreaterThan(0f), caseName);
+                for (int other = index + 1; other < elements.Length; other++)
+                {
+                    Assert.That(
+                        bounds.Overlaps(elements[other].worldBound),
+                        Is.False,
+                        caseName + " step " + (index + 1) + " overlaps step " + (other + 1));
+                }
+            }
         }
 
         private readonly struct LayoutCase
@@ -135,49 +189,13 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
                 View = new BootstrapSetupView(_ => { }, _ => { }, () => { }, _ => { });
                 View.Build(rootVisualElement);
-                View.Render(CreateReviewModel());
+                View.Render(BootstrapTestPresentationModels.Create(
+                    BootstrapSetupPhase.Review,
+                    BootstrapSetupAction.Repair,
+                    true));
                 View.SetSkin(layoutCase.Dark);
                 View.ApplyResponsiveLayout(layoutCase.Width, layoutCase.Height);
                 Repaint();
-            }
-
-            private static BootstrapPresentationModel CreateReviewModel()
-            {
-                BootstrapStepPresentation[] steps =
-                {
-                    new BootstrapStepPresentation(1, "Editor", "Install the shared editor shell.", string.Empty,
-                        BootstrapStepPresentationState.Ready),
-                    new BootstrapStepPresentation(2, "Logging", "Install package diagnostics.", string.Empty,
-                        BootstrapStepPresentationState.Ready),
-                    new BootstrapStepPresentation(3, "Package Installer", "Install package management last.",
-                        string.Empty, BootstrapStepPresentationState.Ready)
-                };
-                BootstrapDetailPresentation[] details =
-                {
-                    new BootstrapDetailPresentation("Target source",
-                        "https://github.com/Deucarian/Package-Installer.git#main")
-                };
-
-                return new BootstrapPresentationModel(
-                    BootstrapChannel.Stable,
-                    BootstrapSetupPhase.Review,
-                    "Setup needs repair",
-                    "Review the dependency-first setup closure.",
-                    "Ready to repair the project setup.",
-                    BootstrapPresentationTone.Warning,
-                    "bootstrap-icon--repair",
-                    BootstrapSetupAction.Repair,
-                    "Repair",
-                    "Repair the setup closure.",
-                    true,
-                    true,
-                    "One explicit action",
-                    "Opening Bootstrap never changes packages automatically.",
-                    steps,
-                    details,
-                    string.Empty,
-                    0,
-                    "Package Installer needs repair.");
             }
         }
     }

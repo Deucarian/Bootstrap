@@ -178,12 +178,15 @@ button hierarchy without importing the shared Editor framework.
 - Compact: 900 through 1179 px
 - Wide: 1180 px or above
 
-The action bar stays visible outside the scrollable details area. Human-facing
-setup state and the three steps remain primary; exact Git URLs, source, lock
-revision, fallback notice, and legacy status are progressively disclosed under
-advanced details. Light and dark Unity skins have separate accessible token
-sets. Action and status imagery comes from package-local Lucide-derived assets
-with attribution in `Editor/Assets/Icons/Lucide/LICENSE.md`.
+The preferred floating footprint is 560 x 820 px, with a 480 x 460 px minimum
+for smaller docks. One status hero and one compact three-step rail carry the
+normal workflow. The action dock appears only when there is something the user
+can do, so loading and installation never show a duplicate disabled action.
+Exact Git URLs, source, lock revision, fallback notice, startup preference, and
+manual refresh are progressively disclosed under **Details**. Light and dark
+Unity skins have separate accessible token sets. Action and status imagery
+comes from package-local Lucide-derived assets with attribution in
+`Editor/Assets/Icons/Lucide/LICENSE.md`.
 
 ## Architecture
 
@@ -199,7 +202,7 @@ responsibilities are split into focused components:
 - Git branch revision resolution under `Editor/Infrastructure`;
 - versioned SessionState operation persistence under `Editor/Infrastructure`;
 - the deterministic setup coordinator under `Editor/Application`;
-- handoff through `Tools > Deucarian > Package Installer` under
+- handoff through `Tools > Deucarian > Tools and Quality > Package Installer` under
   `Editor/Application`;
 - Bootstrap-specific presentation models and responsive UI under
   `Editor/Presentation` and `Editor/UI`.

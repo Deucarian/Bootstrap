@@ -143,7 +143,9 @@ namespace Deucarian.Bootstrap.Editor
                 : !string.IsNullOrWhiteSpace(state.Error)
                     ? state.Error
                     : state.Status;
-            BootstrapPresentationTone tone = GetTone(state);
+            BootstrapPresentationTone tone = string.IsNullOrWhiteSpace(transientMessage)
+                ? GetTone(state)
+                : BootstrapPresentationTone.Error;
             string label = GetActionLabel(state, action);
             bool actionEnabled = !state.IsBusy && action != BootstrapSetupAction.None;
             IReadOnlyList<BootstrapStepPresentation> steps = BuildSteps(state);
@@ -190,17 +192,17 @@ namespace Deucarian.Bootstrap.Editor
             switch (state.Phase)
             {
                 case BootstrapSetupPhase.Loading:
-                    return "Checking your Deucarian setup";
+                    return "Checking setup";
                 case BootstrapSetupPhase.Installing:
-                    return "Installing the setup closure";
+                    return "Installing setup";
                 case BootstrapSetupPhase.WaitingForUnity:
                     return "Waiting for Unity";
                 case BootstrapSetupPhase.Verifying:
                     return "Verifying Package Installer";
                 case BootstrapSetupPhase.Healthy:
-                    return "Deucarian setup is healthy";
+                    return "Setup complete";
                 case BootstrapSetupPhase.ReviewRequired:
-                    return "Revision review required";
+                    return "Revision review needed";
                 case BootstrapSetupPhase.Failed:
                     return "Setup stopped";
             }
@@ -237,51 +239,51 @@ namespace Deucarian.Bootstrap.Editor
         {
             if (state.Phase == BootstrapSetupPhase.Healthy)
             {
-                return "Package Installer matches the selected Git source, channel, and lock revision.";
+                return "Package Installer matches the selected channel and lock revision.";
             }
 
             if (state.Phase == BootstrapSetupPhase.Loading)
             {
-                return "Reading the selected channel, registry metadata, installed packages, and lock revision.";
+                return "Checking channel, packages, and revision.";
             }
 
             if (state.Phase == BootstrapSetupPhase.Installing ||
                 state.Phase == BootstrapSetupPhase.WaitingForUnity ||
                 state.Phase == BootstrapSetupPhase.Verifying)
             {
-                return "Saved progress will continue safely if Unity reloads scripts or the editor domain.";
+                return "Safe to close. Setup resumes after Unity reloads.";
             }
 
             if (state.Phase == BootstrapSetupPhase.ReviewRequired)
             {
-                return "The installed source may be correct, but Bootstrap cannot prove the selected remote revision yet.";
+                return "Bootstrap cannot verify the selected remote revision yet.";
             }
 
             if (state.Phase == BootstrapSetupPhase.Failed)
             {
-                return "No further package changes will run until you explicitly retry.";
+                return "Nothing else will change until you retry.";
             }
 
             switch (action)
             {
                 case BootstrapSetupAction.Install:
-                    return "Bootstrap will install Editor, Logging, and Package Installer in dependency order.";
+                    return "Installs Editor, Logging, then Package Installer.";
                 case BootstrapSetupAction.Migrate:
-                    return "The legacy Package Installer will be removed and reinstalled from the selected Git channel. Scoped registries stay untouched.";
+                    return "Moves Package Installer from the legacy registry to the selected Git channel.";
                 case BootstrapSetupAction.SwitchChannel:
-                    return "The setup closure will be reconciled before Package Installer moves to the selected branch.";
+                    return "Moves Package Installer to the selected branch after checking its setup dependencies.";
                 default:
                     if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.Outdated)
                     {
-                        return "The installed lock revision does not match the selected branch tip. Repair will reconcile the setup closure and Package Installer.";
+                        return "The installed revision does not match the selected branch.";
                     }
 
                     if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.WrongSource)
                     {
-                        return "The installed Git repository does not match the validated Package Installer source for this channel.";
+                        return "The installed Git source does not match this channel.";
                     }
 
-                    return "One or more setup packages are missing. Review the three steps, then run the explicit repair action.";
+                    return "Missing setup packages will be repaired in order.";
             }
         }
 
@@ -437,7 +439,7 @@ namespace Deucarian.Bootstrap.Editor
         private static string GetActionTooltip(BootstrapSetupAction action)
         {
             return action == BootstrapSetupAction.OpenPackageInstaller
-                ? "Open Tools > Deucarian > Package Installer."
+                ? "Open Tools > Deucarian > Tools and Quality > Package Installer."
                 : action == BootstrapSetupAction.Refresh
                     ? "Read registry, UPM, source, and revision state again without changing packages."
                     : "Run the reviewed setup closure. Package changes begin only after this click.";

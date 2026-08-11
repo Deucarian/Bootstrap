@@ -6,7 +6,8 @@ namespace Deucarian.Bootstrap.Editor
         public const string DisplayName = "Deucarian Bootstrap";
         public const string Version = "1.2.0";
         public const string MenuPath = "Tools/Deucarian/Bootstrap/Open Bootstrapper";
-        public const string PackageInstallerMenuPath = "Tools/Deucarian/Package Installer";
+        public const string PackageInstallerMenuPath =
+            "Tools/Deucarian/Tools and Quality/Package Installer";
         public const string StableRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/main/packages.json";
         public const string DevelopmentRegistryCatalogUrl = "https://raw.githubusercontent.com/Deucarian/Package-Registry/develop/packages.json";
         public const string ScopedRegistryName = "Deucarian";

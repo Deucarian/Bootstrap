@@ -16,9 +16,12 @@
 - Added the shared Package Installer channel-change timestamp while preserving
   the project-scoped channel key and legacy Bootstrap read fallback.
 - Replaced the fixed 1180 x 820 wallpaper-driven IMGUI window with a responsive
-  UI Toolkit setup surface for Narrow, Compact, and Wide layouts, including
-  persistent actions, light/dark Tideline-compatible tokens, wrapped copy,
-  keyboard focus treatment, and package-local Lucide-derived icons.
+  UI Toolkit setup surface for Narrow, Compact, and Wide layouts. The final
+  surface uses a 560 x 820 hero-first default, one compact durable step rail,
+  a conditional single-action dock, light/dark Tideline-compatible tokens,
+  wrapped copy, keyboard focus treatment, and package-local Lucide-derived icons.
+- Updated the Package Installer handoff to its canonical
+  `Tools/Deucarian/Tools and Quality/Package Installer` menu contract.
 - Reduced legacy scoped-registry handling to a narrow read-only inspector and
   kept migration limited to removing Package Installer before its selected Git
   installation.

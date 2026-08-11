@@ -1,7 +1,11 @@
 using System;
+using System.Collections;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Deucarian.Bootstrap.Editor.Tests
 {
@@ -420,6 +424,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
             AssertAll(() =>
             {
                 Assert.That(menu.CallCount, Is.EqualTo(1));
+                Assert.That(
+                    DeucarianBootstrapPackageConstants.PackageInstallerMenuPath,
+                    Is.EqualTo("Tools/Deucarian/Tools and Quality/Package Installer"));
                 Assert.That(menu.LastMenuPath,
                     Is.EqualTo(DeucarianBootstrapPackageConstants.PackageInstallerMenuPath));
                 Assert.That(result.Success, Is.EqualTo(menuResult));
@@ -432,6 +439,46 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     Assert.That(result.Message, Is.Not.Empty);
                 }
             });
+        }
+
+        [UnityTest]
+        public IEnumerator Handoff_OpensTheInstalledPackageInstallerThroughItsCanonicalMenu()
+        {
+            if (!AssetDatabase.IsValidFolder(
+                    "Packages/" + DeucarianBootstrapPackageConstants.PackageInstallerPackageId))
+            {
+                Assert.Ignore("The integration smoke requires Package Installer in the host project.");
+            }
+
+            EditorWindow existing = FindPackageInstallerWindow();
+            BootstrapHandoffResult result = new BootstrapPackageInstallerHandoff(
+                new UnityBootstrapMenuExecutor()).Open();
+            yield return null;
+
+            EditorWindow opened = FindPackageInstallerWindow();
+            AssertAll(() =>
+            {
+                Assert.That(result.Success, Is.True, result.Message);
+                Assert.That(opened, Is.Not.Null,
+                    "The canonical menu should open the Package Installer window.");
+            });
+
+            if (opened != null && !ReferenceEquals(existing, opened))
+            {
+                opened.Close();
+            }
+        }
+
+        private static EditorWindow FindPackageInstallerWindow()
+        {
+            return Resources.FindObjectsOfTypeAll<EditorWindow>()
+                .FirstOrDefault(window =>
+                    window != null &&
+                    window.titleContent != null &&
+                    string.Equals(
+                        window.titleContent.text,
+                        "Package Installer",
+                        StringComparison.Ordinal));
         }
 
         private sealed class FakeMenuExecutor : IBootstrapMenuExecutor

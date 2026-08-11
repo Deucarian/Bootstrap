@@ -62,7 +62,7 @@ namespace Deucarian.Bootstrap.Editor
                         headerStacked: false,
                         actionsStacked: false,
                         primaryActionFillsRow: false,
-                        actionBarMinimumHeight: 64f);
+                        actionBarMinimumHeight: 58f);
 
                 case BootstrapResponsiveMode.Compact:
                     return new BootstrapResponsiveLayoutState(
@@ -76,7 +76,7 @@ namespace Deucarian.Bootstrap.Editor
                         headerStacked: false,
                         actionsStacked: false,
                         primaryActionFillsRow: false,
-                        actionBarMinimumHeight: 64f);
+                        actionBarMinimumHeight: 58f);
 
                 default:
                     return new BootstrapResponsiveLayoutState(
@@ -87,10 +87,10 @@ namespace Deucarian.Bootstrap.Editor
                         contentPadding: 12f,
                         sectionGap: 12f,
                         stepColumns: 1,
-                        headerStacked: true,
-                        actionsStacked: true,
+                        headerStacked: false,
+                        actionsStacked: false,
                         primaryActionFillsRow: true,
-                        actionBarMinimumHeight: 96f);
+                        actionBarMinimumHeight: 58f);
             }
         }
 
