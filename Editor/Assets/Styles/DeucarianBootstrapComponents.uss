@@ -1,0 +1,317 @@
+/* Setup steps, progressive details, persistent actions, and icon bindings. */
+.bootstrap-steps {
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    margin-right: -8px;
+    margin-bottom: -8px;
+}
+
+.bootstrap-step {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 28%;
+    min-width: 220px;
+    min-height: 116px;
+    margin-right: var(--bootstrap-space-2);
+    margin-bottom: var(--bootstrap-space-2);
+    padding-left: var(--bootstrap-space-3);
+    padding-right: var(--bootstrap-space-3);
+    padding-top: var(--bootstrap-space-3);
+    padding-bottom: var(--bootstrap-space-3);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: var(--bootstrap-border-soft);
+    border-right-color: var(--bootstrap-border-soft);
+    border-top-color: var(--bootstrap-border-soft);
+    border-bottom-color: var(--bootstrap-border-soft);
+    border-top-left-radius: var(--bootstrap-radius);
+    border-top-right-radius: var(--bootstrap-radius);
+    border-bottom-right-radius: var(--bootstrap-radius);
+    border-bottom-left-radius: var(--bootstrap-radius);
+    background-color: var(--bootstrap-surface-soft);
+}
+
+.bootstrap-step--current {
+    border-left-color: var(--bootstrap-border-active);
+    border-right-color: var(--bootstrap-border-active);
+    border-top-color: var(--bootstrap-border-active);
+    border-bottom-color: var(--bootstrap-border-active);
+    background-color: var(--bootstrap-surface-strong);
+}
+
+.bootstrap-step--complete {
+    border-left-color: var(--bootstrap-success);
+}
+
+.bootstrap-step--failed {
+    border-left-color: var(--bootstrap-error);
+}
+
+.bootstrap-step__header {
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bootstrap-step__number {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    margin-right: var(--bootstrap-space-2);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    background-color: var(--bootstrap-surface-raised);
+    color: var(--bootstrap-text-muted);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    font-size: 11px;
+}
+
+.bootstrap-step__title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    color: var(--bootstrap-text);
+    font-size: 12px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.bootstrap-step__detail {
+    margin-top: var(--bootstrap-space-2);
+    color: var(--bootstrap-text-muted);
+    font-size: 11px;
+    white-space: normal;
+}
+
+.bootstrap-step__technical {
+    margin-top: var(--bootstrap-space-2);
+    color: var(--bootstrap-text-faint);
+    font-size: 10px;
+    white-space: normal;
+}
+
+.bootstrap-details {
+    margin-top: var(--bootstrap-space-3);
+}
+
+.bootstrap-details__foldout {
+    color: var(--bootstrap-text-muted);
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.bootstrap-details__content {
+    margin-top: var(--bootstrap-space-2);
+    padding-left: var(--bootstrap-space-3);
+    padding-right: var(--bootstrap-space-3);
+    padding-top: var(--bootstrap-space-2);
+    padding-bottom: var(--bootstrap-space-2);
+    border-left-width: 1px;
+    border-left-color: var(--bootstrap-border-soft);
+    background-color: var(--bootstrap-surface-soft);
+}
+
+.bootstrap-detail-row {
+    min-width: 0;
+    margin-bottom: var(--bootstrap-space-2);
+}
+
+.bootstrap-detail-row__label {
+    color: var(--bootstrap-text-muted);
+    font-size: 10px;
+    -unity-font-style: bold;
+}
+
+.bootstrap-detail-row__value {
+    margin-top: var(--bootstrap-space-1);
+    color: var(--bootstrap-text);
+    font-size: 10px;
+    white-space: normal;
+}
+
+.bootstrap-action-bar {
+    flex-shrink: 0;
+    min-height: 64px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: var(--bootstrap-space-4);
+    padding-right: var(--bootstrap-space-4);
+    padding-top: var(--bootstrap-space-3);
+    padding-bottom: var(--bootstrap-space-3);
+    border-top-width: 1px;
+    border-top-color: var(--bootstrap-border);
+    background-color: var(--bootstrap-surface-raised);
+}
+
+.bootstrap-action-bar__summary {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: var(--bootstrap-space-4);
+}
+
+.bootstrap-action-bar__title {
+    color: var(--bootstrap-text);
+    font-size: 11px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.bootstrap-action-bar__detail {
+    margin-top: var(--bootstrap-space-1);
+    color: var(--bootstrap-text-muted);
+    font-size: 10px;
+    white-space: normal;
+}
+
+.bootstrap-action-bar__actions {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bootstrap-button {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    height: 36px;
+    margin-left: var(--bootstrap-space-2);
+    padding-left: var(--bootstrap-space-3);
+    padding-right: var(--bootstrap-space-3);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: var(--bootstrap-border);
+    border-right-color: var(--bootstrap-border);
+    border-top-color: var(--bootstrap-border);
+    border-bottom-color: var(--bootstrap-border);
+    border-top-left-radius: var(--bootstrap-radius);
+    border-top-right-radius: var(--bootstrap-radius);
+    border-bottom-right-radius: var(--bootstrap-radius);
+    border-bottom-left-radius: var(--bootstrap-radius);
+    background-color: var(--bootstrap-surface-soft);
+    color: var(--bootstrap-text);
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.bootstrap-button__label {
+    color: var(--bootstrap-on-accent);
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.bootstrap-button:hover {
+    border-left-color: var(--bootstrap-border-active);
+    border-right-color: var(--bootstrap-border-active);
+    border-top-color: var(--bootstrap-border-active);
+    border-bottom-color: var(--bootstrap-border-active);
+    background-color: var(--bootstrap-surface-strong);
+}
+
+.bootstrap-button:active {
+    background-color: var(--bootstrap-bg);
+}
+
+.bootstrap-button:focus {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: var(--bootstrap-focus);
+    border-right-color: var(--bootstrap-focus);
+    border-top-color: var(--bootstrap-focus);
+    border-bottom-color: var(--bootstrap-focus);
+}
+
+.bootstrap-button:disabled {
+    opacity: 0.48;
+}
+
+.bootstrap-button--primary {
+    min-width: 184px;
+    border-left-color: var(--bootstrap-accent);
+    border-right-color: var(--bootstrap-accent);
+    border-top-color: var(--bootstrap-accent);
+    border-bottom-color: var(--bootstrap-accent);
+    background-color: var(--bootstrap-accent);
+    color: var(--bootstrap-on-accent);
+}
+
+.bootstrap-button--primary .bootstrap-icon {
+    -unity-background-image-tint-color: var(--bootstrap-on-accent);
+}
+
+.bootstrap-button--primary:hover {
+    background-color: var(--bootstrap-accent-hover);
+}
+
+.bootstrap-button--primary:active {
+    background-color: var(--bootstrap-accent-active);
+}
+
+.bootstrap-button--quiet {
+    min-width: 88px;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    background-color: transparent;
+    color: var(--bootstrap-text-muted);
+}
+
+.bootstrap-link:focus,
+.bootstrap-details__foldout:focus {
+    color: var(--bootstrap-focus);
+}
+
+.bootstrap-icon {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    margin-right: var(--bootstrap-space-2);
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: var(--bootstrap-text-muted);
+}
+
+.bootstrap-icon--success {
+    background-image: url("../Icons/Lucide/circle-check-big.png");
+    -unity-background-image-tint-color: var(--bootstrap-success);
+}
+
+.bootstrap-icon--warning,
+.bootstrap-icon--review {
+    background-image: url("../Icons/Lucide/triangle-alert.png");
+    -unity-background-image-tint-color: var(--bootstrap-warning);
+}
+
+.bootstrap-icon--error {
+    background-image: url("../Icons/Lucide/circle-x.png");
+    -unity-background-image-tint-color: var(--bootstrap-error);
+}
+
+.bootstrap-icon--loading {
+    background-image: url("../Icons/Lucide/loader-circle.png");
+    -unity-background-image-tint-color: var(--bootstrap-info);
+}
+
+.bootstrap-icon--install {
+    background-image: url("../Icons/Lucide/download.png");
+}
+
+.bootstrap-icon--repair {
+    background-image: url("../Icons/Lucide/wrench.png");
+}
+
+.bootstrap-icon--open {
+    background-image: url("../Icons/Lucide/external-link.png");
+}
