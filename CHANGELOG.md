@@ -17,11 +17,18 @@
   the project-scoped channel key and legacy Bootstrap read fallback.
 - Replaced the fixed 1180 x 820 wallpaper-driven IMGUI window with a responsive
   UI Toolkit setup surface for Narrow, Compact, and Wide layouts. The final
-  surface uses a 560 x 820 hero-first default, one compact durable step rail,
-  a conditional single-action dock, light/dark Tideline-compatible tokens,
-  wrapped copy, keyboard focus treatment, and package-local Lucide-derived icons.
+  destination-first surface uses a 560 x 820 hero default, open implied
+  containers, three transforming requirement/destination items, a quiet healthy
+  receipt, a conditional single-action dock, light/dark Tideline-compatible
+  tokens, wrapped copy, keyboard focus treatment, and package-local
+  Lucide-derived icons.
 - Updated the Package Installer handoff to its canonical
-  `Tools/Deucarian/Tools and Quality/Package Installer` menu contract.
+  `Tools/Deucarian/Tools and Quality/Package Installer` menu contract. A
+  successful handoff now closes only Bootstrap; a failed handoff remains open
+  with actionable recovery guidance.
+- Retired the project-scoped automatic welcome only after authoritative healthy
+  verification, while keeping manual menu access and active-operation reload
+  recovery independent of that preference.
 - Reduced legacy scoped-registry handling to a narrow read-only inspector and
   kept migration limited to removing Package Installer before its selected Git
   installation.

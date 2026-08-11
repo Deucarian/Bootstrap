@@ -1,4 +1,4 @@
-/* Width-mode overrides; load after tokens, shell, and components. */
+/* Width and short-height modes; loaded after the shell and components. */
 .bootstrap-responsive--wide .bootstrap-content {
     width: 100%;
     max-width: 820px;
@@ -9,13 +9,9 @@
     padding-bottom: var(--bootstrap-space-6);
 }
 
-.bootstrap-responsive--wide .bootstrap-plan {
-    margin-top: var(--bootstrap-space-4);
-}
-
 .bootstrap-responsive--compact .bootstrap-content {
     width: 100%;
-    max-width: 720px;
+    max-width: 760px;
     align-self: center;
     padding-left: var(--bootstrap-space-4);
     padding-right: var(--bootstrap-space-4);
@@ -23,30 +19,62 @@
     padding-bottom: var(--bootstrap-space-4);
 }
 
-.bootstrap-responsive--narrow .bootstrap-header {
-    height: 52px;
-    min-height: 52px;
+.bootstrap-responsive--compact .bootstrap-setup-item--requirement,
+.bootstrap-responsive--wide .bootstrap-setup-item--requirement {
+    width: 50%;
+}
+
+.bootstrap-responsive--compact .bootstrap-setup-item--index-1,
+.bootstrap-responsive--wide .bootstrap-setup-item--index-1 {
+    border-right-width: 1px;
+    border-right-color: var(--bootstrap-border-soft);
+}
+
+.bootstrap-responsive--compact .bootstrap-setup-item--destination,
+.bootstrap-responsive--wide .bootstrap-setup-item--destination {
+    width: 100%;
+}
+
+.bootstrap-responsive--compact .bootstrap-setup-flow--busy .bootstrap-setup-item,
+.bootstrap-responsive--wide .bootstrap-setup-flow--busy .bootstrap-setup-item {
+    width: 100%;
+    border-right-width: 0;
+}
+
+.bootstrap-responsive--compact .bootstrap-receipt-items,
+.bootstrap-responsive--wide .bootstrap-receipt-items {
     flex-direction: row;
-    align-items: center;
+}
+
+.bootstrap-responsive--compact .bootstrap-receipt-item,
+.bootstrap-responsive--wide .bootstrap-receipt-item {
+    width: 33.3333%;
+    border-right-width: 1px;
+    border-right-color: var(--bootstrap-border-soft);
+}
+
+.bootstrap-responsive--compact .bootstrap-receipt-item--index-3,
+.bootstrap-responsive--wide .bootstrap-receipt-item--index-3 {
+    border-right-width: 0;
+}
+
+.bootstrap-responsive--narrow .bootstrap-header {
     padding-left: var(--bootstrap-space-3);
     padding-right: var(--bootstrap-space-3);
 }
 
 .bootstrap-responsive--narrow .bootstrap-header__logo {
-    width: 24px;
-    min-width: 24px;
-    height: 24px;
-}
-
-.bootstrap-responsive--narrow .bootstrap-header__subtitle {
-    display: none;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
 }
 
 .bootstrap-responsive--narrow .bootstrap-channel {
-    min-width: 82px;
-    max-width: 128px;
+    min-width: 130px;
     margin-left: var(--bootstrap-space-2);
 }
+
+.bootstrap-responsive--narrow .bootstrap-channel__label { display: none; }
 
 .bootstrap-responsive--narrow .bootstrap-content {
     width: 100%;
@@ -56,44 +84,24 @@
     padding-bottom: var(--bootstrap-space-3);
 }
 
-.bootstrap-responsive--narrow .bootstrap-surface,
 .bootstrap-responsive--narrow .bootstrap-hero {
+    min-height: 210px;
     padding-left: var(--bootstrap-space-3);
     padding-right: var(--bootstrap-space-3);
-    padding-top: var(--bootstrap-space-3);
-    padding-bottom: var(--bootstrap-space-3);
 }
 
-.bootstrap-responsive--narrow .bootstrap-summary__icon {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    margin-right: 10px;
-}
+.bootstrap-responsive--narrow .bootstrap-summary__title { font-size: 21px; }
+.bootstrap-responsive--narrow .bootstrap-setup-flow { margin-top: var(--bootstrap-space-3); }
+.bootstrap-responsive--narrow .bootstrap-setup-item { min-height: 80px; }
 
-.bootstrap-responsive--narrow .bootstrap-summary__title {
-    font-size: 18px;
-}
-
-.bootstrap-responsive--narrow .bootstrap-plan {
-    margin-top: var(--bootstrap-space-3);
-}
-
-.bootstrap-responsive--narrow .bootstrap-step {
-    min-height: 40px;
-}
-
-.bootstrap-responsive--narrow .bootstrap-step__state {
+.bootstrap-responsive--narrow .bootstrap-setup-item__state {
+    max-width: 84px;
     margin-left: var(--bootstrap-space-2);
 }
 
 .bootstrap-responsive--narrow .bootstrap-action-bar {
-    min-height: 58px;
-    max-height: 58px;
     padding-left: var(--bootstrap-space-3);
     padding-right: var(--bootstrap-space-3);
-    padding-top: 10px;
-    padding-bottom: 10px;
 }
 
 .bootstrap-responsive--narrow .bootstrap-action-bar__actions {
@@ -106,6 +114,90 @@
     margin-left: 0;
 }
 
-.bootstrap-responsive--narrow .bootstrap-button--primary {
-    flex-grow: 1;
+.bootstrap-responsive--narrow .bootstrap-button--primary { flex-grow: 1; }
+
+.bootstrap-height--short .bootstrap-header {
+    height: 44px;
+    min-height: 44px;
 }
+
+.bootstrap-height--short .bootstrap-content {
+    padding-top: var(--bootstrap-space-2);
+    padding-bottom: var(--bootstrap-space-2);
+}
+
+.bootstrap-height--short .bootstrap-hero {
+    min-height: 122px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.bootstrap-height--short .bootstrap-hero__visual {
+    width: 54px;
+    min-width: 54px;
+    height: 54px;
+    margin-bottom: 4px;
+}
+
+.bootstrap-height--short .bootstrap-hero__ambient {
+    left: 2px;
+    top: 2px;
+    width: 50px;
+    height: 50px;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 25px;
+}
+
+.bootstrap-height--short .bootstrap-hero__package-icon {
+    width: 27px;
+    min-width: 27px;
+    height: 27px;
+}
+
+.bootstrap-height--short .bootstrap-summary__icon {
+    left: 35px;
+    top: 35px;
+    width: 17px;
+    min-width: 17px;
+    height: 17px;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.bootstrap-height--short .bootstrap-summary__title {
+    margin-top: 3px;
+    font-size: 18px;
+}
+
+.bootstrap-height--short .bootstrap-summary__message { margin-top: 2px; }
+.bootstrap-height--short .bootstrap-progress-meta { margin-top: 4px; }
+.bootstrap-height--short .bootstrap-status-line { margin-top: 5px; }
+.bootstrap-height--short .bootstrap-setup-flow,
+.bootstrap-height--short .bootstrap-completion-receipt { margin-top: var(--bootstrap-space-2); }
+.bootstrap-height--short .bootstrap-setup-flow__heading { margin-bottom: 4px; }
+
+.bootstrap-height--short .bootstrap-setup-item {
+    min-height: 58px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.bootstrap-height--short .bootstrap-setup-item__marker {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+}
+
+.bootstrap-height--short .bootstrap-setup-item__detail { margin-top: 1px; }
+.bootstrap-height--short .bootstrap-receipt-item { min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
+.bootstrap-height--short .bootstrap-details { margin-top: 5px; }
+.bootstrap-height--short .bootstrap-action-bar { min-height: 58px; max-height: 58px; }

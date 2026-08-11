@@ -78,7 +78,8 @@ namespace Deucarian.Bootstrap.Editor
                 _operation.PendingPackageId,
                 _installedState,
                 health,
-                _legacyRegistryStatus);
+                _legacyRegistryStatus,
+                _operation.PendingKind);
             Changed?.Invoke();
         }
 

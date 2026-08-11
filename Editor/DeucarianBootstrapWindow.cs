@@ -76,7 +76,7 @@ namespace Deucarian.Bootstrap.Editor
         {
             EditorApplication.delayCall -= ResumeActiveOperationAfterReload;
             BootstrapOperationState state = new BootstrapSessionOperationStore().Load();
-            if (state == null || !state.Active)
+            if (!BootstrapWindowLifecyclePolicy.ShouldResumeAfterReload(state))
             {
                 return;
             }
@@ -198,8 +198,15 @@ namespace Deucarian.Bootstrap.Editor
             _transientMessage = string.Empty;
             if (action == BootstrapSetupAction.OpenPackageInstaller)
             {
-                BootstrapHandoffResult result = _handoff.Open();
-                _transientMessage = result.Success ? string.Empty : result.Message;
+                BootstrapWindowHandoffDecision decision =
+                    BootstrapWindowLifecyclePolicy.EvaluateHandoff(_handoff.Open());
+                if (decision.CloseWindow)
+                {
+                    Close();
+                    return;
+                }
+
+                _transientMessage = decision.Message;
                 Render();
                 return;
             }
@@ -220,8 +227,10 @@ namespace Deucarian.Bootstrap.Editor
                 return;
             }
 
+            BootstrapSetupSnapshot snapshot = _coordinator.Snapshot;
+            BootstrapStartupPreferences.RetireIfAuthoritativelyHealthy(snapshot);
             _view.Render(BootstrapPresentationModelFactory.Create(
-                _coordinator.Snapshot,
+                snapshot,
                 _transientMessage));
         }
 

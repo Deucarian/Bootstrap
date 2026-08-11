@@ -44,12 +44,46 @@ namespace Deucarian.Bootstrap.Editor
 
         public static bool ShouldShow()
         {
-            return EditorPrefs.GetBool(GetPreferenceKey(GetProjectRoot()), true);
+            return ShouldShowForProject(GetProjectRoot());
         }
 
         public static void SetShouldShow(bool value)
         {
-            EditorPrefs.SetBool(GetPreferenceKey(GetProjectRoot()), value);
+            SetShouldShowForProject(GetProjectRoot(), value);
+        }
+
+        public static bool RetireIfAuthoritativelyHealthy(BootstrapSetupSnapshot snapshot)
+        {
+            return RetireIfAuthoritativelyHealthyForProject(snapshot, GetProjectRoot());
+        }
+
+        internal static bool ShouldShowForProject(string projectRoot)
+        {
+            return EditorPrefs.GetBool(GetPreferenceKey(projectRoot), true);
+        }
+
+        internal static void SetShouldShowForProject(string projectRoot, bool value)
+        {
+            EditorPrefs.SetBool(GetPreferenceKey(projectRoot), value);
+        }
+
+        internal static bool RetireIfAuthoritativelyHealthyForProject(
+            BootstrapSetupSnapshot snapshot,
+            string projectRoot)
+        {
+            if (!BootstrapWindowLifecyclePolicy.ShouldRetireAutomaticStartup(snapshot) ||
+                !ShouldShowForProject(projectRoot))
+            {
+                return false;
+            }
+
+            SetShouldShowForProject(projectRoot, false);
+            return true;
+        }
+
+        internal static void DeleteForProjectForTests(string projectRoot)
+        {
+            EditorPrefs.DeleteKey(GetPreferenceKey(projectRoot));
         }
 
         internal static string GetPreferenceKey(string projectRoot)

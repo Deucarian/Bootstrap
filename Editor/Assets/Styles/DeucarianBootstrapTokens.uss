@@ -33,6 +33,11 @@
     --bootstrap-error: #d36a68;
     --bootstrap-neutral: #80919b;
     --bootstrap-focus: #67dfd1;
+    --bootstrap-accent-wash: rgba(59, 166, 154, 0.10);
+    --bootstrap-info-wash: rgba(103, 145, 189, 0.10);
+    --bootstrap-success-wash: rgba(95, 191, 134, 0.10);
+    --bootstrap-warning-wash: rgba(217, 157, 72, 0.10);
+    --bootstrap-error-wash: rgba(211, 106, 104, 0.10);
 
     flex-grow: 1;
     min-width: 0;
@@ -52,15 +57,20 @@
     --bootstrap-border-active: rgba(35, 126, 121, 0.74);
     --bootstrap-text: #1f2b32;
     --bootstrap-text-muted: #53636d;
-    --bootstrap-text-faint: #6f7d85;
-    --bootstrap-accent: #257f79;
+    --bootstrap-text-faint: #596770;
+    --bootstrap-accent: #1f6f6a;
     --bootstrap-accent-hover: #1f746f;
     --bootstrap-accent-active: #1e6e69;
     --bootstrap-on-accent: #ffffff;
     --bootstrap-info: #3f6f9d;
     --bootstrap-success: #397853;
-    --bootstrap-warning: #95631d;
+    --bootstrap-warning: #8c5b18;
     --bootstrap-error: #a24747;
-    --bootstrap-neutral: #64757f;
-    --bootstrap-focus: #177b75;
+    --bootstrap-neutral: #5c6e77;
+    --bootstrap-focus: #126f6a;
+    --bootstrap-accent-wash: rgba(37, 127, 121, 0.09);
+    --bootstrap-info-wash: rgba(63, 111, 157, 0.09);
+    --bootstrap-success-wash: rgba(57, 120, 83, 0.09);
+    --bootstrap-warning-wash: rgba(149, 99, 29, 0.09);
+    --bootstrap-error-wash: rgba(162, 71, 71, 0.09);
 }

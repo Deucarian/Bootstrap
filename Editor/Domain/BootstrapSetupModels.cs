@@ -147,7 +147,8 @@ namespace Deucarian.Bootstrap.Editor
             string pendingPackageId,
             BootstrapInstalledState installedState,
             BootstrapHealthReport health,
-            BootstrapScopedRegistryStatus legacyRegistryStatus)
+            BootstrapScopedRegistryStatus legacyRegistryStatus,
+            BootstrapPersistedOperationKind pendingKind = BootstrapPersistedOperationKind.None)
         {
             Channel = channel;
             Phase = phase;
@@ -165,6 +166,7 @@ namespace Deucarian.Bootstrap.Editor
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList());
             PendingPackageId = pendingPackageId ?? string.Empty;
+            PendingKind = pendingKind;
             InstalledState = installedState ?? BootstrapInstalledState.Empty;
             Health = health ?? BootstrapSetupPolicy.Evaluate(
                 channel,
@@ -197,6 +199,8 @@ namespace Deucarian.Bootstrap.Editor
         public IReadOnlyList<string> CompletedPackageIds { get; }
 
         public string PendingPackageId { get; }
+
+        public BootstrapPersistedOperationKind PendingKind { get; }
 
         public BootstrapInstalledState InstalledState { get; }
 

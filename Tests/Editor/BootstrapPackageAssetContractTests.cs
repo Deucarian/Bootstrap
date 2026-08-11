@@ -151,7 +151,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 "loader-circle.png",
                 "download.png",
                 "wrench.png",
-                "external-link.png"
+                "external-link.png",
+                "package-open.png"
             };
             byte[] pngSignature = { 137, 80, 78, 71, 13, 10, 26, 10 };
 
@@ -228,7 +229,108 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 StringAssert.Contains("url(\"../Icons/Lucide/download.png\")", components);
                 StringAssert.Contains("url(\"../Icons/Lucide/wrench.png\")", components);
                 StringAssert.Contains("url(\"../Icons/Lucide/external-link.png\")", components);
+                StringAssert.Contains("url(\"../Icons/Lucide/package-open.png\")", components);
             });
+        }
+
+        [Test]
+        public void LightSkinSmallTextTokensMeetAccessibleContrast()
+        {
+            string tokens = File.ReadAllText(Path.Combine(
+                GetPackageRoot(),
+                "Editor",
+                "Assets",
+                "Styles",
+                "DeucarianBootstrapTokens.uss"));
+            string lightBlock = Regex.Match(
+                tokens,
+                "\\.deucarian-bootstrap--light\\s*\\{(?<body>[^}]*)\\}",
+                RegexOptions.CultureInvariant | RegexOptions.Singleline).Groups["body"].Value;
+            string background = ReadHexToken(lightBlock, "--bootstrap-bg");
+            string[] foregroundTokens =
+            {
+                "--bootstrap-text",
+                "--bootstrap-text-muted",
+                "--bootstrap-text-faint",
+                "--bootstrap-accent",
+                "--bootstrap-info",
+                "--bootstrap-success",
+                "--bootstrap-warning",
+                "--bootstrap-error",
+                "--bootstrap-neutral",
+                "--bootstrap-focus"
+            };
+
+            foreach (string token in foregroundTokens)
+            {
+                double ratio = ContrastRatio(
+                    ReadHexToken(lightBlock, token),
+                    background);
+                Assert.That(ratio, Is.GreaterThanOrEqualTo(4.5d),
+                    token + " must meet WCAG normal-text contrast in the light skin.");
+            }
+        }
+
+        [Test]
+        public void ProductionUiStaysWithinTheUnity2021_3CompatibilitySurface()
+        {
+            string packageRoot = GetPackageRoot();
+            string stylesRoot = Path.Combine(packageRoot, "Editor", "Assets", "Styles");
+            string allStyles = string.Join(
+                "\n",
+                Directory.GetFiles(stylesRoot, "*.uss", SearchOption.TopDirectoryOnly)
+                    .Select(File.ReadAllText));
+            string allProductionCode = string.Join(
+                "\n",
+                Directory.GetFiles(
+                        Path.Combine(packageRoot, "Editor"),
+                        "*.cs",
+                        SearchOption.AllDirectories)
+                    .Select(File.ReadAllText));
+
+            string[] unsupportedUssPatterns =
+            {
+                @"(^|[\s;{])(row-|column-)?gap\s*:",
+                @"display\s*:\s*grid",
+                @"grid-template",
+                @"color-mix\s*\(",
+                @"light-dark\s*\(",
+                @"(^|[\s;{])transition(-[a-z]+)?\s*:",
+                @"(^|[\s;{])animation(-[a-z]+)?\s*:"
+            };
+            string[] unsupportedCodePatterns =
+            {
+                @"\bFindFirstObjectByType\b",
+                @"\bFindAnyObjectByType\b",
+                @"\bMultiColumnListView\b",
+                @"\.dataSource\b",
+                @"\.SetBinding\s*\(",
+                @"\brecord\s+(class|struct|[A-Za-z_])",
+                @"\brequired\s+(string|bool|int|float|double|long|object|[A-Z][A-Za-z0-9_<>,?]*)\s+[A-Za-z_]",
+                @"\binit\s*;"
+            };
+
+            foreach (string pattern in unsupportedUssPatterns)
+            {
+                Assert.That(Regex.IsMatch(
+                    allStyles,
+                    pattern,
+                    RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Multiline),
+                    Is.False,
+                    "USS uses a construct outside Bootstrap's Unity 2021.3 compatibility subset: " +
+                    pattern);
+            }
+
+            foreach (string pattern in unsupportedCodePatterns)
+            {
+                Assert.That(Regex.IsMatch(
+                    allProductionCode,
+                    pattern,
+                    RegexOptions.CultureInvariant),
+                    Is.False,
+                    "Production code uses an API or language construct unavailable on Unity 2021.3: " +
+                    pattern);
+            }
         }
 
         private static string GetPackageRoot()
@@ -249,6 +351,39 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 RegexOptions.CultureInvariant);
             Assert.That(match.Success, Is.True, "Missing JSON object property " + propertyName + ".");
             return match.Groups["body"].Value.Trim();
+        }
+
+        private static string ReadHexToken(string block, string token)
+        {
+            Match match = Regex.Match(
+                block ?? string.Empty,
+                Regex.Escape(token) + "\\s*:\\s*#(?<hex>[0-9a-fA-F]{6})\\s*;",
+                RegexOptions.CultureInvariant);
+            Assert.That(match.Success, Is.True, "Missing color token " + token + ".");
+            return match.Groups["hex"].Value;
+        }
+
+        private static double ContrastRatio(string foreground, string background)
+        {
+            double foregroundLuminance = RelativeLuminance(foreground);
+            double backgroundLuminance = RelativeLuminance(background);
+            return (Math.Max(foregroundLuminance, backgroundLuminance) + 0.05d) /
+                   (Math.Min(foregroundLuminance, backgroundLuminance) + 0.05d);
+        }
+
+        private static double RelativeLuminance(string hex)
+        {
+            double red = LinearChannel(Convert.ToInt32(hex.Substring(0, 2), 16) / 255d);
+            double green = LinearChannel(Convert.ToInt32(hex.Substring(2, 2), 16) / 255d);
+            double blue = LinearChannel(Convert.ToInt32(hex.Substring(4, 2), 16) / 255d);
+            return (0.2126d * red) + (0.7152d * green) + (0.0722d * blue);
+        }
+
+        private static double LinearChannel(double channel)
+        {
+            return channel <= 0.04045d
+                ? channel / 12.92d
+                : Math.Pow((channel + 0.055d) / 1.055d, 2.4d);
         }
 
         private static string ToPackageRelativePath(string packageRoot, string path)

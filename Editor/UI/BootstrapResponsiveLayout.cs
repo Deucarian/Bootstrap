@@ -18,10 +18,12 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const float NarrowBreakpoint = 900f;
         public const float WideBreakpoint = 1180f;
+        public const float ShortHeightBreakpoint = 600f;
 
         public const string NarrowClassName = "bootstrap-responsive--narrow";
         public const string CompactClassName = "bootstrap-responsive--compact";
         public const string WideClassName = "bootstrap-responsive--wide";
+        public const string ShortHeightClassName = "bootstrap-height--short";
 
         public static BootstrapResponsiveMode ResolveMode(float windowWidth)
         {
@@ -171,6 +173,15 @@ namespace Deucarian.Bootstrap.Editor
         public bool IsWide
         {
             get { return Mode == BootstrapResponsiveMode.Wide; }
+        }
+
+        public bool IsShortHeight
+        {
+            get
+            {
+                return WindowHeight > 0f &&
+                       WindowHeight < BootstrapResponsiveLayout.ShortHeightBreakpoint;
+            }
         }
     }
 }

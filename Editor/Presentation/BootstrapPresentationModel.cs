@@ -4,130 +4,7 @@ using System.Linq;
 
 namespace Deucarian.Bootstrap.Editor
 {
-    internal enum BootstrapPresentationTone
-    {
-        Neutral,
-        Info,
-        Success,
-        Warning,
-        Error
-    }
-
-    internal enum BootstrapStepPresentationState
-    {
-        Pending,
-        Ready,
-        Current,
-        Complete,
-        Failed
-    }
-
-    internal sealed class BootstrapStepPresentation
-    {
-        public BootstrapStepPresentation(
-            int number,
-            string title,
-            string detail,
-            string technicalDetail,
-            BootstrapStepPresentationState state)
-        {
-            Number = number;
-            Title = title ?? string.Empty;
-            Detail = detail ?? string.Empty;
-            TechnicalDetail = technicalDetail ?? string.Empty;
-            State = state;
-        }
-
-        public int Number { get; }
-
-        public string Title { get; }
-
-        public string Detail { get; }
-
-        public string TechnicalDetail { get; }
-
-        public BootstrapStepPresentationState State { get; }
-    }
-
-    internal sealed class BootstrapDetailPresentation
-    {
-        public BootstrapDetailPresentation(string label, string value)
-        {
-            Label = label ?? string.Empty;
-            Value = value ?? string.Empty;
-        }
-
-        public string Label { get; }
-
-        public string Value { get; }
-    }
-
-    internal sealed class BootstrapPresentationModel
-    {
-        public BootstrapPresentationModel(
-            BootstrapChannel channel,
-            BootstrapSetupPhase phase,
-            string stateTitle,
-            string stateMessage,
-            string statusText,
-            BootstrapPresentationTone tone,
-            string iconClass,
-            BootstrapSetupAction primaryAction,
-            string primaryActionLabel,
-            string primaryActionTooltip,
-            bool primaryActionEnabled,
-            bool channelEnabled,
-            string actionSummary,
-            string actionDetail,
-            IReadOnlyList<BootstrapStepPresentation> steps,
-            IReadOnlyList<BootstrapDetailPresentation> details,
-            string offlineNotice,
-            int completedStepCount,
-            string installedSummary)
-        {
-            Channel = channel;
-            Phase = phase;
-            StateTitle = stateTitle ?? string.Empty;
-            StateMessage = stateMessage ?? string.Empty;
-            StatusText = statusText ?? string.Empty;
-            Tone = tone;
-            IconClass = iconClass ?? string.Empty;
-            PrimaryAction = primaryAction;
-            PrimaryActionLabel = primaryActionLabel ?? string.Empty;
-            PrimaryActionTooltip = primaryActionTooltip ?? string.Empty;
-            PrimaryActionEnabled = primaryActionEnabled;
-            ChannelEnabled = channelEnabled;
-            ActionSummary = actionSummary ?? string.Empty;
-            ActionDetail = actionDetail ?? string.Empty;
-            Steps = steps ?? Array.Empty<BootstrapStepPresentation>();
-            Details = details ?? Array.Empty<BootstrapDetailPresentation>();
-            OfflineNotice = offlineNotice ?? string.Empty;
-            CompletedStepCount = Math.Max(0, completedStepCount);
-            InstalledSummary = installedSummary ?? string.Empty;
-        }
-
-        public BootstrapChannel Channel { get; }
-        public BootstrapSetupPhase Phase { get; }
-        public string StateTitle { get; }
-        public string StateMessage { get; }
-        public string StatusText { get; }
-        public BootstrapPresentationTone Tone { get; }
-        public string IconClass { get; }
-        public BootstrapSetupAction PrimaryAction { get; }
-        public string PrimaryActionLabel { get; }
-        public string PrimaryActionTooltip { get; }
-        public bool PrimaryActionEnabled { get; }
-        public bool ChannelEnabled { get; }
-        public string ActionSummary { get; }
-        public string ActionDetail { get; }
-        public IReadOnlyList<BootstrapStepPresentation> Steps { get; }
-        public IReadOnlyList<BootstrapDetailPresentation> Details { get; }
-        public string OfflineNotice { get; }
-        public int CompletedStepCount { get; }
-        public string InstalledSummary { get; }
-    }
-
-    internal static class BootstrapPresentationModelFactory
+    internal static partial class BootstrapPresentationModelFactory
     {
         public static BootstrapPresentationModel Create(
             BootstrapSetupSnapshot snapshot,
@@ -135,44 +12,65 @@ namespace Deucarian.Bootstrap.Editor
         {
             BootstrapSetupSnapshot state = snapshot ??
                 BootstrapSetupSnapshot.Loading(BootstrapChannel.Stable, "Checking setup...");
-            BootstrapSetupAction action = ResolveVisibleAction(state);
-            string title = GetTitle(state, action);
-            string message = GetMessage(state, action);
-            string status = !string.IsNullOrWhiteSpace(transientMessage)
+            bool handoffRecovery = !string.IsNullOrWhiteSpace(transientMessage);
+            BootstrapSetupAction action = handoffRecovery
+                ? BootstrapSetupAction.Refresh
+                : ResolveVisibleAction(state);
+            IReadOnlyList<BootstrapStepPresentation> steps = BuildSteps(state);
+            IReadOnlyList<BootstrapReceiptPresentation> receipt = BuildReceipt(state);
+            string actionLabel = GetActionLabel(state, action);
+            string footerText = handoffRecovery
+                ? "Refresh checks the menu and package state again without changing packages."
+                : GetFooterText(state, actionLabel);
+            string status = handoffRecovery
                 ? transientMessage
                 : !string.IsNullOrWhiteSpace(state.Error)
                     ? state.Error
                     : state.Status;
-            BootstrapPresentationTone tone = string.IsNullOrWhiteSpace(transientMessage)
-                ? GetTone(state)
-                : BootstrapPresentationTone.Error;
-            string label = GetActionLabel(state, action);
-            bool actionEnabled = !state.IsBusy && action != BootstrapSetupAction.None;
-            IReadOnlyList<BootstrapStepPresentation> steps = BuildSteps(state);
-            int completed = steps.Count(step => step.State == BootstrapStepPresentationState.Complete);
+            BootstrapPresentationTone tone = handoffRecovery
+                ? BootstrapPresentationTone.Error
+                : GetTone(state);
+            bool showSetupFlow = steps.Count > 0 &&
+                state.Phase != BootstrapSetupPhase.Loading &&
+                state.Phase != BootstrapSetupPhase.Healthy;
+            bool showReceipt = state.Phase == BootstrapSetupPhase.Healthy &&
+                state.Health.IsHealthy;
+            bool showAction = !state.IsBusy && action != BootstrapSetupAction.None;
+            int completed = steps.Count(step =>
+                step.State == BootstrapStepPresentationState.Complete);
 
             return new BootstrapPresentationModel(
                 state.Channel,
                 state.Phase,
-                title,
-                message,
+                handoffRecovery
+                    ? "Package Installer is still starting"
+                    : GetTitle(state, action),
+                handoffRecovery
+                    ? "Unity has not registered the Package Installer menu yet. No package changes will happen while you wait."
+                    : GetMessage(state, action),
                 status,
                 tone,
-                GetIconClass(state, action),
+                handoffRecovery ? "bootstrap-icon--error" : GetIconClass(state, action),
                 action,
-                label,
+                actionLabel,
                 GetActionTooltip(action),
-                actionEnabled,
+                showAction,
                 !state.IsBusy,
                 GetActionSummary(state, action),
-                GetActionDetail(state, action),
+                footerText,
                 steps,
                 BuildDetails(state),
                 state.CatalogOrigin == BootstrapCatalogOrigin.BundledFallback
                     ? state.CatalogNotice
                     : string.Empty,
                 completed,
-                GetInstalledSummary(state));
+                GetInstalledSummary(state),
+                receipt,
+                showSetupFlow,
+                showReceipt,
+                showAction,
+                footerText,
+                IsDurableBusyPhase(state.Phase));
         }
 
         private static BootstrapSetupAction ResolveVisibleAction(BootstrapSetupSnapshot state)
@@ -182,144 +80,188 @@ namespace Deucarian.Bootstrap.Editor
                 return BootstrapSetupAction.None;
             }
 
-            return state.Phase == BootstrapSetupPhase.Failed
-                ? BootstrapSetupAction.Refresh
-                : state.Health.RecommendedAction;
+            if (state.Phase == BootstrapSetupPhase.Failed ||
+                state.Phase == BootstrapSetupPhase.ReviewRequired)
+            {
+                return BootstrapSetupAction.Refresh;
+            }
+
+            return state.Health.RecommendedAction;
         }
 
-        private static string GetTitle(BootstrapSetupSnapshot state, BootstrapSetupAction action)
+        private static string GetTitle(
+            BootstrapSetupSnapshot state,
+            BootstrapSetupAction action)
         {
             switch (state.Phase)
             {
                 case BootstrapSetupPhase.Loading:
-                    return "Checking setup";
+                    return "Checking Package Installer setup";
                 case BootstrapSetupPhase.Installing:
-                    return "Installing setup";
+                    return "Installing Package Installer";
                 case BootstrapSetupPhase.WaitingForUnity:
                     return "Waiting for Unity";
                 case BootstrapSetupPhase.Verifying:
                     return "Verifying Package Installer";
                 case BootstrapSetupPhase.Healthy:
-                    return "Setup complete";
+                    return "Package Installer is ready";
                 case BootstrapSetupPhase.ReviewRequired:
-                    return "Revision review needed";
+                    return "Package Installer needs review";
                 case BootstrapSetupPhase.Failed:
-                    return "Setup stopped";
+                    return "Setup needs attention";
             }
 
             switch (action)
             {
                 case BootstrapSetupAction.Install:
-                    return "Ready for first-time setup";
+                    return "Install Package Installer";
                 case BootstrapSetupAction.Migrate:
-                    return "Legacy Package Installer source detected";
+                    return "Migrate Package Installer";
                 case BootstrapSetupAction.SwitchChannel:
-                    return "Package Installer is on another channel";
+                    return "Switch Package Installer to " +
+                        BootstrapChannelUtility.GetDisplayName(state.Channel);
                 default:
-                    if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.Outdated)
-                    {
-                        return "Package Installer is outdated";
-                    }
-
-                    if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.WrongSource)
-                    {
-                        return "Package Installer source needs repair";
-                    }
-
-                    if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.Missing)
-                    {
-                        return "Package Installer is missing";
-                    }
-
-                    return "Setup dependencies need repair";
+                    return "Repair Package Installer";
             }
         }
 
-        private static string GetMessage(BootstrapSetupSnapshot state, BootstrapSetupAction action)
+        private static string GetMessage(
+            BootstrapSetupSnapshot state,
+            BootstrapSetupAction action)
         {
-            if (state.Phase == BootstrapSetupPhase.Healthy)
+            switch (state.Phase)
             {
-                return "Package Installer matches the selected channel and lock revision.";
-            }
-
-            if (state.Phase == BootstrapSetupPhase.Loading)
-            {
-                return "Checking channel, packages, and revision.";
-            }
-
-            if (state.Phase == BootstrapSetupPhase.Installing ||
-                state.Phase == BootstrapSetupPhase.WaitingForUnity ||
-                state.Phase == BootstrapSetupPhase.Verifying)
-            {
-                return "Safe to close. Setup resumes after Unity reloads.";
-            }
-
-            if (state.Phase == BootstrapSetupPhase.ReviewRequired)
-            {
-                return "Bootstrap cannot verify the selected remote revision yet.";
-            }
-
-            if (state.Phase == BootstrapSetupPhase.Failed)
-            {
-                return "Nothing else will change until you retry.";
+                case BootstrapSetupPhase.Loading:
+                    return "Checking this project and the selected channel. Nothing is being installed.";
+                case BootstrapSetupPhase.Installing:
+                case BootstrapSetupPhase.WaitingForUnity:
+                case BootstrapSetupPhase.Verifying:
+                    return "Bootstrap is preparing the requirements, then Package Installer, in a durable order.";
+                case BootstrapSetupPhase.Healthy:
+                    return "Setup is complete. Continue all Deucarian package work in Package Installer.";
+                case BootstrapSetupPhase.ReviewRequired:
+                    return "The installed source is present, but its selected-branch revision cannot be verified.";
+                case BootstrapSetupPhase.Failed:
+                    return "No further package changes will happen until the project is checked again.";
             }
 
             switch (action)
             {
                 case BootstrapSetupAction.Install:
-                    return "Installs Editor, Logging, then Package Installer.";
+                    return "Editor and Logging are installed first. Package Installer becomes your home for ongoing package work.";
                 case BootstrapSetupAction.Migrate:
-                    return "Moves Package Installer from the legacy registry to the selected Git channel.";
+                    return "The legacy registry source will be replaced with Package Installer from the selected Git channel.";
                 case BootstrapSetupAction.SwitchChannel:
-                    return "Moves Package Installer to the selected branch after checking its setup dependencies.";
+                    return "Requirements stay in place while Package Installer moves to the selected Git branch.";
                 default:
-                    if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.Outdated)
-                    {
-                        return "The installed revision does not match the selected branch.";
-                    }
-
-                    if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.WrongSource)
-                    {
-                        return "The installed Git source does not match this channel.";
-                    }
-
-                    return "Missing setup packages will be repaired in order.";
+                    return "Bootstrap repairs the requirements first, then restores Package Installer as the destination.";
             }
         }
 
-        private static IReadOnlyList<BootstrapStepPresentation> BuildSteps(BootstrapSetupSnapshot state)
+        private static IReadOnlyList<BootstrapStepPresentation> BuildSteps(
+            BootstrapSetupSnapshot state)
         {
+            IReadOnlyList<BootstrapPackageStep> plan = GetPresentationPlan(state);
             List<BootstrapStepPresentation> steps = new List<BootstrapStepPresentation>();
-            for (int index = 0; index < state.Plan.Count; index++)
+            for (int index = 0; index < plan.Count; index++)
             {
-                BootstrapPackageStep step = state.Plan[index];
-                BootstrapStepPresentationState stepState = GetStepState(state, step);
+                BootstrapPackageStep step = plan[index];
+                if (step == null)
+                {
+                    continue;
+                }
+
+                BootstrapSetupItemRole role = GetRole(step.PackageId);
+                BootstrapStepPresentationState stepState = GetStepState(state, step, role);
                 steps.Add(new BootstrapStepPresentation(
                     index + 1,
-                    step.DisplayName,
-                    GetStepDetail(step, stepState),
-                    step.PackageId + "\n" + step.PackageReference,
+                    step.PackageId,
+                    role,
+                    GetItemTitle(step.PackageId, step.DisplayName),
+                    GetStepLabel(state, stepState, role),
+                    GetStepDetail(state, step, stepState, role),
+                    GetTechnicalDetail(step),
                     stepState));
             }
 
             return steps;
         }
 
-        private static BootstrapStepPresentationState GetStepState(
-            BootstrapSetupSnapshot state,
-            BootstrapPackageStep step)
+        private static IReadOnlyList<BootstrapPackageStep> GetPresentationPlan(
+            BootstrapSetupSnapshot state)
         {
-            if (state.CompletedPackageIds.Contains(step.PackageId, StringComparer.OrdinalIgnoreCase) ||
-                (state.Phase == BootstrapSetupPhase.Healthy && state.InstalledState.Contains(step.PackageId)))
+            if (state.Plan.Count > 0 || state.Phase != BootstrapSetupPhase.Failed)
             {
-                return BootstrapStepPresentationState.Complete;
+                return state.Plan;
             }
 
-            if (string.Equals(state.PendingPackageId, step.PackageId, StringComparison.OrdinalIgnoreCase))
+            return new[]
+            {
+                new BootstrapPackageStep(
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    DeucarianBootstrapPackageConstants.EditorPackageDisplayName,
+                    string.Empty),
+                new BootstrapPackageStep(
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageDisplayName,
+                    string.Empty),
+                new BootstrapPackageStep(
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName,
+                    string.Empty)
+            };
+        }
+
+        private static string GetTechnicalDetail(BootstrapPackageStep step)
+        {
+            return string.IsNullOrWhiteSpace(step.PackageReference)
+                ? step.PackageId + "\nExact Git reference unavailable until setup metadata validates."
+                : step.PackageId + "\n" + step.PackageReference;
+        }
+
+        private static BootstrapStepPresentationState GetStepState(
+            BootstrapSetupSnapshot state,
+            BootstrapPackageStep step,
+            BootstrapSetupItemRole role)
+        {
+            if (state.Phase == BootstrapSetupPhase.Failed &&
+                state.Plan.Count == 0 &&
+                string.IsNullOrWhiteSpace(state.PendingPackageId) &&
+                role == BootstrapSetupItemRole.Destination)
+            {
+                return BootstrapStepPresentationState.Failed;
+            }
+
+            if (state.Phase == BootstrapSetupPhase.Verifying &&
+                role == BootstrapSetupItemRole.Destination)
+            {
+                return BootstrapStepPresentationState.Current;
+            }
+
+            if (string.Equals(
+                    state.PendingPackageId,
+                    step.PackageId,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return state.Phase == BootstrapSetupPhase.Failed
                     ? BootstrapStepPresentationState.Failed
                     : BootstrapStepPresentationState.Current;
+            }
+
+            if (state.CompletedPackageIds.Contains(
+                    step.PackageId,
+                    StringComparer.OrdinalIgnoreCase) ||
+                (state.Phase == BootstrapSetupPhase.Healthy &&
+                 state.InstalledState.Contains(step.PackageId)))
+            {
+                return BootstrapStepPresentationState.Complete;
+            }
+
+            if (role == BootstrapSetupItemRole.Destination &&
+                state.InstalledState.Contains(step.PackageId) &&
+                state.Health.PackageInstallerState != BootstrapPackageInstallerSetupState.Healthy)
+            {
+                return BootstrapStepPresentationState.Attention;
             }
 
             return state.InstalledState.Contains(step.PackageId)
@@ -327,168 +269,189 @@ namespace Deucarian.Bootstrap.Editor
                 : BootstrapStepPresentationState.Pending;
         }
 
-        private static string GetStepDetail(
-            BootstrapPackageStep step,
-            BootstrapStepPresentationState state)
+        private static string GetStepLabel(
+            BootstrapSetupSnapshot state,
+            BootstrapStepPresentationState stepState,
+            BootstrapSetupItemRole role)
         {
-            if (state == BootstrapStepPresentationState.Complete)
+            switch (stepState)
             {
-                return "Completed from the selected Git channel.";
-            }
+                case BootstrapStepPresentationState.Complete:
+                    return "Installed";
+                case BootstrapStepPresentationState.Ready:
+                    return "Installed";
+                case BootstrapStepPresentationState.Failed:
+                    if (state.Plan.Count == 0 &&
+                        string.IsNullOrWhiteSpace(state.PendingPackageId))
+                    {
+                        return "Status unavailable";
+                    }
 
-            if (state == BootstrapStepPresentationState.Current)
-            {
-                return "Current durable operation.";
-            }
+                    return "Needs attention";
+                case BootstrapStepPresentationState.Attention:
+                    return GetAttentionLabel(state);
+                case BootstrapStepPresentationState.Current:
+                    if (state.Phase == BootstrapSetupPhase.Verifying) return "Verifying";
+                    if (state.PendingKind == BootstrapPersistedOperationKind.Remove)
+                    {
+                        return "Removing legacy source";
+                    }
 
-            if (state == BootstrapStepPresentationState.Failed)
-            {
-                return "This step needs attention before setup can continue.";
-            }
+                    if (state.PendingKind == BootstrapPersistedOperationKind.List ||
+                        state.Phase == BootstrapSetupPhase.WaitingForUnity)
+                    {
+                        return "Waiting for Unity";
+                    }
 
-            if (string.Equals(step.PackageId, DeucarianBootstrapPackageConstants.EditorPackageId, StringComparison.OrdinalIgnoreCase))
-            {
-                return "Shared editor shell and resources, installed first.";
-            }
-
-            if (string.Equals(step.PackageId, DeucarianBootstrapPackageConstants.LoggingPackageId, StringComparison.OrdinalIgnoreCase))
-            {
-                return "Installer diagnostics facade, installed after Editor.";
-            }
-
-            return "Package management destination, installed or migrated last.";
-        }
-
-        private static IReadOnlyList<BootstrapDetailPresentation> BuildDetails(BootstrapSetupSnapshot state)
-        {
-            BootstrapInstalledPackageInfo installer = state.InstalledState.Get(
-                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
-            List<BootstrapDetailPresentation> details = new List<BootstrapDetailPresentation>
-            {
-                new BootstrapDetailPresentation("Selected channel", BootstrapChannelUtility.GetDisplayName(state.Channel) + " · Git #" + BootstrapChannelUtility.GetGitBranch(state.Channel)),
-                new BootstrapDetailPresentation("Registry source", string.IsNullOrWhiteSpace(state.CatalogSource) ? "Checking..." : state.CatalogSource),
-                new BootstrapDetailPresentation("Package Installer target", state.TargetGitUrl),
-                new BootstrapDetailPresentation("Target branch revision", ExactRevision(state.TargetRevision, "Unverifiable")),
-                new BootstrapDetailPresentation("Installed source", installer != null ? installer.BestReference : "Not installed"),
-                new BootstrapDetailPresentation("Installed lock revision", installer != null ? ExactRevision(installer.LockRevision, "Unverifiable") : "Not installed"),
-                new BootstrapDetailPresentation("Legacy scoped registry", state.LegacyRegistryStatus.Detail),
-                new BootstrapDetailPresentation("Registry notice", string.IsNullOrWhiteSpace(state.CatalogNotice) ? "Remote metadata validated." : state.CatalogNotice)
-            };
-
-            foreach (BootstrapPackageStep step in state.Plan)
-            {
-                details.Add(new BootstrapDetailPresentation(
-                    step.DisplayName + " Git reference",
-                    step.PackageReference));
-            }
-
-            return details;
-        }
-
-        private static BootstrapPresentationTone GetTone(BootstrapSetupSnapshot state)
-        {
-            switch (state.Phase)
-            {
-                case BootstrapSetupPhase.Healthy:
-                    return BootstrapPresentationTone.Success;
-                case BootstrapSetupPhase.Failed:
-                    return BootstrapPresentationTone.Error;
-                case BootstrapSetupPhase.ReviewRequired:
-                case BootstrapSetupPhase.Review:
-                    return BootstrapPresentationTone.Warning;
-                case BootstrapSetupPhase.Loading:
-                case BootstrapSetupPhase.Installing:
-                case BootstrapSetupPhase.WaitingForUnity:
-                case BootstrapSetupPhase.Verifying:
-                    return BootstrapPresentationTone.Info;
+                    return state.PendingKind == BootstrapPersistedOperationKind.Add
+                        ? "Installing"
+                        : "Preparing";
                 default:
-                    return BootstrapPresentationTone.Neutral;
+                    return role == BootstrapSetupItemRole.Destination
+                        ? "Will install last"
+                        : "Will install";
             }
         }
 
-        private static string GetIconClass(BootstrapSetupSnapshot state, BootstrapSetupAction action)
+        private static string GetStepDetail(
+            BootstrapSetupSnapshot state,
+            BootstrapPackageStep step,
+            BootstrapStepPresentationState stepState,
+            BootstrapSetupItemRole role)
         {
-            if (state.Phase == BootstrapSetupPhase.Healthy) return "bootstrap-icon--success";
-            if (state.Phase == BootstrapSetupPhase.Failed) return "bootstrap-icon--error";
-            if (state.IsBusy) return "bootstrap-icon--loading";
-            if (state.Phase == BootstrapSetupPhase.ReviewRequired) return "bootstrap-icon--review";
-            if (action == BootstrapSetupAction.Install) return "bootstrap-icon--install";
-            if (action == BootstrapSetupAction.OpenPackageInstaller) return "bootstrap-icon--open";
-            return "bootstrap-icon--repair";
-        }
-
-        private static string GetActionLabel(BootstrapSetupSnapshot state, BootstrapSetupAction action)
-        {
-            if (state.Phase == BootstrapSetupPhase.Loading) return "Checking...";
-            if (state.Phase == BootstrapSetupPhase.Installing) return "Installing...";
-            if (state.Phase == BootstrapSetupPhase.WaitingForUnity) return "Waiting for Unity...";
-            if (state.Phase == BootstrapSetupPhase.Verifying) return "Verifying...";
-
-            switch (action)
+            if (stepState == BootstrapStepPresentationState.Current)
             {
-                case BootstrapSetupAction.Install: return "Install";
-                case BootstrapSetupAction.Repair: return "Repair";
-                case BootstrapSetupAction.SwitchChannel: return "Switch Channel";
-                case BootstrapSetupAction.Migrate: return "Migrate";
-                case BootstrapSetupAction.Refresh: return "Refresh Status";
-                case BootstrapSetupAction.OpenPackageInstaller: return "Open Package Installer";
-                default: return "Working...";
+                if (state.Phase == BootstrapSetupPhase.Verifying)
+                {
+                    return "Checking Package Installer source, channel, and lock revision.";
+                }
+
+                if (state.PendingKind == BootstrapPersistedOperationKind.Remove)
+                {
+                    return "Removing the legacy Package Installer source before the Git installation.";
+                }
+
+                if (state.PendingKind == BootstrapPersistedOperationKind.List ||
+                    state.Phase == BootstrapSetupPhase.WaitingForUnity)
+                {
+                    return "Unity is resolving " + GetItemTitle(step.PackageId, step.DisplayName) + ".";
+                }
+
+                return role == BootstrapSetupItemRole.Destination
+                    ? "Installing Package Installer from the selected Git channel."
+                    : "Installing this requirement from the selected Git channel.";
             }
-        }
 
-        private static string GetActionTooltip(BootstrapSetupAction action)
-        {
-            return action == BootstrapSetupAction.OpenPackageInstaller
-                ? "Open Tools > Deucarian > Tools and Quality > Package Installer."
-                : action == BootstrapSetupAction.Refresh
-                    ? "Read registry, UPM, source, and revision state again without changing packages."
-                    : "Run the reviewed setup closure. Package changes begin only after this click.";
-        }
-
-        private static string GetActionSummary(BootstrapSetupSnapshot state, BootstrapSetupAction action)
-        {
-            return action == BootstrapSetupAction.OpenPackageInstaller
-                ? "Setup complete"
-                : state.IsBusy
-                    ? "Durable setup progress"
-                    : "One explicit action";
-        }
-
-        private static string GetActionDetail(BootstrapSetupSnapshot state, BootstrapSetupAction action)
-        {
-            return action == BootstrapSetupAction.OpenPackageInstaller
-                ? GetInstalledSummary(state)
-                : state.IsBusy
-                    ? Math.Min(state.CompletedPackageIds.Count, state.Plan.Count) + " of " + state.Plan.Count + " steps completed"
-                    : "Opening Bootstrap never installs or changes packages automatically.";
-        }
-
-        private static string GetInstalledSummary(BootstrapSetupSnapshot state)
-        {
-            BootstrapInstalledPackageInfo package = state.InstalledState.Get(
-                DeucarianBootstrapPackageConstants.PackageInstallerPackageId);
-            if (package == null)
+            if (stepState == BootstrapStepPresentationState.Complete)
             {
-                return "Package Installer is not installed.";
+                return role == BootstrapSetupItemRole.Destination
+                    ? "Installed and verified as the package-management destination."
+                    : "Installed and ready for Package Installer.";
             }
 
-            string version = string.IsNullOrWhiteSpace(package.Version) ? "version unknown" : "v" + package.Version;
-            return version + " · Git #" + BootstrapChannelUtility.GetGitBranch(state.Channel) +
-                " · " + ShortRevision(package.LockRevision, "revision unknown");
+            if (stepState == BootstrapStepPresentationState.Ready)
+            {
+                return role == BootstrapSetupItemRole.Destination
+                    ? "Already installed from the selected Git channel."
+                    : "Already installed and ready for Package Installer.";
+            }
+
+            if (stepState == BootstrapStepPresentationState.Failed)
+            {
+                if (state.Plan.Count == 0 &&
+                    string.IsNullOrWhiteSpace(state.PendingPackageId))
+                {
+                    return "Setup metadata or installed state could not be confirmed. Refresh retries detection without changing packages.";
+                }
+
+                return "Setup stopped at this item. Check the message above, then refresh.";
+            }
+
+            if (stepState == BootstrapStepPresentationState.Attention)
+            {
+                return GetAttentionDetail(state);
+            }
+
+            if (string.Equals(
+                    step.PackageId,
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return "Shared editor foundation required by Package Installer.";
+            }
+
+            if (string.Equals(
+                    step.PackageId,
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return "Setup diagnostics required by Package Installer.";
+            }
+
+            return "Your destination for ongoing Deucarian package management.";
         }
 
-        private static string ShortRevision(string revision, string fallback)
+        private static string GetAttentionLabel(BootstrapSetupSnapshot state)
         {
-            return string.IsNullOrWhiteSpace(revision)
-                ? fallback
-                : revision.Length <= 12
-                    ? revision
-                    : revision.Substring(0, 12);
+            if (state.Phase == BootstrapSetupPhase.ReviewRequired) return "Review needed";
+            if (state.Health.RecommendedAction == BootstrapSetupAction.Migrate) return "Migration needed";
+            if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.WrongChannel)
+            {
+                return "Wrong channel";
+            }
+
+            if (state.Health.PackageInstallerState == BootstrapPackageInstallerSetupState.Outdated)
+            {
+                return "Update needed";
+            }
+
+            return "Source repair needed";
         }
 
-        private static string ExactRevision(string revision, string fallback)
+        private static string GetAttentionDetail(BootstrapSetupSnapshot state)
         {
-            return string.IsNullOrWhiteSpace(revision) ? fallback : revision.Trim();
+            if (state.Health.RecommendedAction == BootstrapSetupAction.Migrate)
+            {
+                return "Installed from the legacy scoped registry; move it to the selected Git channel.";
+            }
+
+            switch (state.Health.PackageInstallerState)
+            {
+                case BootstrapPackageInstallerSetupState.WrongChannel:
+                    return "Installed from a different Git branch than the selected channel.";
+                case BootstrapPackageInstallerSetupState.Outdated:
+                    return "The lock revision does not match the selected branch head.";
+                case BootstrapPackageInstallerSetupState.UnknownReviewRequired:
+                    return "The selected remote revision cannot currently be verified.";
+                default:
+                    return "The installed source does not match the selected Git source.";
+            }
         }
+
+        private static IReadOnlyList<BootstrapReceiptPresentation> BuildReceipt(
+            BootstrapSetupSnapshot state)
+        {
+            if (state.Phase != BootstrapSetupPhase.Healthy || !state.Health.IsHealthy)
+            {
+                return Array.Empty<BootstrapReceiptPresentation>();
+            }
+
+            return new[]
+            {
+                new BootstrapReceiptPresentation(
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    "Editor",
+                    "Requirement installed"),
+                new BootstrapReceiptPresentation(
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    "Logging",
+                    "Requirement installed"),
+                new BootstrapReceiptPresentation(
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                    "Package Installer",
+                    "Destination ready")
+            };
+        }
+
     }
 }

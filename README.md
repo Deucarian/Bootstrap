@@ -179,9 +179,19 @@ button hierarchy without importing the shared Editor framework.
 - Wide: 1180 px or above
 
 The preferred floating footprint is 560 x 820 px, with a 480 x 460 px minimum
-for smaller docks. One status hero and one compact three-step rail carry the
-normal workflow. The action dock appears only when there is something the user
-can do, so loading and installation never show a duplicate disabled action.
+for smaller docks. An open, destination-first hero makes Package Installer the
+clear outcome. Editor and Logging appear as supporting requirements in three
+transforming setup items whose spacing and hairlines imply structure without a
+stack of heavy containers. The action dock appears only when there is something
+the user can do, so loading and installation never show a duplicate disabled
+action.
+
+During review and installation, the setup items explain and then track the
+dependency-first closure. Once the closure is authoritatively verified, they
+collapse into a quiet three-check receipt with source, channel, and revision
+context. **Open Package Installer** is the only primary handoff, and a successful
+handoff closes Bootstrap so normal package work continues in Package Installer.
+Bootstrap remains available from its menu for an explicit repair or migration.
 Exact Git URLs, source, lock revision, fallback notice, startup preference, and
 manual refresh are progressively disclosed under **Details**. Light and dark
 Unity skins have separate accessible token sets. Action and status imagery
@@ -209,6 +219,12 @@ responsibilities are split into focused components:
 
 Ordinary services use constructor injection. Unity static APIs are isolated to
 small adapters and the EditorWindow composition boundary.
+
+Automatic startup is project-scoped. Bootstrap retires its welcome only after
+the coordinator publishes both the `Healthy` phase and a fully healthy report.
+That preference never blocks explicit menu opening or persisted operation
+recovery after a script/domain reload, and completing one project does not
+change the welcome behavior of another project.
 
 ## Public API
 

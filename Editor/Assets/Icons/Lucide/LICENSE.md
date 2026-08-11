@@ -9,6 +9,7 @@ The PNG files in this directory are package-local, tint-neutral raster derivativ
 - `download`
 - `wrench`
 - `external-link`
+- `package-open`
 
 Source: <https://github.com/lucide-icons/lucide/tree/main/icons>
 

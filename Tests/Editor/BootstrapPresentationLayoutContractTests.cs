@@ -9,156 +9,441 @@ namespace Deucarian.Bootstrap.Editor.Tests
     [TestFixture]
     internal sealed class BootstrapPresentationContractTests
     {
-        [TestCase(BootstrapSetupAction.Install, "Install")]
-        [TestCase(BootstrapSetupAction.Repair, "Repair")]
-        [TestCase(BootstrapSetupAction.SwitchChannel, "Switch Channel")]
-        [TestCase(BootstrapSetupAction.Migrate, "Migrate")]
-        [TestCase(BootstrapSetupAction.Refresh, "Refresh Status")]
-        [TestCase(BootstrapSetupAction.OpenPackageInstaller, "Open Package Installer")]
-        public void ReviewAndHealthyStates_ExposeExactPrimaryActionLabel(
-            BootstrapSetupAction action,
-            string expectedLabel)
+        [Test]
+        public void PrimaryActionsUseDestinationSpecificCopy()
         {
-            BootstrapSetupPhase phase = action == BootstrapSetupAction.OpenPackageInstaller
-                ? BootstrapSetupPhase.Healthy
-                : action == BootstrapSetupAction.Refresh
-                    ? BootstrapSetupPhase.ReviewRequired
-                    : BootstrapSetupPhase.Review;
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.CleanReview(),
+                BootstrapSetupAction.Install,
+                "Install Package Installer");
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.MissingPackageInstaller(),
+                BootstrapSetupAction.Repair,
+                "Repair Package Installer");
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.WrongChannel(),
+                BootstrapSetupAction.SwitchChannel,
+                "Switch to Development");
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.LegacyMigration(),
+                BootstrapSetupAction.Migrate,
+                "Migrate Package Installer");
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.ReviewRequired(),
+                BootstrapSetupAction.Refresh,
+                "Refresh Status");
+            AssertAction(
+                BootstrapPresentationSnapshotFixtures.Healthy(),
+                BootstrapSetupAction.OpenPackageInstaller,
+                "Open Package Installer");
+        }
 
+        [Test]
+        public void SetupFlowIdentifiesTwoRequirementsAndOneDestination()
+        {
             BootstrapPresentationModel model = BootstrapPresentationModelFactory.Create(
-                Snapshot(action, phase));
+                BootstrapPresentationSnapshotFixtures.CleanReview());
 
             AssertAll(() =>
             {
-                Assert.That(model.PrimaryAction, Is.EqualTo(action));
-                Assert.That(model.PrimaryActionLabel, Is.EqualTo(expectedLabel));
-                Assert.That(model.PrimaryActionEnabled, Is.True);
-                Assert.That(model.PrimaryActionTooltip, Is.Not.Empty);
+                Assert.That(model.Steps.Count, Is.EqualTo(3));
+                AssertStep(
+                    model.Steps[0],
+                    DeucarianBootstrapPackageConstants.EditorPackageId,
+                    "Editor",
+                    BootstrapSetupItemRole.Requirement);
+                AssertStep(
+                    model.Steps[1],
+                    DeucarianBootstrapPackageConstants.LoggingPackageId,
+                    "Logging",
+                    BootstrapSetupItemRole.Requirement);
+                AssertStep(
+                    model.Steps[2],
+                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
+                    "Package Installer",
+                    BootstrapSetupItemRole.Destination);
+                Assert.That(model.Steps[0].Label, Is.EqualTo("Will install"));
+                Assert.That(model.Steps[1].Label, Is.EqualTo("Will install"));
+                Assert.That(model.Steps[2].Label, Is.EqualTo("Will install last"));
+                Assert.That(model.StateTitle, Does.Contain("Package Installer"));
+                Assert.That(model.StateMessage, Does.Contain("Editor and Logging"));
             });
         }
 
-        [TestCase(BootstrapSetupPhase.Loading, "Checking...")]
-        [TestCase(BootstrapSetupPhase.Installing, "Installing...")]
-        [TestCase(BootstrapSetupPhase.WaitingForUnity, "Waiting for Unity...")]
-        [TestCase(BootstrapSetupPhase.Verifying, "Verifying...")]
-        public void BusyStates_HaveOneTruthfulDisabledPrimaryLabel(
-            BootstrapSetupPhase phase,
-            string expectedLabel)
+        [Test]
+        public void RepairScenariosKeepEveryDependencyVisibleAndMarkItsTruth()
         {
-            BootstrapPresentationModel model = BootstrapPresentationModelFactory.Create(
-                Snapshot(BootstrapSetupAction.Repair, phase));
+            BootstrapPresentationModel missingEditor = Create(
+                BootstrapPresentationSnapshotFixtures.MissingEditor());
+            BootstrapPresentationModel missingLogging = Create(
+                BootstrapPresentationSnapshotFixtures.MissingLogging());
+            BootstrapPresentationModel missingInstaller = Create(
+                BootstrapPresentationSnapshotFixtures.MissingPackageInstaller());
+            BootstrapPresentationModel wrongChannel = Create(
+                BootstrapPresentationSnapshotFixtures.WrongChannel());
+            BootstrapPresentationModel outdated = Create(
+                BootstrapPresentationSnapshotFixtures.OutdatedRevision());
+            BootstrapPresentationModel migration = Create(
+                BootstrapPresentationSnapshotFixtures.LegacyMigration());
 
             AssertAll(() =>
             {
-                Assert.That(model.PrimaryAction, Is.EqualTo(BootstrapSetupAction.None));
-                Assert.That(model.PrimaryActionLabel, Is.EqualTo(expectedLabel));
-                Assert.That(model.PrimaryActionEnabled, Is.False);
-                Assert.That(model.ChannelEnabled, Is.False);
+                Assert.That(missingEditor.Steps[0].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Pending));
+                Assert.That(missingLogging.Steps[1].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Pending));
+                Assert.That(missingInstaller.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Pending));
+                Assert.That(wrongChannel.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Attention));
+                Assert.That(wrongChannel.Steps[2].Label, Is.EqualTo("Wrong channel"));
+                Assert.That(outdated.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Attention));
+                Assert.That(outdated.Steps[2].Label, Is.EqualTo("Update needed"));
+                Assert.That(migration.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Attention));
+                Assert.That(migration.Steps[2].Label, Is.EqualTo("Migration needed"));
+                Assert.That(new[]
+                {
+                    missingEditor, missingLogging, missingInstaller,
+                    wrongChannel, outdated, migration
+                }, Has.All.Matches<BootstrapPresentationModel>(value =>
+                    value.ShowSetupFlow && value.Steps.Count == 3));
+            });
+        }
+
+        [Test]
+        public void PendingOperationKindProducesTruthfulCurrentStepCopy()
+        {
+            BootstrapPresentationModel addingEditor = Create(
+                BootstrapPresentationSnapshotFixtures.InstallingEditor());
+            BootstrapPresentationModel addingLogging = Create(
+                BootstrapPresentationSnapshotFixtures.InstallingLogging());
+            BootstrapPresentationModel addingInstaller = Create(
+                BootstrapPresentationSnapshotFixtures.InstallingPackageInstaller());
+            BootstrapPresentationModel removingLegacy = Create(
+                BootstrapPresentationSnapshotFixtures.RemovingLegacyPackageInstaller());
+            BootstrapPresentationModel waiting = Create(
+                BootstrapPresentationSnapshotFixtures.WaitingForUnity());
+            BootstrapPresentationModel verifying = Create(
+                BootstrapPresentationSnapshotFixtures.Verifying());
+
+            AssertAll(() =>
+            {
+                AssertCurrent(addingEditor, 0, "Installing");
+                AssertCurrent(addingLogging, 1, "Installing");
+                AssertCurrent(addingInstaller, 2, "Installing");
+                AssertCurrent(removingLegacy, 2, "Removing legacy source");
+                AssertCurrent(waiting, 1, "Waiting for Unity");
+                AssertCurrent(verifying, 2, "Verifying");
+                Assert.That(addingInstaller.Steps[2].Detail,
+                    Does.Contain("selected Git channel"));
+                Assert.That(removingLegacy.Steps[2].Detail,
+                    Does.Contain("Removing the legacy"));
+                Assert.That(waiting.Steps[1].Detail,
+                    Is.EqualTo("Unity is resolving Logging."));
+                Assert.That(verifying.Steps[2].Detail,
+                    Does.Contain("source, channel, and lock revision"));
+            });
+        }
+
+        [Test]
+        public void LifecycleCompositionIsExclusiveAndActionSafe()
+        {
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.Loading(),
+                false, false, false, false);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.CleanReview(),
+                true, false, true, false);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.InstallingLogging(),
+                true, false, false, true);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.WaitingForUnity(),
+                true, false, false, true);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.Verifying(),
+                true, false, false, true);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.Healthy(),
+                false, true, true, false);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.ReviewRequired(),
+                true, false, true, false);
+            AssertComposition(
+                BootstrapPresentationSnapshotFixtures.Failed(),
+                true, false, true, false);
+        }
+
+        [Test]
+        public void BusyFooterIsPassiveTruthfulAndNeverExposesAnAction()
+        {
+            BootstrapPresentationModel installing = Create(
+                BootstrapPresentationSnapshotFixtures.InstallingLogging());
+            BootstrapPresentationModel waiting = Create(
+                BootstrapPresentationSnapshotFixtures.WaitingForUnity());
+            BootstrapPresentationModel verifying = Create(
+                BootstrapPresentationSnapshotFixtures.Verifying());
+
+            AssertAll(() =>
+            {
+                AssertPassive(installing, "resumes after Unity reloads");
+                AssertPassive(waiting, "continue automatically");
+                AssertPassive(verifying, "source, channel, and lock revision");
+                Assert.That(new[] { installing, waiting, verifying },
+                    Has.All.Matches<BootstrapPresentationModel>(model =>
+                        model.PrimaryAction == BootstrapSetupAction.None &&
+                        string.IsNullOrEmpty(model.PrimaryActionLabel)));
+            });
+        }
+
+        [Test]
+        public void HealthyStateBecomesAThreeCheckReceiptAndDirectHandoff()
+        {
+            BootstrapPresentationModel model = Create(
+                BootstrapPresentationSnapshotFixtures.Healthy());
+
+            AssertAll(() =>
+            {
+                Assert.That(model.StateTitle, Is.EqualTo("Package Installer is ready"));
+                Assert.That(model.ShowSetupFlow, Is.False);
+                Assert.That(model.ShowCompletionReceipt, Is.True);
+                Assert.That(model.Receipt.Count, Is.EqualTo(3));
+                Assert.That(model.Receipt.Select(item => item.Title), Is.EqualTo(new[]
+                {
+                    "Editor", "Logging", "Package Installer"
+                }));
+                Assert.That(model.Receipt[0].Summary, Is.EqualTo("Requirement installed"));
+                Assert.That(model.Receipt[1].Summary, Is.EqualTo("Requirement installed"));
+                Assert.That(model.Receipt[2].Summary, Is.EqualTo("Destination ready"));
+                Assert.That(model.InstalledSummary,
+                    Is.EqualTo("v1.1.83 | Git #main | 0123456789ab"));
+                Assert.That(model.PrimaryAction,
+                    Is.EqualTo(BootstrapSetupAction.OpenPackageInstaller));
+            });
+        }
+
+        [Test]
+        public void FailureAndReviewRequiredOnlyOfferAReadOnlyRefresh()
+        {
+            BootstrapPresentationModel reviewRequired = Create(
+                BootstrapPresentationSnapshotFixtures.ReviewRequired());
+            BootstrapPresentationModel failed = Create(
+                BootstrapPresentationSnapshotFixtures.Failed());
+
+            AssertAll(() =>
+            {
+                Assert.That(reviewRequired.PrimaryAction,
+                    Is.EqualTo(BootstrapSetupAction.Refresh));
+                Assert.That(failed.PrimaryAction,
+                    Is.EqualTo(BootstrapSetupAction.Refresh));
+                Assert.That(reviewRequired.PrimaryActionLabel, Is.EqualTo("Refresh Status"));
+                Assert.That(failed.PrimaryActionLabel, Is.EqualTo("Refresh Status"));
+                Assert.That(reviewRequired.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Attention));
+                Assert.That(failed.Steps[1].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Failed));
+                Assert.That(failed.StatusText,
+                    Is.EqualTo("Unity Package Manager could not add Logging."));
+                Assert.That(reviewRequired.PrimaryActionTooltip,
+                    Does.Contain("without changing packages"));
+            });
+        }
+
+        [Test]
+        public void DetectionFailureWithoutAValidatedPlanPreservesTheSetupPathTruth()
+        {
+            BootstrapPresentationModel model = Create(
+                BootstrapPresentationSnapshotFixtures.DetectionFailureWithoutPlan());
+
+            AssertAll(() =>
+            {
+                Assert.That(model.ShowSetupFlow, Is.True);
+                Assert.That(model.Steps.Count, Is.EqualTo(3));
+                Assert.That(model.Steps[0].Role,
+                    Is.EqualTo(BootstrapSetupItemRole.Requirement));
+                Assert.That(model.Steps[1].Role,
+                    Is.EqualTo(BootstrapSetupItemRole.Requirement));
+                Assert.That(model.Steps[2].Role,
+                    Is.EqualTo(BootstrapSetupItemRole.Destination));
+                Assert.That(model.Steps[2].State,
+                    Is.EqualTo(BootstrapStepPresentationState.Failed));
+                Assert.That(model.Steps[2].Label, Is.EqualTo("Status unavailable"));
+                Assert.That(model.Steps[2].Detail,
+                    Does.Contain("could not be confirmed"));
+                Assert.That(model.Steps[2].TechnicalDetail,
+                    Does.Contain("Exact Git reference unavailable"));
+                Assert.That(model.PrimaryAction, Is.EqualTo(BootstrapSetupAction.Refresh));
+                Assert.That(model.PrimaryActionLabel, Is.EqualTo("Refresh Status"));
+            });
+        }
+
+        [Test]
+        public void HealthyHandoffFailureKeepsTheReceiptAndOffersOnlyRefresh()
+        {
+            const string handoffError =
+                "Package Installer is installed, but its menu is not available yet.";
+            BootstrapPresentationModel model = BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.Healthy(),
+                handoffError);
+
+            AssertAll(() =>
+            {
+                Assert.That(model.StateTitle,
+                    Is.EqualTo("Package Installer is still starting"));
+                Assert.That(model.Tone, Is.EqualTo(BootstrapPresentationTone.Error));
+                Assert.That(model.StatusText, Is.EqualTo(handoffError));
+                Assert.That(model.ShowSetupFlow, Is.False);
+                Assert.That(model.ShowCompletionReceipt, Is.True);
+                Assert.That(model.Receipt.Count, Is.EqualTo(3));
+                Assert.That(model.PrimaryAction, Is.EqualTo(BootstrapSetupAction.Refresh));
+                Assert.That(model.PrimaryActionLabel, Is.EqualTo("Refresh Status"));
+                Assert.That(model.IsActionVisible, Is.True);
+                Assert.That(model.FooterIsPassive, Is.False);
+                Assert.That(model.StateMessage, Does.Contain("No package changes"));
+            });
+        }
+
+        [Test]
+        public void BundledFallbackIsVisibleWithoutReplacingTechnicalRegistryTruth()
+        {
+            BootstrapPresentationModel model = Create(
+                BootstrapPresentationSnapshotFixtures.BundledFallbackReview());
+
+            AssertAll(() =>
+            {
+                Assert.That(model.OfflineNotice,
+                    Does.Contain("exact bundled setup closure"));
+                Assert.That(model.PrimaryAction,
+                    Is.EqualTo(BootstrapSetupAction.Install));
+                Assert.That(model.Steps.Count, Is.EqualTo(3));
+                Assert.That(model.Details.Single(item => item.Label == "Registry source").Value,
+                    Is.EqualTo("Bundled setup fallback"));
             });
         }
 
         [Test]
         public void AdvancedDetailsExposeFullRevisionHashes()
         {
-            const string revision = "0123456789abcdef0123456789abcdef01234567";
-            BootstrapSetupSnapshot snapshot = Snapshot(
-                BootstrapSetupAction.OpenPackageInstaller,
-                BootstrapSetupPhase.Healthy);
-            BootstrapSetupSnapshot withFullRevision = new BootstrapSetupSnapshot(
-                snapshot.Channel,
-                snapshot.Phase,
-                snapshot.CatalogOrigin,
-                snapshot.CatalogSource,
-                snapshot.CatalogNotice,
-                snapshot.Status,
-                snapshot.Error,
-                snapshot.TargetGitUrl,
-                revision,
-                snapshot.Plan,
-                snapshot.CompletedPackageIds,
-                snapshot.PendingPackageId,
-                snapshot.InstalledState,
-                snapshot.Health,
-                snapshot.LegacyRegistryStatus);
+            BootstrapPresentationModel model = Create(
+                BootstrapPresentationSnapshotFixtures.Healthy());
 
-            BootstrapPresentationModel model = BootstrapPresentationModelFactory.Create(withFullRevision);
-
-            Assert.That(
-                model.Details.Single(detail => detail.Label == "Target branch revision").Value,
-                Is.EqualTo(revision));
-        }
-
-        private static BootstrapSetupSnapshot Snapshot(
-            BootstrapSetupAction action,
-            BootstrapSetupPhase phase)
-        {
-            BootstrapPackageStep[] plan =
+            AssertAll(() =>
             {
-                new BootstrapPackageStep(
-                    DeucarianBootstrapPackageConstants.EditorPackageId,
-                    DeucarianBootstrapPackageConstants.EditorPackageDisplayName,
-                    "https://github.com/Deucarian/Editor.git#main"),
-                new BootstrapPackageStep(
-                    DeucarianBootstrapPackageConstants.LoggingPackageId,
-                    DeucarianBootstrapPackageConstants.LoggingPackageDisplayName,
-                    "https://github.com/Deucarian/Logging.git#main"),
-                new BootstrapPackageStep(
-                    DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
-                    DeucarianBootstrapPackageConstants.PackageInstallerPackageDisplayName,
-                    DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl)
-            };
-            BootstrapInstalledState installed = action == BootstrapSetupAction.OpenPackageInstaller
-                ? new BootstrapInstalledState(new[]
-                {
-                    Installed(DeucarianBootstrapPackageConstants.EditorPackageId),
-                    Installed(DeucarianBootstrapPackageConstants.LoggingPackageId),
-                    new BootstrapInstalledPackageInfo(
-                        DeucarianBootstrapPackageConstants.PackageInstallerPackageId,
-                        "1.2.0",
-                        "git",
-                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
-                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
-                        "0123456789abcdef")
-                })
-                : BootstrapInstalledState.Empty;
-            BootstrapPackageInstallerSetupState installerState =
-                action == BootstrapSetupAction.OpenPackageInstaller
-                    ? BootstrapPackageInstallerSetupState.Healthy
-                    : BootstrapPackageInstallerSetupState.Missing;
-            BootstrapHealthReport health = new BootstrapHealthReport(
-                action == BootstrapSetupAction.OpenPackageInstaller,
-                action == BootstrapSetupAction.OpenPackageInstaller,
-                installerState,
-                action,
-                action != BootstrapSetupAction.Install);
-
-            return new BootstrapSetupSnapshot(
-                BootstrapChannel.Stable,
-                phase,
-                BootstrapCatalogOrigin.Remote,
-                "Remote Package Registry #main",
-                string.Empty,
-                "Ready",
-                string.Empty,
-                DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
-                "0123456789abcdef",
-                plan,
-                Array.Empty<string>(),
-                string.Empty,
-                installed,
-                health,
-                BootstrapScopedRegistryStatus.NotInspected);
+                Assert.That(model.Details.Single(
+                        detail => detail.Label == "Target branch revision").Value,
+                    Is.EqualTo(BootstrapPresentationSnapshotFixtures.CurrentRevision));
+                Assert.That(model.Details.Single(
+                        detail => detail.Label == "Installed lock revision").Value,
+                    Is.EqualTo(BootstrapPresentationSnapshotFixtures.CurrentRevision));
+                Assert.That(model.Steps, Has.All.Matches<BootstrapStepPresentation>(step =>
+                    step.TechnicalDetail.Contains(step.PackageId) &&
+                    step.TechnicalDetail.Contains("github.com")));
+            });
         }
 
-        private static BootstrapInstalledPackageInfo Installed(string packageId)
+        [Test]
+        public void PresentationCollectionsAreReadOnlySnapshots()
         {
-            return new BootstrapInstalledPackageInfo(
-                packageId,
-                "1.0.0",
-                "git",
-                packageId,
-                string.Empty,
-                string.Empty);
+            BootstrapPresentationModel model = Create(
+                BootstrapPresentationSnapshotFixtures.Healthy());
+            IList<BootstrapStepPresentation> steps =
+                model.Steps as IList<BootstrapStepPresentation>;
+            IList<BootstrapDetailPresentation> details =
+                model.Details as IList<BootstrapDetailPresentation>;
+            IList<BootstrapReceiptPresentation> receipt =
+                model.Receipt as IList<BootstrapReceiptPresentation>;
+
+            AssertAll(() =>
+            {
+                Assert.That(steps, Is.Not.Null);
+                Assert.That(details, Is.Not.Null);
+                Assert.That(receipt, Is.Not.Null);
+                Assert.That(steps.IsReadOnly, Is.True);
+                Assert.That(details.IsReadOnly, Is.True);
+                Assert.That(receipt.IsReadOnly, Is.True);
+                Assert.Throws<NotSupportedException>(() => steps.Add(model.Steps[0]));
+                Assert.Throws<NotSupportedException>(() => details.Clear());
+                Assert.Throws<NotSupportedException>(() => receipt.Clear());
+            });
+        }
+
+        private static BootstrapPresentationModel Create(BootstrapSetupSnapshot snapshot)
+        {
+            return BootstrapPresentationModelFactory.Create(snapshot);
+        }
+
+        private static void AssertAction(
+            BootstrapSetupSnapshot snapshot,
+            BootstrapSetupAction expectedAction,
+            string expectedLabel)
+        {
+            BootstrapPresentationModel model = Create(snapshot);
+            AssertAll(() =>
+            {
+                Assert.That(model.PrimaryAction, Is.EqualTo(expectedAction));
+                Assert.That(model.PrimaryActionLabel, Is.EqualTo(expectedLabel));
+                Assert.That(model.PrimaryActionEnabled, Is.True);
+                Assert.That(model.IsActionVisible, Is.True);
+                Assert.That(model.PrimaryActionTooltip, Is.Not.Empty);
+            });
+        }
+
+        private static void AssertStep(
+            BootstrapStepPresentation step,
+            string packageId,
+            string title,
+            BootstrapSetupItemRole role)
+        {
+            AssertAll(() =>
+            {
+                Assert.That(step.PackageId, Is.EqualTo(packageId));
+                Assert.That(step.Title, Is.EqualTo(title));
+                Assert.That(step.Role, Is.EqualTo(role));
+                Assert.That(step.Detail, Is.Not.Empty);
+                Assert.That(step.TechnicalDetail, Does.Contain(packageId));
+            });
+        }
+
+        private static void AssertCurrent(
+            BootstrapPresentationModel model,
+            int index,
+            string expectedLabel)
+        {
+            Assert.That(model.Steps[index].State,
+                Is.EqualTo(BootstrapStepPresentationState.Current));
+            Assert.That(model.Steps[index].Label, Is.EqualTo(expectedLabel));
+        }
+
+        private static void AssertComposition(
+            BootstrapSetupSnapshot snapshot,
+            bool flow,
+            bool receipt,
+            bool action,
+            bool passiveFooter)
+        {
+            BootstrapPresentationModel model = Create(snapshot);
+            AssertAll(() =>
+            {
+                Assert.That(model.ShowSetupFlow, Is.EqualTo(flow), model.Phase.ToString());
+                Assert.That(model.ShowCompletionReceipt, Is.EqualTo(receipt),
+                    model.Phase.ToString());
+                Assert.That(model.IsActionVisible, Is.EqualTo(action), model.Phase.ToString());
+                Assert.That(model.FooterIsPassive, Is.EqualTo(passiveFooter),
+                    model.Phase.ToString());
+                Assert.That(model.ShowSetupFlow && model.ShowCompletionReceipt, Is.False,
+                    model.Phase.ToString());
+            });
+        }
+
+        private static void AssertPassive(
+            BootstrapPresentationModel model,
+            string expectedText)
+        {
+            Assert.That(model.FooterIsPassive, Is.True);
+            Assert.That(model.IsActionVisible, Is.False);
+            Assert.That(model.FooterText, Does.Contain(expectedText).IgnoreCase);
         }
 
         private static void AssertAll(Action assertions)
@@ -171,7 +456,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
     internal sealed class BootstrapResponsiveLayoutContractTests
     {
         [Test]
-        public void WindowFootprint_DefaultsToTheNarrowHeroAndKeepsAUsableMinimum()
+        public void WindowFootprintDefaultsToNarrowAndKeepsAUsableMinimum()
         {
             AssertAll(() =>
             {
@@ -179,13 +464,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Assert.That(DeucarianBootstrapWindow.PreferredWindowHeight, Is.EqualTo(820f));
                 Assert.That(DeucarianBootstrapWindow.MinWindowWidth, Is.EqualTo(480f));
                 Assert.That(DeucarianBootstrapWindow.MinWindowHeight, Is.EqualTo(460f));
-                Assert.That(
-                    BootstrapResponsiveLayout.ResolveMode(
-                        DeucarianBootstrapWindow.PreferredWindowWidth),
+                Assert.That(BootstrapResponsiveLayout.ResolveMode(560f),
                     Is.EqualTo(BootstrapResponsiveMode.Narrow));
-                Assert.That(
-                    BootstrapResponsiveLayout.ResolveMode(
-                        DeucarianBootstrapWindow.MinWindowWidth),
+                Assert.That(BootstrapResponsiveLayout.ResolveMode(480f),
                     Is.EqualTo(BootstrapResponsiveMode.Narrow));
             });
         }
@@ -196,7 +477,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
         [TestCase(1179.999f, BootstrapResponsiveMode.Compact)]
         [TestCase(1180f, BootstrapResponsiveMode.Wide)]
         [TestCase(1600f, BootstrapResponsiveMode.Wide)]
-        public void Breakpoints_ResolveExactNarrowCompactWideBoundaries(
+        public void BreakpointsResolveExactWorkbenchBoundaries(
             float width,
             BootstrapResponsiveMode expected)
         {
@@ -204,288 +485,254 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void BreakpointConstants_MatchSharedWorkbenchContract()
+        public void LayoutPolicyExposesShortHeightWithoutChangingWidthMode()
         {
+            BootstrapResponsiveLayoutState shortLayout =
+                BootstrapResponsiveLayout.Calculate(480f, 599.999f);
+            BootstrapResponsiveLayoutState regularLayout =
+                BootstrapResponsiveLayout.Calculate(480f, 600f);
+
             AssertAll(() =>
             {
                 Assert.That(BootstrapResponsiveLayout.NarrowBreakpoint, Is.EqualTo(900f));
                 Assert.That(BootstrapResponsiveLayout.WideBreakpoint, Is.EqualTo(1180f));
+                Assert.That(BootstrapResponsiveLayout.ShortHeightBreakpoint, Is.EqualTo(600f));
+                Assert.That(shortLayout.Mode, Is.EqualTo(BootstrapResponsiveMode.Narrow));
+                Assert.That(shortLayout.IsShortHeight, Is.True);
+                Assert.That(regularLayout.IsShortHeight, Is.False);
+                Assert.That(shortLayout.ActionBarMinimumHeight, Is.GreaterThan(0f));
+                Assert.That(shortLayout.AvailableBodyHeight, Is.GreaterThan(0f));
                 Assert.That(BootstrapResponsiveLayout.ResolveMode(float.NaN),
                     Is.EqualTo(BootstrapResponsiveMode.Narrow));
-                Assert.That(BootstrapResponsiveLayout.ResolveMode(float.PositiveInfinity),
-                    Is.EqualTo(BootstrapResponsiveMode.Narrow));
-            });
-        }
-
-        [TestCase(480f, 460f, BootstrapResponsiveMode.Narrow, 1, false, false, true, 58f)]
-        [TestCase(560f, 820f, BootstrapResponsiveMode.Narrow, 1, false, false, true, 58f)]
-        [TestCase(1024f, 600f, BootstrapResponsiveMode.Compact, 2, false, false, false, 58f)]
-        [TestCase(1280f, 720f, BootstrapResponsiveMode.Wide, 3, false, false, false, 58f)]
-        public void LayoutState_ReservesNonOverlappingBodyAndPersistentActionSpace(
-            float width,
-            float height,
-            BootstrapResponsiveMode expectedMode,
-            int expectedColumns,
-            bool expectHeaderStacked,
-            bool expectActionsStacked,
-            bool expectPrimaryActionFillsRow,
-            float expectedActionBarHeight)
-        {
-            BootstrapResponsiveLayoutState layout =
-                BootstrapResponsiveLayout.Calculate(width, height);
-
-            AssertAll(() =>
-            {
-                Assert.That(layout.Mode, Is.EqualTo(expectedMode));
-                Assert.That(layout.StepColumns, Is.EqualTo(expectedColumns));
-                Assert.That(layout.HeaderStacked, Is.EqualTo(expectHeaderStacked));
-                Assert.That(layout.ActionsStacked, Is.EqualTo(expectActionsStacked));
-                Assert.That(layout.PrimaryActionFillsRow,
-                    Is.EqualTo(expectPrimaryActionFillsRow));
-                Assert.That(layout.ActionBarMinimumHeight, Is.EqualTo(expectedActionBarHeight));
-                Assert.That(layout.ActionBarMinimumHeight, Is.LessThan(height));
-                Assert.That(layout.AvailableBodyHeight, Is.GreaterThan(0f));
-                Assert.That(layout.AvailableBodyHeight + layout.ActionBarMinimumHeight,
-                    Is.EqualTo(height).Within(0.001f));
-                Assert.That(width - (layout.ContentPadding * 2f), Is.GreaterThan(0f));
             });
         }
 
         [Test]
-        public void View_UsesMutuallyExclusiveLightAndDarkSkinClasses()
+        public void ViewBuildsAnOpenDestinationFirstHierarchy()
+        {
+            VisualElement root = new VisualElement();
+            BootstrapSetupView view = CreateView();
+            view.Build(root);
+
+            VisualElement hero = root.Q<VisualElement>("bootstrap-hero");
+            VisualElement channel = root.Q<VisualElement>("bootstrap-channel");
+            VisualElement flow = root.Q<VisualElement>("bootstrap-setup-flow");
+            VisualElement receipt = root.Q<VisualElement>("bootstrap-completion-receipt");
+            Foldout details = root.Q<Foldout>("bootstrap-details-foldout");
+            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
+            Button primary = root.Q<Button>("bootstrap-primary-action");
+            Button refresh = root.Q<Button>("bootstrap-refresh-button");
+
+            AssertAll(() =>
+            {
+                Assert.That(root.Q<VisualElement>("bootstrap-shell"), Is.Not.Null);
+                Assert.That(root.Q<ScrollView>("bootstrap-content-scroll"), Is.Not.Null);
+                Assert.That(hero, Is.Not.Null);
+                Assert.That(hero.ClassListContains("bootstrap-surface"), Is.False);
+                Assert.That(channel, Is.Not.Null);
+                Assert.That(channel.ClassListContains("bootstrap-surface"), Is.False);
+                Assert.That(flow, Is.Not.Null);
+                Assert.That(receipt, Is.Not.Null);
+                Assert.That(details, Is.Not.Null);
+                Assert.That(details.value, Is.False);
+                Assert.That(primary, Is.Not.Null);
+                Assert.That(refresh, Is.Not.Null);
+                Assert.That(IsDescendantOf(primary, actionBar), Is.True);
+                Assert.That(IsDescendantOf(refresh,
+                    root.Q<VisualElement>("bootstrap-details-content")), Is.True);
+                Assert.That(root.Q<VisualElement>("bootstrap-plan"), Is.Null);
+                Assert.That(root.Q<VisualElement>("bootstrap-progress-surface"), Is.Null);
+                Assert.That(root.Q<VisualElement>("bootstrap-action-summary"), Is.Null);
+                Assert.That(root.Q<Label>(className: "bootstrap-step__detail"), Is.Null);
+            });
+        }
+
+        [Test]
+        public void ViewUsesExclusiveWidthSkinAndShortHeightClasses()
         {
             VisualElement root = new VisualElement();
             BootstrapSetupView view = CreateView();
             view.Build(root);
 
             view.SetSkin(false);
-            AssertAll(() =>
-            {
-                Assert.That(root.ClassListContains("deucarian-bootstrap--light"), Is.True);
-                Assert.That(root.ClassListContains("deucarian-bootstrap--dark"), Is.False);
-            });
-
+            Assert.That(root.ClassListContains("deucarian-bootstrap--light"), Is.True);
+            Assert.That(root.ClassListContains("deucarian-bootstrap--dark"), Is.False);
             view.SetSkin(true);
+            Assert.That(root.ClassListContains("deucarian-bootstrap--dark"), Is.True);
+            Assert.That(root.ClassListContains("deucarian-bootstrap--light"), Is.False);
+
+            AssertResponsiveClass(view, root, 899.999f,
+                BootstrapResponsiveLayout.NarrowClassName);
+            AssertResponsiveClass(view, root, 900f,
+                BootstrapResponsiveLayout.CompactClassName);
+            AssertResponsiveClass(view, root, 1180f,
+                BootstrapResponsiveLayout.WideClassName);
+
+            view.ApplyResponsiveLayout(480f, 459f);
+            Assert.That(root.ClassListContains(BootstrapResponsiveLayout.ShortHeightClassName),
+                Is.True);
+            view.ApplyResponsiveLayout(480f, 600f);
+            Assert.That(root.ClassListContains(BootstrapResponsiveLayout.ShortHeightClassName),
+                Is.False);
+            Assert.That(root.Q<Label>(className: "bootstrap-summary__title"), Is.Not.Null);
+            Assert.That(root.Q<VisualElement>("bootstrap-details"), Is.Not.Null);
+            Assert.That(root.Q<VisualElement>("bootstrap-action-bar"), Is.Not.Null);
+        }
+
+        [Test]
+        public void LoadingRendersOnlyTheCalmHeroWithoutAnActionFooter()
+        {
+            RenderedView rendered = Render(BootstrapPresentationSnapshotFixtures.Loading());
+
             AssertAll(() =>
             {
-                Assert.That(root.ClassListContains("deucarian-bootstrap--dark"), Is.True);
-                Assert.That(root.ClassListContains("deucarian-bootstrap--light"), Is.False);
+                AssertHidden(rendered.Root, "bootstrap-setup-flow");
+                AssertHidden(rendered.Root, "bootstrap-completion-receipt");
+                AssertHidden(rendered.Root, "bootstrap-details");
+                AssertHidden(rendered.Root, "bootstrap-action-bar");
+                AssertHidden(rendered.Root, "bootstrap-passive-footer");
+                AssertHidden(rendered.Root, "bootstrap-action-actions");
+                Assert.That(rendered.Root.Q<Label>(className: "bootstrap-summary__title").text,
+                    Is.EqualTo("Checking Package Installer setup"));
             });
         }
 
         [Test]
-        public void View_AppliesOnlyTheResponsiveClassForTheCurrentWidth()
+        public void ReviewRendersThreeTransformingItemsAndOneAction()
         {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-
-            AssertResponsiveClass(view, root, 899.999f, BootstrapResponsiveLayout.NarrowClassName);
-            AssertResponsiveClass(view, root, 900f, BootstrapResponsiveLayout.CompactClassName);
-            AssertResponsiveClass(view, root, 1180f, BootstrapResponsiveLayout.WideClassName);
-        }
-
-        [Test]
-        public void View_KeepsOnePrimaryActionInTheBarAndRefreshInsideCollapsedDetails()
-        {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-
-            VisualElement scroll = root.Q<ScrollView>("bootstrap-content-scroll");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
-            Foldout details = root.Q<Foldout>("bootstrap-details-foldout");
-            VisualElement detailsContent = root.Q<VisualElement>("bootstrap-details-content");
-            Button primary = root.Q<Button>("bootstrap-primary-action");
-            Button refresh = root.Q<Button>("bootstrap-refresh-button");
+            RenderedView rendered = Render(
+                BootstrapPresentationSnapshotFixtures.CleanReview());
+            VisualElement requirementOne = rendered.Root.Q<VisualElement>(
+                "bootstrap-setup-item-1");
+            VisualElement requirementTwo = rendered.Root.Q<VisualElement>(
+                "bootstrap-setup-item-2");
+            VisualElement destination = rendered.Root.Q<VisualElement>(
+                "bootstrap-setup-item-3");
 
             AssertAll(() =>
             {
-                Assert.That(scroll, Is.Not.Null);
-                Assert.That(actionBar, Is.Not.Null);
-                Assert.That(details, Is.Not.Null);
-                Assert.That(detailsContent, Is.Not.Null);
-                Assert.That(primary, Is.Not.Null);
-                Assert.That(refresh, Is.Not.Null);
-                Assert.That(CountNamedElements(root, "bootstrap-primary-action"), Is.EqualTo(1));
-                Assert.That(CountNamedElements(root, "bootstrap-refresh-button"), Is.EqualTo(1));
-                Assert.That(IsDescendantOf(primary, actionBar), Is.True);
-                Assert.That(IsDescendantOf(primary, scroll), Is.False,
-                    "The primary action must stay visible while the setup details scroll.");
-                Assert.That(IsDescendantOf(refresh, detailsContent), Is.True);
-                Assert.That(IsDescendantOf(refresh, scroll), Is.True);
-                Assert.That(IsDescendantOf(refresh, actionBar), Is.False);
-                Assert.That(details.value, Is.False,
-                    "Technical controls remain progressively disclosed by default.");
-                Assert.That(primary.ClassListContains("bootstrap-button--primary"), Is.True);
-                Assert.That(refresh.ClassListContains("bootstrap-button--primary"), Is.False);
-                Assert.That(primary.focusable, Is.True);
-                Assert.That(refresh.focusable, Is.True);
-            });
-        }
-
-        [TestCase(BootstrapSetupPhase.Loading, false)]
-        [TestCase(BootstrapSetupPhase.Installing, true)]
-        [TestCase(BootstrapSetupPhase.WaitingForUnity, true)]
-        [TestCase(BootstrapSetupPhase.Verifying, true)]
-        public void BusyAndLoadingStates_HideTheActionBarAndOnlyBusyPhasesShowThePlan(
-            BootstrapSetupPhase phase,
-            bool expectPlan)
-        {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-            view.Render(BootstrapTestPresentationModels.Create(
-                phase,
-                BootstrapSetupAction.None,
-                false));
-
-            VisualElement plan = root.Q<VisualElement>("bootstrap-plan");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
-            Label progress = root.Q<Label>(className: "bootstrap-progress-meta");
-
-            AssertAll(() =>
-            {
-                Assert.That(actionBar.style.display.value, Is.EqualTo(DisplayStyle.None));
-                Assert.That(
-                    plan.style.display.value,
-                    Is.EqualTo(expectPlan ? DisplayStyle.Flex : DisplayStyle.None));
-                Assert.That(
-                    progress.style.display.value,
-                    Is.EqualTo(
-                        BootstrapViewContentPolicy.IsBusyPhase(phase)
-                            ? DisplayStyle.Flex
-                            : DisplayStyle.None));
+                AssertVisible(rendered.Root, "bootstrap-setup-flow");
+                AssertHidden(rendered.Root, "bootstrap-completion-receipt");
+                AssertVisible(rendered.Root, "bootstrap-details");
+                AssertVisible(rendered.Root, "bootstrap-action-actions");
+                AssertHidden(rendered.Root, "bootstrap-passive-footer");
+                Assert.That(requirementOne.ClassListContains(
+                    "bootstrap-setup-item--requirement"), Is.True);
+                Assert.That(requirementTwo.ClassListContains(
+                    "bootstrap-setup-item--requirement"), Is.True);
+                Assert.That(destination.ClassListContains(
+                    "bootstrap-setup-item--destination"), Is.True);
+                Assert.That(CountNamedElements(rendered.Root,
+                    "bootstrap-primary-action"), Is.EqualTo(1));
+                Assert.That(PrimaryLabel(rendered.Root),
+                    Is.EqualTo("Install Package Installer"));
             });
         }
 
         [Test]
-        public void Review_ShowsThePlanAndExactlyOnePrimaryAction()
+        public void BusyStateUsesAVisiblePassiveFooterAndNoClickableAction()
         {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-            view.Render(BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Review,
-                BootstrapSetupAction.Repair,
-                true));
-
-            VisualElement plan = root.Q<VisualElement>("bootstrap-plan");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
-            Button primary = root.Q<Button>("bootstrap-primary-action");
-            Label primaryLabel = primary.Q<Label>(className: "bootstrap-button__label");
+            RenderedView rendered = Render(
+                BootstrapPresentationSnapshotFixtures.InstallingLogging());
 
             AssertAll(() =>
             {
-                Assert.That(plan.style.display.value, Is.EqualTo(DisplayStyle.Flex));
-                Assert.That(actionBar.style.display.value, Is.EqualTo(DisplayStyle.Flex));
-                Assert.That(CountNamedElements(root, "bootstrap-primary-action"), Is.EqualTo(1));
-                Assert.That(primary.enabledSelf, Is.True);
-                Assert.That(primaryLabel.text, Is.EqualTo("Repair"));
+                AssertVisible(rendered.Root, "bootstrap-setup-flow");
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-setup-flow")
+                    .ClassListContains("bootstrap-setup-flow--busy"), Is.True);
+                AssertVisible(rendered.Root, "bootstrap-action-bar");
+                AssertVisible(rendered.Root, "bootstrap-passive-footer");
+                AssertHidden(rendered.Root, "bootstrap-action-actions");
+                Assert.That(rendered.Root.Q<Button>("bootstrap-primary-action").enabledSelf,
+                    Is.False);
+                Assert.That(rendered.Root.Q<Label>(className: "bootstrap-progress-meta")
+                    .style.display.value, Is.EqualTo(DisplayStyle.Flex));
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-setup-item-2")
+                    .ClassListContains("bootstrap-setup-item--current"), Is.True);
             });
         }
 
         [Test]
-        public void Healthy_HidesThePlanAndShowsOnlyTheHandoffAction()
+        public void HealthyStateReplacesTheFlowWithAThreeCheckReceiptAndHandoff()
         {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-            view.Render(BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Healthy,
-                BootstrapSetupAction.OpenPackageInstaller,
-                true));
-
-            VisualElement plan = root.Q<VisualElement>("bootstrap-plan");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
-            Button primary = root.Q<Button>("bootstrap-primary-action");
-            Label primaryLabel = primary.Q<Label>(className: "bootstrap-button__label");
+            RenderedView rendered = Render(
+                BootstrapPresentationSnapshotFixtures.Healthy());
 
             AssertAll(() =>
             {
-                Assert.That(plan.style.display.value, Is.EqualTo(DisplayStyle.None));
-                Assert.That(actionBar.style.display.value, Is.EqualTo(DisplayStyle.Flex));
-                Assert.That(CountNamedElements(root, "bootstrap-primary-action"), Is.EqualTo(1));
-                Assert.That(primary.enabledSelf, Is.True);
-                Assert.That(primaryLabel.text, Is.EqualTo("Open Package Installer"));
+                AssertHidden(rendered.Root, "bootstrap-setup-flow");
+                AssertVisible(rendered.Root, "bootstrap-completion-receipt");
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-receipt-item-1"),
+                    Is.Not.Null);
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-receipt-item-2"),
+                    Is.Not.Null);
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-receipt-item-3"),
+                    Is.Not.Null);
+                AssertVisible(rendered.Root, "bootstrap-action-actions");
+                AssertHidden(rendered.Root, "bootstrap-passive-footer");
+                Assert.That(PrimaryLabel(rendered.Root),
+                    Is.EqualTo("Open Package Installer"));
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-status-line")
+                    .style.display.value, Is.EqualTo(DisplayStyle.Flex));
             });
         }
 
         [Test]
-        public void View_DoesNotBuildTheLegacyDuplicateProgressActionSummaryOrStepDetails()
+        public void FailureKeepsTheAffectedItemAndOnlyOffersRefresh()
         {
-            VisualElement root = new VisualElement();
-            BootstrapSetupView view = CreateView();
-            view.Build(root);
-            view.Render(BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Review,
-                BootstrapSetupAction.Repair,
-                true));
+            RenderedView rendered = Render(BootstrapPresentationSnapshotFixtures.Failed());
 
             AssertAll(() =>
             {
-                Assert.That(root.Q<VisualElement>("bootstrap-progress-surface"), Is.Null);
-                Assert.That(root.Q<VisualElement>("bootstrap-action-summary"), Is.Null);
-                Assert.That(root.Q<Label>(className: "bootstrap-step__detail"), Is.Null);
-                Assert.That(root.Q<VisualElement>("bootstrap-hero"), Is.Not.Null);
-                Assert.That(root.Q<VisualElement>("bootstrap-plan"), Is.Not.Null);
-                Assert.That(root.Q<Label>(className: "bootstrap-progress-meta"), Is.Not.Null);
+                AssertVisible(rendered.Root, "bootstrap-setup-flow");
+                Assert.That(rendered.Root.Q<VisualElement>("bootstrap-setup-item-2")
+                    .ClassListContains("bootstrap-setup-item--failed"), Is.True);
+                Assert.That(PrimaryLabel(rendered.Root), Is.EqualTo("Refresh Status"));
+                AssertHidden(rendered.Root, "bootstrap-refresh-button");
+                AssertVisible(rendered.Root, "bootstrap-action-actions");
+                AssertHidden(rendered.Root, "bootstrap-passive-footer");
             });
         }
 
         [Test]
-        public void RepeatedRendering_DoesNotDuplicateOrRelocatePrimaryControls()
+        public void RepeatedRenderingDoesNotDuplicateOrRelocatePrimaryControls()
         {
             VisualElement root = new VisualElement();
             BootstrapSetupView view = CreateView();
             view.Build(root);
-            BootstrapPresentationModel model = BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Review,
-                BootstrapSetupAction.Repair,
-                true);
+            BootstrapPresentationModel review = BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.CleanReview());
 
-            view.Render(model);
-            view.Render(model);
+            view.Render(review);
+            view.Render(BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.Healthy()));
+            view.Render(review);
 
             Button primary = root.Q<Button>("bootstrap-primary-action");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
             AssertAll(() =>
             {
                 Assert.That(CountNamedElements(root, "bootstrap-primary-action"), Is.EqualTo(1));
-                Assert.That(IsDescendantOf(primary, actionBar), Is.True);
+                Assert.That(IsDescendantOf(primary,
+                    root.Q<VisualElement>("bootstrap-action-bar")), Is.True);
                 Assert.That(primary.enabledSelf, Is.True);
                 Assert.That(primary.tooltip, Is.Not.Empty);
+                Assert.That(root.Q<VisualElement>("bootstrap-setup-item-1"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("bootstrap-receipt-item-1"), Is.Null);
             });
         }
 
-        [Test]
-        public void RefreshPrimaryHidesTheDetailsRefreshControlWithoutDuplicatingActions()
+        private static RenderedView Render(BootstrapSetupSnapshot snapshot)
         {
             VisualElement root = new VisualElement();
             BootstrapSetupView view = CreateView();
             view.Build(root);
-            view.Render(BootstrapPresentationModelFactory.Create(
-                BootstrapPresentationContractTestsSnapshot.RefreshRequired()));
-
-            Button refresh = root.Q<Button>("bootstrap-refresh-button");
-            Button primary = root.Q<Button>("bootstrap-primary-action");
-            VisualElement actionBar = root.Q<VisualElement>("bootstrap-action-bar");
-            AssertAll(() =>
-            {
-                Assert.That(refresh.style.display.value, Is.EqualTo(DisplayStyle.None));
-                Assert.That(primary.style.display.value, Is.Not.EqualTo(DisplayStyle.None));
-                Assert.That(actionBar.style.display.value, Is.EqualTo(DisplayStyle.Flex));
-                Assert.That(primary.enabledSelf, Is.True);
-            });
+            view.Render(BootstrapPresentationModelFactory.Create(snapshot));
+            return new RenderedView(root, view);
         }
 
         private static BootstrapSetupView CreateView()
         {
-            return new BootstrapSetupView(
-                _ => { },
-                _ => { },
-                () => { },
-                _ => { });
+            return new BootstrapSetupView(_ => { }, _ => { }, () => { }, _ => { });
         }
 
         private static void AssertResponsiveClass(
@@ -501,10 +748,28 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 BootstrapResponsiveLayout.CompactClassName,
                 BootstrapResponsiveLayout.WideClassName
             };
-
-            Assert.That(
-                responsiveClasses.Where(root.ClassListContains),
+            Assert.That(responsiveClasses.Where(root.ClassListContains),
                 Is.EqualTo(new[] { expectedClass }));
+        }
+
+        private static void AssertVisible(VisualElement root, string name)
+        {
+            VisualElement element = root.Q<VisualElement>(name);
+            Assert.That(element, Is.Not.Null, name);
+            Assert.That(element.style.display.value, Is.EqualTo(DisplayStyle.Flex), name);
+        }
+
+        private static void AssertHidden(VisualElement root, string name)
+        {
+            VisualElement element = root.Q<VisualElement>(name);
+            Assert.That(element, Is.Not.Null, name);
+            Assert.That(element.style.display.value, Is.EqualTo(DisplayStyle.None), name);
+        }
+
+        private static string PrimaryLabel(VisualElement root)
+        {
+            return root.Q<Button>("bootstrap-primary-action")
+                .Q<Label>(className: "bootstrap-button__label").text;
         }
 
         private static int CountNamedElements(VisualElement root, string name)
@@ -535,32 +800,23 @@ namespace Deucarian.Bootstrap.Editor.Tests
         {
             assertions();
         }
+
+        private readonly struct RenderedView
+        {
+            public RenderedView(VisualElement root, BootstrapSetupView view)
+            {
+                Root = root;
+                View = view;
+            }
+
+            public VisualElement Root { get; }
+            public BootstrapSetupView View { get; }
+        }
     }
 
     [TestFixture]
     internal sealed class BootstrapViewContentPolicyContractTests
     {
-        [TestCase(BootstrapSetupPhase.Loading, false)]
-        [TestCase(BootstrapSetupPhase.Review, true)]
-        [TestCase(BootstrapSetupPhase.Installing, true)]
-        [TestCase(BootstrapSetupPhase.WaitingForUnity, true)]
-        [TestCase(BootstrapSetupPhase.Verifying, true)]
-        [TestCase(BootstrapSetupPhase.Healthy, false)]
-        [TestCase(BootstrapSetupPhase.Failed, true)]
-        public void PlanVisibility_IsAStateOnlyMinimalContentDecision(
-            BootstrapSetupPhase phase,
-            bool expected)
-        {
-            BootstrapPresentationModel model = BootstrapTestPresentationModels.Create(
-                phase,
-                phase == BootstrapSetupPhase.Healthy
-                    ? BootstrapSetupAction.OpenPackageInstaller
-                    : BootstrapSetupAction.Repair,
-                phase == BootstrapSetupPhase.Healthy || phase == BootstrapSetupPhase.Review);
-
-            Assert.That(BootstrapViewContentPolicy.ShouldShowPlan(model), Is.EqualTo(expected));
-        }
-
         [TestCase(BootstrapSetupPhase.Loading, false)]
         [TestCase(BootstrapSetupPhase.Review, false)]
         [TestCase(BootstrapSetupPhase.Installing, true)]
@@ -568,7 +824,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
         [TestCase(BootstrapSetupPhase.Verifying, true)]
         [TestCase(BootstrapSetupPhase.Healthy, false)]
         [TestCase(BootstrapSetupPhase.Failed, false)]
-        public void BusyPhasePolicy_OnlyMarksDurableOperationPhases(
+        public void BusyPhasePolicyOnlyMarksDurableOperationPhases(
             BootstrapSetupPhase phase,
             bool expected)
         {
@@ -576,12 +832,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void InstallingCopy_FocusesTheCurrentStepAndOneCompactProgressLine()
+        public void InstallingHeroFocusesTheCurrentDependency()
         {
-            BootstrapPresentationModel model = BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Installing,
-                BootstrapSetupAction.None,
-                false);
+            BootstrapPresentationModel model = BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.InstallingLogging());
 
             AssertAll(() =>
             {
@@ -594,20 +848,15 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void ContextPolicy_OnlySurfacesHealthyReviewOrFailureEssentials()
+        public void ContextOnlySurfacesHealthyReviewOrFailureEssentials()
         {
-            BootstrapPresentationModel healthy = BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Healthy,
-                BootstrapSetupAction.OpenPackageInstaller,
-                true);
-            BootstrapPresentationModel reviewRequired = BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.ReviewRequired,
-                BootstrapSetupAction.Refresh,
-                true);
-            BootstrapPresentationModel failed = BootstrapTestPresentationModels.Create(
-                BootstrapSetupPhase.Failed,
-                BootstrapSetupAction.Refresh,
-                true);
+            BootstrapPresentationModel healthy = BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.Healthy());
+            BootstrapPresentationModel reviewRequired =
+                BootstrapPresentationModelFactory.Create(
+                    BootstrapPresentationSnapshotFixtures.ReviewRequired());
+            BootstrapPresentationModel failed = BootstrapPresentationModelFactory.Create(
+                BootstrapPresentationSnapshotFixtures.Failed());
 
             AssertAll(() =>
             {
@@ -620,222 +869,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
             });
         }
 
-        [Test]
-        public void ActionAndStepPolicies_UseLucideAndConciseSemanticLabels()
-        {
-            AssertAll(() =>
-            {
-                Assert.That(
-                    BootstrapViewContentPolicy.GetActionIconClass(BootstrapSetupAction.Install),
-                    Is.EqualTo("bootstrap-icon--install"));
-                Assert.That(
-                    BootstrapViewContentPolicy.GetActionIconClass(
-                        BootstrapSetupAction.OpenPackageInstaller),
-                    Is.EqualTo("bootstrap-icon--open"));
-                Assert.That(
-                    BootstrapViewContentPolicy.GetStepClass(
-                        BootstrapStepPresentationState.Current),
-                    Is.EqualTo("bootstrap-step--current"));
-                Assert.That(
-                    BootstrapViewContentPolicy.GetStepStateLabel(
-                        BootstrapStepPresentationState.Complete),
-                    Is.EqualTo("Done"));
-                Assert.That(
-                    BootstrapViewContentPolicy.GetStepStateLabel(
-                        BootstrapStepPresentationState.Failed),
-                    Is.EqualTo("Needs attention"));
-            });
-        }
-
         private static void AssertAll(Action assertions)
         {
             assertions();
-        }
-    }
-
-    internal static class BootstrapTestPresentationModels
-    {
-        public static BootstrapPresentationModel Create(
-            BootstrapSetupPhase phase,
-            BootstrapSetupAction action,
-            bool primaryActionEnabled)
-        {
-            bool busy = BootstrapViewContentPolicy.IsBusyPhase(phase);
-            BootstrapStepPresentationState[] states = ResolveStepStates(phase);
-            BootstrapStepPresentation[] steps =
-            {
-                Step(1, "Editor", states[0]),
-                Step(2, "Logging", states[1]),
-                Step(3, "Package Installer", states[2])
-            };
-
-            BootstrapPresentationTone tone = ResolveTone(phase);
-            string status = tone == BootstrapPresentationTone.Error
-                ? "Setup stopped before another package change."
-                : phase == BootstrapSetupPhase.ReviewRequired
-                    ? "Remote revision could not be verified."
-                    : "Ready";
-
-            return new BootstrapPresentationModel(
-                BootstrapChannel.Stable,
-                phase,
-                ResolveTitle(phase),
-                "A concise setup and repair state.",
-                status,
-                tone,
-                phase == BootstrapSetupPhase.Healthy
-                    ? "bootstrap-icon--success"
-                    : busy
-                        ? "bootstrap-icon--loading"
-                        : "bootstrap-icon--repair",
-                action,
-                ResolveActionLabel(action),
-                "Run the current primary action.",
-                primaryActionEnabled,
-                phase != BootstrapSetupPhase.Loading && !busy,
-                string.Empty,
-                string.Empty,
-                steps,
-                new[]
-                {
-                    new BootstrapDetailPresentation(
-                        "Target source",
-                        DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl)
-                },
-                string.Empty,
-                CountComplete(states),
-                "v1.1.83 - Git #main - 8edb9125");
-        }
-
-        private static BootstrapStepPresentation Step(
-            int number,
-            string title,
-            BootstrapStepPresentationState state)
-        {
-            return new BootstrapStepPresentation(
-                number,
-                title,
-                "Durable setup step detail.",
-                "com.deucarian." + title.ToLowerInvariant().Replace(" ", "-"),
-                state);
-        }
-
-        private static BootstrapStepPresentationState[] ResolveStepStates(
-            BootstrapSetupPhase phase)
-        {
-            if (phase == BootstrapSetupPhase.Healthy || phase == BootstrapSetupPhase.Verifying)
-            {
-                return new[]
-                {
-                    BootstrapStepPresentationState.Complete,
-                    BootstrapStepPresentationState.Complete,
-                    BootstrapStepPresentationState.Complete
-                };
-            }
-
-            if (phase == BootstrapSetupPhase.Installing ||
-                phase == BootstrapSetupPhase.WaitingForUnity)
-            {
-                return new[]
-                {
-                    BootstrapStepPresentationState.Complete,
-                    BootstrapStepPresentationState.Current,
-                    BootstrapStepPresentationState.Pending
-                };
-            }
-
-            if (phase == BootstrapSetupPhase.Failed)
-            {
-                return new[]
-                {
-                    BootstrapStepPresentationState.Complete,
-                    BootstrapStepPresentationState.Failed,
-                    BootstrapStepPresentationState.Pending
-                };
-            }
-
-            return new[]
-            {
-                BootstrapStepPresentationState.Ready,
-                BootstrapStepPresentationState.Pending,
-                BootstrapStepPresentationState.Pending
-            };
-        }
-
-        private static BootstrapPresentationTone ResolveTone(BootstrapSetupPhase phase)
-        {
-            if (phase == BootstrapSetupPhase.Healthy) return BootstrapPresentationTone.Success;
-            if (phase == BootstrapSetupPhase.Failed) return BootstrapPresentationTone.Error;
-            if (phase == BootstrapSetupPhase.Review ||
-                phase == BootstrapSetupPhase.ReviewRequired)
-            {
-                return BootstrapPresentationTone.Warning;
-            }
-
-            return BootstrapPresentationTone.Info;
-        }
-
-        private static string ResolveTitle(BootstrapSetupPhase phase)
-        {
-            switch (phase)
-            {
-                case BootstrapSetupPhase.Loading: return "Checking setup";
-                case BootstrapSetupPhase.Installing: return "Installing setup";
-                case BootstrapSetupPhase.WaitingForUnity: return "Waiting for Unity";
-                case BootstrapSetupPhase.Verifying: return "Verifying setup";
-                case BootstrapSetupPhase.Healthy: return "Setup is healthy";
-                case BootstrapSetupPhase.Failed: return "Setup stopped";
-                default: return "Setup needs repair";
-            }
-        }
-
-        private static string ResolveActionLabel(BootstrapSetupAction action)
-        {
-            switch (action)
-            {
-                case BootstrapSetupAction.Install: return "Install";
-                case BootstrapSetupAction.Repair: return "Repair";
-                case BootstrapSetupAction.SwitchChannel: return "Switch Channel";
-                case BootstrapSetupAction.Migrate: return "Migrate";
-                case BootstrapSetupAction.Refresh: return "Refresh Status";
-                case BootstrapSetupAction.OpenPackageInstaller: return "Open Package Installer";
-                default: return "Working...";
-            }
-        }
-
-        private static int CountComplete(IEnumerable<BootstrapStepPresentationState> states)
-        {
-            return states.Count(state => state == BootstrapStepPresentationState.Complete);
-        }
-    }
-
-    internal static class BootstrapPresentationContractTestsSnapshot
-    {
-        public static BootstrapSetupSnapshot RefreshRequired()
-        {
-            BootstrapInstalledState installed = BootstrapInstalledState.Empty;
-            BootstrapHealthReport health = new BootstrapHealthReport(
-                true,
-                true,
-                BootstrapPackageInstallerSetupState.UnknownReviewRequired,
-                BootstrapSetupAction.Refresh,
-                true);
-            return new BootstrapSetupSnapshot(
-                BootstrapChannel.Stable,
-                BootstrapSetupPhase.ReviewRequired,
-                BootstrapCatalogOrigin.BundledFallback,
-                "Bundled setup fallback",
-                "Remote unavailable.",
-                "Review required.",
-                string.Empty,
-                DeucarianBootstrapPackageConstants.PackageInstallerStableGitUrl,
-                string.Empty,
-                Array.Empty<BootstrapPackageStep>(),
-                Array.Empty<string>(),
-                string.Empty,
-                installed,
-                health,
-                BootstrapScopedRegistryStatus.NotInspected);
         }
     }
 }
