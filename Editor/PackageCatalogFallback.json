@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-24",
+  "updatedAt": "2026-08-14",
   "groups": [
     {
       "id": "infrastructure",
@@ -135,6 +135,15 @@
       "sortOrder": 71,
       "description": "Playable starter game templates.",
       "iconKey": "gamepad-2",
+      "styleKey": "template"
+    },
+    {
+      "id": "templates-viewers",
+      "displayName": "Viewers",
+      "parentGroupId": "templates",
+      "sortOrder": 72,
+      "description": "Ready-to-run 3D web viewer templates.",
+      "iconKey": "panel-top",
       "styleKey": "template"
     }
   ],

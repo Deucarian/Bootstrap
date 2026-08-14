@@ -9,7 +9,7 @@ dependencies. It exists because a clean direct Git installation of
 `com.deucarian.package-installer` cannot resolve its Git-distributed Deucarian
 Editor and Logging dependencies transitively.
 
-Current package version: `1.2.0`.
+Current package version: `1.2.1`.
 
 ## Responsibilities
 
