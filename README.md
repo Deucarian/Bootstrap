@@ -120,6 +120,13 @@ validated package-local fallback. Invalid remote data never replaces a valid
 fallback. The fallback deliberately carries branch URLs rather than moving
 package-version or commit claims.
 
+The fallback also carries the dependency-first metadata needed to expose the
+Activity Visualization, WebGL Command Routing Integration, Viewer Navigation,
+Web Viewer Suite, and Web Viewer Template package IDs to review tooling. These
+extra catalog entries do not change Bootstrap's setup plan: Bootstrap still
+installs exactly Editor, Logging, and Package Installer, then hands normal
+package discovery to Package Installer.
+
 ## Channel state
 
 Stable maps to Git `#main`; Development maps to Git `#develop`.
