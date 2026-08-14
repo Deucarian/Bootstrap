@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.1 - 2026-08-14
+
+- Refreshed the generated fallback catalog metadata for review of the reusable
+  Web Viewer ecosystem without expanding Bootstrap's setup dependency closure.
+
 ## 1.2.0 - 2026-08-11
 
 - Rebuilt Bootstrap as a self-contained first-time setup and repair state
