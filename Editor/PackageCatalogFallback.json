@@ -358,7 +358,7 @@
       "category": "World",
       "type": "Core",
       "ecosystemGroup": "Experience & Interaction",
-      "description": "Canonical viewer toolbar, Orbit/Fly state, Top Down, Return to Origin, six-face view cube, reference bounds, and input coordination.",
+      "description": "Canonical Report Viewer-proven navigation preset, toolbar, Orbit/Fly state, Top Down, Return to Origin, six-face view cube, reference bounds, and input coordination.",
       "stableUrl": "https://github.com/Deucarian/Viewer-Navigation.git#main",
       "developmentUrl": "https://github.com/Deucarian/Viewer-Navigation.git#develop",
       "dependencies": [
@@ -444,7 +444,7 @@
       "category": "Suites",
       "type": "Suite",
       "ecosystemGroup": "Suites",
-      "description": "Implementation-free curated bundle of the reusable Deucarian WebGL viewer stack, with a compiled reference-composition sample.",
+      "description": "Implementation-free curated bundle of the reusable Deucarian WebGL viewer stack and its Report Viewer-proven navigation preset, with a compiled reference-composition sample.",
       "stableUrl": "https://github.com/Deucarian/Web-Viewer-Suite.git#main",
       "developmentUrl": "https://github.com/Deucarian/Web-Viewer-Suite.git#develop",
       "dependencies": [
@@ -471,7 +471,7 @@
       "category": "Templates",
       "type": "Template",
       "ecosystemGroup": "Templates",
-      "description": "Ready-to-run generic WebGL viewer with secure browser commands, model loading, viewer navigation, diagnostics, a local host harness, and project-owned build profiles.",
+      "description": "Ready-to-run generic WebGL viewer with Report Viewer-proven navigation defaults, secure browser commands, model loading, diagnostics, a local host harness, and project-owned build profiles.",
       "stableUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#main",
       "developmentUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#develop",
       "dependencies": [
