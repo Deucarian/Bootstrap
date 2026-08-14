@@ -12,7 +12,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
     [TestFixture]
     internal sealed class BootstrapPackageAssetContractTests
     {
-        private const string ExpectedFeatureVersion = "1.2.0";
+        private const string ExpectedPackageVersion = "1.2.1";
 
         [Serializable]
         private sealed class PackageManifestDto
@@ -43,7 +43,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
         }
 
         [Test]
-        public void PackageIdentityVersionAndDependencyContract_IsSelfContainedEditorOnlyFeatureRelease()
+        public void PackageIdentityVersionAndDependencyContract_IsSelfContainedEditorOnlyPackage()
         {
             string packageRoot = GetPackageRoot();
             string packageJson = File.ReadAllText(Path.Combine(packageRoot, "package.json"));
@@ -58,8 +58,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
             {
                 Assert.That(package.name, Is.EqualTo("com.deucarian.bootstrap"));
                 Assert.That(package.displayName, Is.EqualTo("Deucarian Bootstrap"));
-                Assert.That(package.version, Is.EqualTo(ExpectedFeatureVersion),
-                    "The backwards-compatible architecture/UX rebuild is a minor release from 1.1.6.");
+                Assert.That(package.version, Is.EqualTo(ExpectedPackageVersion),
+                    "The generated catalog synchronization is a patch release from 1.2.0.");
                 Assert.That(package.version, Is.EqualTo(DeucarianBootstrapPackageConstants.Version));
                 Assert.That(package.unity, Is.EqualTo("2021.3"));
                 Assert.That(ExtractObjectBody(packageJson, "dependencies"), Is.Empty,
@@ -89,13 +89,13 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             AssertAll(() =>
             {
-                StringAssert.Contains("## " + ExpectedFeatureVersion, changelog);
+                StringAssert.Contains("## " + ExpectedPackageVersion, changelog);
                 Assert.That(DeucarianBootstrapPackageConstants.PackageName,
                     Is.EqualTo("com.deucarian.bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.DisplayName,
                     Is.EqualTo("Deucarian Bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.Version,
-                    Is.EqualTo(ExpectedFeatureVersion));
+                    Is.EqualTo(ExpectedPackageVersion));
             });
         }
 
