@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-07-24",
+  "updatedAt": "2026-08-14",
   "groups": [
     {
       "id": "infrastructure",
@@ -136,6 +136,15 @@
       "description": "Playable starter game templates.",
       "iconKey": "gamepad-2",
       "styleKey": "template"
+    },
+    {
+      "id": "templates-viewers",
+      "displayName": "Viewers",
+      "parentGroupId": "templates",
+      "sortOrder": 72,
+      "description": "Ready-to-run 3D web viewer templates.",
+      "iconKey": "panel-top",
+      "styleKey": "template"
     }
   ],
   "packages": [
@@ -181,6 +190,304 @@
       "dependencies": [
         "com.deucarian.editor",
         "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.diagnostics",
+      "displayName": "Deucarian Diagnostics",
+      "kind": "Tool",
+      "groupId": "tools-quality",
+      "category": "Tools",
+      "type": "Tool",
+      "ecosystemGroup": "Tools & Quality",
+      "description": "Local diagnostics snapshots, providers, JSON export, and developer-facing runtime/editor views for Deucarian Unity projects.",
+      "stableUrl": "https://github.com/Deucarian/Diagnostics.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Diagnostics.git#develop",
+      "dependencies": [
+        "com.deucarian.editor",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.activity-visualization",
+      "displayName": "Deucarian Activity Visualization",
+      "kind": "Library",
+      "groupId": "world-xr-interaction",
+      "category": "World",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Backend-neutral, deterministic flat Activity membership planning with authoritative revision and visibility state.",
+      "stableUrl": "https://github.com/Deucarian/Activity-Visualization.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Activity-Visualization.git#develop",
+      "dependencies": [
+        "com.deucarian.diagnostics",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.command-routing",
+      "displayName": "Deucarian Command Routing",
+      "kind": "Library",
+      "groupId": "infrastructure",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Infrastructure",
+      "description": "Transport-independent command handlers, middleware, JSON protocol, redaction, history, logging, diagnostics, and editor tooling.",
+      "stableUrl": "https://github.com/Deucarian/Command-Routing.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Command-Routing.git#develop",
+      "dependencies": [
+        "com.deucarian.diagnostics",
+        "com.deucarian.editor",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.command-routing.webgl-integration",
+      "displayName": "Deucarian Command Routing WebGL Integration",
+      "kind": "Integration",
+      "groupId": "infrastructure",
+      "category": "Integration",
+      "type": "Integration",
+      "ecosystemGroup": "Integrations",
+      "description": "Secure direct-page and iframe browser transport, ready handshake, responses, events, and lifecycle adapters for Deucarian Command Routing.",
+      "stableUrl": "https://github.com/Deucarian/Command-Routing-WebGL-Integration.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Command-Routing-WebGL-Integration.git#develop",
+      "dependencies": [
+        "com.deucarian.command-routing",
+        "com.deucarian.diagnostics",
+        "com.deucarian.editor",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.common",
+      "displayName": "Deucarian Common",
+      "kind": "Library",
+      "groupId": "infrastructure",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Infrastructure",
+      "description": "Tiny dependency-free runtime primitives shared across Deucarian packages.",
+      "stableUrl": "https://github.com/Deucarian/Common.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Common.git#develop",
+      "dependencies": []
+    },
+    {
+      "id": "com.deucarian.camera-navigation",
+      "displayName": "Deucarian Camera Navigation",
+      "kind": "Library",
+      "groupId": "world-xr-interaction",
+      "category": "World",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Reusable camera pose, framing, transition, orbit, fly, top-down, and waypoint navigation primitives.",
+      "stableUrl": "https://github.com/Deucarian/Camera-Navigation.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Camera-Navigation.git#develop",
+      "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.editor"
+      ]
+    },
+    {
+      "id": "com.deucarian.camera-navigation.input-system-integration",
+      "displayName": "Deucarian Camera Navigation Input System Integration",
+      "kind": "Integration",
+      "groupId": "world-xr-interaction",
+      "category": "Integration",
+      "type": "Integration",
+      "ecosystemGroup": "Integrations",
+      "description": "Ready-to-use Unity Input System adapters and rig for Deucarian Orbit and Fly camera navigation.",
+      "stableUrl": "https://github.com/Deucarian/CameraNavigation-InputSystem-Integration.git#main",
+      "developmentUrl": "https://github.com/Deucarian/CameraNavigation-InputSystem-Integration.git#develop",
+      "dependencies": [
+        "com.deucarian.camera-navigation"
+      ]
+    },
+    {
+      "id": "com.deucarian.pointer-capture",
+      "displayName": "Deucarian Pointer Capture",
+      "kind": "Library",
+      "groupId": "world-xr-interaction",
+      "category": "Interaction",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Cross-platform pointer-lock lifecycle, capture policy, diagnostics, and WebGL integration for Unity applications.",
+      "stableUrl": "https://github.com/Deucarian/Pointer-Capture.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Pointer-Capture.git#develop",
+      "dependencies": [
+        "com.deucarian.editor"
+      ]
+    },
+    {
+      "id": "com.deucarian.theming",
+      "displayName": "Deucarian Theming",
+      "kind": "Library",
+      "groupId": "ui-presentation",
+      "category": "UI",
+      "type": "OptionalIntegration",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Designer-friendly ScriptableObject theming with color role assets, palettes, themes, and Unity component adapters.",
+      "stableUrl": "https://github.com/Deucarian/Theming.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Theming.git#develop",
+      "dependencies": [
+        "com.deucarian.editor",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.ui",
+      "displayName": "Deucarian UI",
+      "kind": "Library",
+      "groupId": "ui-presentation",
+      "category": "UI",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Reusable Deucarian UI motion, glass, icon, control island, and UI Toolkit/uGUI presentation primitives.",
+      "stableUrl": "https://github.com/Deucarian/UI.git#main",
+      "developmentUrl": "https://github.com/Deucarian/UI.git#develop",
+      "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.theming"
+      ]
+    },
+    {
+      "id": "com.deucarian.viewer-navigation",
+      "displayName": "Deucarian Viewer Navigation",
+      "kind": "Library",
+      "groupId": "world-xr-interaction",
+      "category": "World",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Canonical Report Viewer-proven navigation preset, toolbar, Orbit/Fly state, Top Down, Return to Origin, six-face view cube, reference bounds, and input coordination.",
+      "stableUrl": "https://github.com/Deucarian/Viewer-Navigation.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Viewer-Navigation.git#develop",
+      "dependencies": [
+        "com.deucarian.camera-navigation",
+        "com.deucarian.camera-navigation.input-system-integration",
+        "com.deucarian.common",
+        "com.deucarian.diagnostics",
+        "com.deucarian.editor",
+        "com.deucarian.logging",
+        "com.deucarian.pointer-capture",
+        "com.deucarian.theming",
+        "com.deucarian.ui"
+      ]
+    },
+    {
+      "id": "com.deucarian.api",
+      "displayName": "Deucarian API",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable API client for Unity.",
+      "stableUrl": "https://github.com/Deucarian/API.git#main",
+      "developmentUrl": "https://github.com/Deucarian/API.git#develop",
+      "dependencies": [
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.build-pipeline",
+      "displayName": "Deucarian Build Pipeline",
+      "kind": "Tool",
+      "groupId": "tools-quality",
+      "category": "Tools",
+      "type": "Tool",
+      "ecosystemGroup": "Tools & Quality",
+      "description": "Editor-only Build Pipeline Manager, provider workflows, profile policies, drift validation, artifact manifests, and CI build entry points.",
+      "stableUrl": "https://github.com/Deucarian/Build-Pipeline.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Build-Pipeline.git#develop",
+      "dependencies": [
+        "com.deucarian.editor",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.object-loading",
+      "displayName": "Deucarian Object Loading",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable runtime loading pipeline for resolved object and scene content sources.",
+      "stableUrl": "https://github.com/Deucarian/Object-Loading.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Object-Loading.git#develop",
+      "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.object-loading.api-integration",
+      "displayName": "Deucarian Object Loading API Integration",
+      "kind": "Integration",
+      "groupId": "runtime-services",
+      "category": "Integration",
+      "type": "Integration",
+      "ecosystemGroup": "Integrations",
+      "description": "Optional integration package that provides optimized API-backed UnityWebRequestAssetBundle transport for Object Loading.",
+      "stableUrl": "https://github.com/Deucarian/ObjectLoading-API-Integration.git#main",
+      "developmentUrl": "https://github.com/Deucarian/ObjectLoading-API-Integration.git#develop",
+      "dependencies": [
+        "com.deucarian.api",
+        "com.deucarian.object-loading"
+      ]
+    },
+    {
+      "id": "com.deucarian.web-viewer-suite",
+      "displayName": "Deucarian Web Viewer Suite",
+      "kind": "Suite",
+      "groupId": "world-xr-interaction",
+      "category": "Suites",
+      "type": "Suite",
+      "ecosystemGroup": "Suites",
+      "description": "Implementation-free curated bundle of the reusable Deucarian WebGL viewer stack and its Report Viewer-proven navigation preset, with a compiled reference-composition sample.",
+      "stableUrl": "https://github.com/Deucarian/Web-Viewer-Suite.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Web-Viewer-Suite.git#develop",
+      "dependencies": [
+        "com.deucarian.api",
+        "com.deucarian.build-pipeline",
+        "com.deucarian.camera-navigation",
+        "com.deucarian.camera-navigation.input-system-integration",
+        "com.deucarian.command-routing",
+        "com.deucarian.command-routing.webgl-integration",
+        "com.deucarian.diagnostics",
+        "com.deucarian.object-loading",
+        "com.deucarian.object-loading.api-integration",
+        "com.deucarian.pointer-capture",
+        "com.deucarian.theming",
+        "com.deucarian.ui",
+        "com.deucarian.viewer-navigation"
+      ]
+    },
+    {
+      "id": "com.deucarian.template.viewer.web",
+      "displayName": "Deucarian Web Viewer Template",
+      "kind": "Template",
+      "groupId": "templates-viewers",
+      "category": "Templates",
+      "type": "Template",
+      "ecosystemGroup": "Templates",
+      "description": "Ready-to-run generic WebGL viewer with Report Viewer-proven navigation defaults, secure browser commands, model loading, diagnostics, a local host harness, and project-owned build profiles.",
+      "stableUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#develop",
+      "dependencies": [
+        "com.deucarian.api",
+        "com.deucarian.build-pipeline",
+        "com.deucarian.camera-navigation",
+        "com.deucarian.command-routing",
+        "com.deucarian.command-routing.webgl-integration",
+        "com.deucarian.diagnostics",
+        "com.deucarian.logging",
+        "com.deucarian.object-loading",
+        "com.deucarian.object-loading.api-integration",
+        "com.deucarian.theming",
+        "com.deucarian.ui",
+        "com.deucarian.viewer-navigation",
+        "com.deucarian.web-viewer-suite"
       ]
     }
   ]

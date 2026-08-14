@@ -10,7 +10,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
     internal sealed class BootstrapCatalogContractTests
     {
         [Test]
-        public void BundledFallback_IsSchemaTwoAndExactlyResolvesSetupClosureForBothChannels()
+        public void BundledFallback_ContainsSetupClosureAndViewerReviewEntriesForBothChannels()
         {
             string json = ReadBundledFallback();
 
@@ -22,12 +22,28 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Is.True,
                 parseError);
             Assert.That(catalog.schemaVersion, Is.EqualTo(2));
-            Assert.That(catalog.packages.Select(package => package.id), Is.EquivalentTo(new[]
+            string[] packageIds = catalog.packages.Select(package => package.id).ToArray();
+            Assert.That(packageIds, Does.Contain("com.deucarian.activity-visualization"));
+            Assert.That(packageIds, Does.Contain("com.deucarian.command-routing.webgl-integration"));
+            Assert.That(packageIds, Does.Contain("com.deucarian.viewer-navigation"));
+            Assert.That(packageIds, Does.Contain("com.deucarian.web-viewer-suite"));
+            Assert.That(packageIds, Does.Contain("com.deucarian.template.viewer.web"));
+            Assert.That(packageIds, Does.Contain(DeucarianBootstrapPackageConstants.EditorPackageId));
+            Assert.That(packageIds, Does.Contain(DeucarianBootstrapPackageConstants.LoggingPackageId));
+            Assert.That(packageIds, Does.Contain(
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId));
+
+            Assert.That(catalog.packages.Where(package => new[]
             {
                 DeucarianBootstrapPackageConstants.EditorPackageId,
                 DeucarianBootstrapPackageConstants.LoggingPackageId,
                 DeucarianBootstrapPackageConstants.PackageInstallerPackageId
-            }), "The fallback must contain only the setup closure, not the full ecosystem.");
+            }.Contains(package.id)).Select(package => package.id), Is.EquivalentTo(new[]
+            {
+                DeucarianBootstrapPackageConstants.EditorPackageId,
+                DeucarianBootstrapPackageConstants.LoggingPackageId,
+                DeucarianBootstrapPackageConstants.PackageInstallerPackageId
+            }));
 
             BootstrapInstallPlanResult stable = BootstrapSetupPlanner.Build(
                 catalog,
