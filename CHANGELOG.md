@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.3 - 2026-08-18
+
+- Refreshed the generated fallback catalog so the Web Viewer template includes
+  its required Session package dependency.
+
 ## 1.2.2 - 2026-08-18
 
 - Refreshed the fallback catalog with Viewer Authentication and the complete
