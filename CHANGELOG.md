@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.2 - 2026-08-18
+
+- Refreshed the fallback catalog with Viewer Authentication and the complete
+  authenticated Web Viewer dependency graph.
+
 ## 1.2.1 - 2026-08-14
 
 - Refreshed the generated fallback catalog metadata for review of the reusable
