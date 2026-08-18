@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.4 - 2026-08-18
+
+- Refreshed the fallback dependency graph for API's shared Editor tooling and
+  the Web Viewer Template's Session API integration.
+
 ## 1.2.3 - 2026-08-18
 
 - Refreshed the generated fallback catalog so the Web Viewer template includes
