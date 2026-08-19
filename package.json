@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/Deucarian/Bootstrap.git"
   },
+  "documentationUrl": "https://github.com/Deucarian/Bootstrap/blob/main/README.md",
+  "changelogUrl": "https://github.com/Deucarian/Bootstrap/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Deucarian/Bootstrap/blob/main/LICENSE.md",
   "keywords": [
     "deucarian",
     "bootstrap",
