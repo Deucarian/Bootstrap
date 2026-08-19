@@ -429,7 +429,7 @@
       "category": "Integration",
       "type": "Integration",
       "ecosystemGroup": "Integrations",
-      "description": "Optional integration package that provides optimized API-backed UnityWebRequestAssetBundle transport for Object Loading.",
+      "description": "Optional integration package that provides optimized API-backed UnityWebRequestAssetBundle transport and exact-origin authenticated download policy for Object Loading.",
       "stableUrl": "https://github.com/Deucarian/ObjectLoading-API-Integration.git#main",
       "developmentUrl": "https://github.com/Deucarian/ObjectLoading-API-Integration.git#develop",
       "dependencies": [
@@ -476,7 +476,7 @@
       "category": "Core",
       "type": "Core",
       "ecosystemGroup": "Runtime Services",
-      "description": "Reusable viewer session composition, live API authentication, secure auth commands, sanitized status, and shared development authentication tooling.",
+      "description": "Reusable viewer session composition, live API authentication, secure auth commands, sanitized status, shared development tooling, and an optional runtime connection-provider seam.",
       "stableUrl": "https://github.com/Deucarian/Viewer-Authentication.git#main",
       "developmentUrl": "https://github.com/Deucarian/Viewer-Authentication.git#develop",
       "dependencies": [
