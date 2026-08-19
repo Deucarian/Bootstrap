@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.2.5 - 2026-08-19
+
+- Refreshed the generated fallback catalog against the registry revision that
+  adds optional Simultria viewer compositions. The Bootstrap dependency closure
+  remains vendor-neutral and unchanged.
+
 ## 1.2.4 - 2026-08-18
 
 - Refreshed the fallback dependency graph for API's shared Editor tooling and
