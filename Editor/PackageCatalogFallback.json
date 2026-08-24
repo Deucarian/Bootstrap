@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-19",
+  "updatedAt": "2026-08-24",
   "groups": [
     {
       "id": "infrastructure",
@@ -397,7 +397,7 @@
       "category": "Tools",
       "type": "Tool",
       "ecosystemGroup": "Tools & Quality",
-      "description": "Editor-only Build Pipeline Manager, provider workflows, profile policies, drift validation, artifact manifests, and CI build entry points.",
+      "description": "Editor-only Build Pipeline Manager, provider workflows, profile policies, package-owned WebGL template synchronization and selection, drift validation, artifact manifests, and CI build entry points.",
       "stableUrl": "https://github.com/Deucarian/Build-Pipeline.git#main",
       "developmentUrl": "https://github.com/Deucarian/Build-Pipeline.git#develop",
       "dependencies": [
@@ -524,6 +524,21 @@
       ]
     },
     {
+      "id": "com.deucarian.webgl-template",
+      "displayName": "Deucarian WebGL Template",
+      "kind": "Tool",
+      "groupId": "tools-quality",
+      "category": "Tools",
+      "type": "Tool",
+      "ecosystemGroup": "Tools & Quality",
+      "description": "Reusable Unity WebGL browser template with responsive canvas hosting, loading, ready and failure presentation, fullscreen controls, runtime theme synchronization, and lifecycle/progress bridges.",
+      "stableUrl": "https://github.com/Deucarian/WebGL-Template.git#main",
+      "developmentUrl": "https://github.com/Deucarian/WebGL-Template.git#develop",
+      "dependencies": [
+        "com.deucarian.build-pipeline"
+      ]
+    },
+    {
       "id": "com.deucarian.web-viewer-suite",
       "displayName": "Deucarian Web Viewer Suite",
       "kind": "Suite",
@@ -552,7 +567,8 @@
         "com.deucarian.viewer-navigation",
         "com.deucarian.viewer-rendering",
         "com.deucarian.viewer-shell",
-        "com.deucarian.viewer-authentication"
+        "com.deucarian.viewer-authentication",
+        "com.deucarian.webgl-template"
       ]
     },
     {
@@ -584,7 +600,8 @@
         "com.deucarian.viewer-rendering",
         "com.deucarian.viewer-shell",
         "com.deucarian.viewer-authentication",
-        "com.deucarian.web-viewer-suite"
+        "com.deucarian.web-viewer-suite",
+        "com.deucarian.webgl-template"
       ]
     }
   ]
