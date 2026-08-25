@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.2.6 - 2026-08-25
+
+- Refreshed the generated fallback catalog date for the shared Simultria
+  rendering and Activity integration registration. Bootstrap's vendor-neutral
+  dependency closure remains unchanged.
+
 ## 1.2.5 - 2026-08-19
 
 - Refreshed the generated fallback catalog against the registry revision that
