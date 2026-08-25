@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.7 - 2026-08-25
+
+- Refreshed the generated fallback catalog so the 3D Viewer Templates group
+  uses the canonical vendored `panels-top-left` icon.
+
 ## 1.2.6 - 2026-08-25
 
 - Refreshed the generated fallback catalog date for the shared Simultria
