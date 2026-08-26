@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.2.8 - 2026-08-26
+
+- Registered the platform-neutral Viewer Template and its Web adapter in the
+  generated offline fallback catalog.
+
 ## 1.2.7 - 2026-08-25
 
 - Refreshed the generated fallback catalog so the 3D Viewer Templates group
