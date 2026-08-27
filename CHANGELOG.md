@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.2.9 - 2026-08-27
+
+- Regenerated the offline catalog for generic Authentication, Simultria Viewer
+  Integration, API 2.0, and the optional Authentication/Command Routing edge
+  while retaining the platform-neutral Viewer Template/Web adapter split.
+
 ## 1.2.8 - 2026-08-26
 
 - Registered the platform-neutral Viewer Template and its Web adapter in the
