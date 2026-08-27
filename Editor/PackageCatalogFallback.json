@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-25",
+  "updatedAt": "2026-08-26",
   "groups": [
     {
       "id": "infrastructure",
@@ -352,13 +352,13 @@
     },
     {
       "id": "com.deucarian.viewer-navigation",
-      "displayName": "Deucarian Viewer Navigation",
+      "displayName": "Deucarian Viewer Navigation Experience",
       "kind": "Library",
       "groupId": "world-xr-interaction",
       "category": "World",
       "type": "Core",
       "ecosystemGroup": "Experience & Interaction",
-      "description": "Canonical Report Viewer-proven navigation preset, toolbar, Orbit/Fly state, Top Down, Return to Origin, six-face view cube, reference bounds, and input coordination.",
+      "description": "Reusable viewer navigation experience composing canonical Orbit/Fly and top-down state, toolbar, origin, reference bounds, view cube, and input coordination over generic Camera Navigation.",
       "stableUrl": "https://github.com/Deucarian/Viewer-Navigation.git#main",
       "developmentUrl": "https://github.com/Deucarian/Viewer-Navigation.git#develop",
       "dependencies": [
@@ -387,6 +387,56 @@
       "dependencies": [
         "com.deucarian.editor",
         "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.session",
+      "displayName": "Deucarian Session",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable session management for Unity.",
+      "stableUrl": "https://github.com/Deucarian/Session.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Session.git#develop",
+      "dependencies": [
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.session.api-integration",
+      "displayName": "Deucarian Session API Integration",
+      "kind": "Integration",
+      "groupId": "runtime-services",
+      "category": "Integration",
+      "type": "Integration",
+      "ecosystemGroup": "Integrations",
+      "description": "Integration package connecting Session authentication to API.",
+      "stableUrl": "https://github.com/Deucarian/Session-API-Integration.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Session-API-Integration.git#develop",
+      "dependencies": [
+        "com.deucarian.session",
+        "com.deucarian.api"
+      ]
+    },
+    {
+      "id": "com.deucarian.authentication",
+      "displayName": "Deucarian Authentication",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable authentication session lifecycle, explicit-target API authentication, secure local persistence, sanitized status, and an optional viewer integration assembly.",
+      "stableUrl": "https://github.com/Deucarian/Viewer-Authentication.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Viewer-Authentication.git#develop",
+      "dependencies": [
+        "com.deucarian.api",
+        "com.deucarian.command-routing",
+        "com.deucarian.editor",
+        "com.deucarian.session",
+        "com.deucarian.session.api-integration"
       ]
     },
     {
@@ -435,56 +485,6 @@
       "dependencies": [
         "com.deucarian.api",
         "com.deucarian.object-loading"
-      ]
-    },
-    {
-      "id": "com.deucarian.session",
-      "displayName": "Deucarian Session",
-      "kind": "Library",
-      "groupId": "runtime-services",
-      "category": "Core",
-      "type": "Core",
-      "ecosystemGroup": "Runtime Services",
-      "description": "Reusable session management for Unity.",
-      "stableUrl": "https://github.com/Deucarian/Session.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Session.git#develop",
-      "dependencies": [
-        "com.deucarian.logging"
-      ]
-    },
-    {
-      "id": "com.deucarian.session.api-integration",
-      "displayName": "Deucarian Session API Integration",
-      "kind": "Integration",
-      "groupId": "runtime-services",
-      "category": "Integration",
-      "type": "Integration",
-      "ecosystemGroup": "Integrations",
-      "description": "Integration package connecting Session authentication to API.",
-      "stableUrl": "https://github.com/Deucarian/Session-API-Integration.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Session-API-Integration.git#develop",
-      "dependencies": [
-        "com.deucarian.session",
-        "com.deucarian.api"
-      ]
-    },
-    {
-      "id": "com.deucarian.viewer-authentication",
-      "displayName": "Deucarian Viewer Authentication",
-      "kind": "Library",
-      "groupId": "runtime-services",
-      "category": "Core",
-      "type": "Core",
-      "ecosystemGroup": "Runtime Services",
-      "description": "Reusable viewer session composition, live API authentication, secure auth commands, sanitized status, shared development tooling, and an optional runtime connection-provider seam.",
-      "stableUrl": "https://github.com/Deucarian/Viewer-Authentication.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Viewer-Authentication.git#develop",
-      "dependencies": [
-        "com.deucarian.api",
-        "com.deucarian.command-routing",
-        "com.deucarian.editor",
-        "com.deucarian.session",
-        "com.deucarian.session.api-integration"
       ]
     },
     {
@@ -567,7 +567,7 @@
         "com.deucarian.viewer-navigation",
         "com.deucarian.viewer-rendering",
         "com.deucarian.viewer-shell",
-        "com.deucarian.viewer-authentication",
+        "com.deucarian.authentication",
         "com.deucarian.webgl-template"
       ]
     },
@@ -599,7 +599,7 @@
         "com.deucarian.viewer-navigation",
         "com.deucarian.viewer-rendering",
         "com.deucarian.viewer-shell",
-        "com.deucarian.viewer-authentication",
+        "com.deucarian.authentication",
         "com.deucarian.web-viewer-suite",
         "com.deucarian.webgl-template"
       ]
