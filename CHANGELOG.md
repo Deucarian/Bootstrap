@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.10 - 2026-08-31
+
+- Renamed the standalone bootstrap entry to `Tools/Deucarian/Set Up or Repair...` and clarified the window title.
+- Updated the dependency-free Package Installer handoff to the governed `Tools/Deucarian/Package Installer...` bridge.
+- Added a stable public editor-only `DeucarianBootstrap.Open()` API for optional package integrations.
+
 ## Unreleased
 
 ## 1.2.8 - 2026-08-26

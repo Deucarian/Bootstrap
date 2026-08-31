@@ -426,7 +426,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Assert.That(menu.CallCount, Is.EqualTo(1));
                 Assert.That(
                     DeucarianBootstrapPackageConstants.PackageInstallerMenuPath,
-                    Is.EqualTo("Tools/Deucarian/Tools and Quality/Package Installer"));
+                    Is.EqualTo("Tools/Deucarian/Package Installer..."));
                 Assert.That(menu.LastMenuPath,
                     Is.EqualTo(DeucarianBootstrapPackageConstants.PackageInstallerMenuPath));
                 Assert.That(result.Success, Is.EqualTo(menuResult));
