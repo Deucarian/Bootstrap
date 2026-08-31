@@ -27,7 +27,7 @@ namespace Deucarian.Bootstrap.Editor
         public static void Open()
         {
             DeucarianBootstrapWindow window = GetWindow<DeucarianBootstrapWindow>();
-            window.titleContent = new GUIContent("Deucarian Setup");
+            window.titleContent = new GUIContent("Deucarian Setup & Repair");
             window.minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             window.Show();
             EnsureUsefulInitialSize(window);
@@ -123,7 +123,7 @@ namespace Deucarian.Bootstrap.Editor
 
         private void OnEnable()
         {
-            titleContent = new GUIContent("Deucarian Setup");
+            titleContent = new GUIContent("Deucarian Setup & Repair");
             minSize = new Vector2(MinWindowWidth, MinWindowHeight);
             _lastProSkin = EditorGUIUtility.isProSkin;
             _coordinator = BootstrapCompositionRoot.CreateCoordinator();
