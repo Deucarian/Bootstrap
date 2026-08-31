@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor.PackageManager;
@@ -12,7 +13,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
     [TestFixture]
     internal sealed class BootstrapPackageAssetContractTests
     {
-        private const string ExpectedPackageVersion = "1.2.7";
+        private const string ExpectedPackageVersion = "1.2.10";
 
         [Serializable]
         private sealed class PackageManifestDto
@@ -96,6 +97,30 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     Is.EqualTo("Deucarian Bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.Version,
                     Is.EqualTo(ExpectedPackageVersion));
+            });
+        }
+
+        [Test]
+        public void PublicOpenApi_IsAStableDependencyFreeFacade()
+        {
+            Type api = typeof(DeucarianBootstrap);
+            MethodInfo open = api.GetMethod(
+                nameof(DeucarianBootstrap.Open),
+                BindingFlags.Public | BindingFlags.Static);
+            string source = File.ReadAllText(Path.Combine(
+                GetPackageRoot(),
+                "Editor",
+                "DeucarianBootstrap.cs"));
+
+            AssertAll(() =>
+            {
+                Assert.That(api.IsPublic, Is.True);
+                Assert.That(api.IsAbstract && api.IsSealed, Is.True,
+                    "The optional integration surface must remain a static API.");
+                Assert.That(open, Is.Not.Null);
+                Assert.That(open.ReturnType, Is.EqualTo(typeof(void)));
+                Assert.That(open.GetParameters(), Is.Empty);
+                StringAssert.Contains("DeucarianBootstrapWindow.Open();", source);
             });
         }
 

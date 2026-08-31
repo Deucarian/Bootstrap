@@ -25,7 +25,18 @@ namespace Deucarian.Bootstrap.Editor
     {
         public bool Execute(string menuPath)
         {
-            return EditorApplication.ExecuteMenuItem(menuPath);
+            if (!string.Equals(
+                    menuPath,
+                    DeucarianBootstrapPackageConstants.PackageInstallerMenuPath,
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            // Bootstrap intentionally has no package dependencies, so this is the
+            // single governed literal-menu bridge allowed by menu-policy.json.
+            return EditorApplication.ExecuteMenuItem(
+                DeucarianBootstrapPackageConstants.PackageInstallerMenuPath);
         }
     }
 
