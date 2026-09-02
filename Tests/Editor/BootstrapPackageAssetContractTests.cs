@@ -13,7 +13,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
     [TestFixture]
     internal sealed class BootstrapPackageAssetContractTests
     {
-        private const string ExpectedPackageVersion = "1.2.10";
+        private const string ExpectedPackageVersion = "1.2.11";
 
         [Serializable]
         private sealed class PackageManifestDto
