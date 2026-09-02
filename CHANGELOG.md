@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.11 - 2026-09-02
+
+- Regenerated the dependency-first offline fallback catalog for the audited
+  shared viewer package graph while retaining Bootstrap's self-contained
+  setup boundary.
+
 ## 1.2.10 - 2026-08-31
 
 - Renamed the standalone bootstrap entry to `Tools/Deucarian/Set Up or Repair...` and clarified the window title.

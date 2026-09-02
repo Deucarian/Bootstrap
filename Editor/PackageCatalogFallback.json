@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-31",
+  "updatedAt": "2026-09-02",
   "groups": [
     {
       "id": "infrastructure",
@@ -585,6 +585,7 @@
         "com.deucarian.api",
         "com.deucarian.camera-navigation",
         "com.deucarian.command-routing",
+        "com.deucarian.common",
         "com.deucarian.diagnostics",
         "com.deucarian.logging",
         "com.deucarian.object-loading",
@@ -607,7 +608,7 @@
       "category": "Templates",
       "type": "Template",
       "ecosystemGroup": "Templates",
-      "description": "WebGL adapter for the platform-neutral Viewer Template, with secure browser commands, deployment-configured iframe routing, page lifecycle projection, a local host harness, and project-owned build profiles.",
+      "description": "WebGL adapter for the platform-neutral Viewer Template, with secure browser commands, page lifecycle projection, a local host harness, and one declarative product build workflow.",
       "stableUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#main",
       "developmentUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#develop",
       "dependencies": [
@@ -616,6 +617,7 @@
         "com.deucarian.command-routing.webgl-integration",
         "com.deucarian.diagnostics",
         "com.deucarian.template.viewer",
+        "com.deucarian.theming",
         "com.deucarian.authentication",
         "com.deucarian.webgl-template"
       ]
