@@ -9,7 +9,7 @@ dependencies. It exists because a clean direct Git installation of
 `com.deucarian.package-installer` cannot resolve its Git-distributed Deucarian
 Editor and Logging dependencies transitively.
 
-Current package version: `1.2.7`.
+Current package version: `1.2.11`.
 
 ## Responsibilities
 
@@ -50,7 +50,7 @@ Unity 2021.3 or newer is supported.
 After Unity imports the package, open:
 
 ```text
-Tools > Deucarian > Bootstrap > Open Bootstrapper
+Tools > Deucarian > Set Up or Repair...
 ```
 
 Choose Stable or Development, review the three setup steps, and invoke the one
@@ -219,7 +219,7 @@ responsibilities are split into focused components:
 - Git branch revision resolution under `Editor/Infrastructure`;
 - versioned SessionState operation persistence under `Editor/Infrastructure`;
 - the deterministic setup coordinator under `Editor/Application`;
-- handoff through `Tools > Deucarian > Tools and Quality > Package Installer` under
+- the single governed dependency-free handoff to `Tools > Deucarian > Package Installer...` under
   `Editor/Application`;
 - Bootstrap-specific presentation models and responsive UI under
   `Editor/Presentation` and `Editor/UI`.
@@ -239,7 +239,12 @@ Bootstrap is primarily a Unity editor workflow rather than a runtime API.
 
 - `DeucarianBootstrapPackageConstants` is the public identity, version, menu,
   documentation, and package-local asset-path contract.
-- `Tools/Deucarian/Bootstrap/Open Bootstrapper` is the public editor entry.
+- `Tools/Deucarian/Set Up or Repair...` is the public editor entry.
+- Optional editor integrations can call the stable public
+  `DeucarianBootstrap.Open()` API when Bootstrap is installed.
+
+Bootstrap remains dependency-free; its Package Installer handoff is the single
+governed literal-menu compatibility bridge.
 
 The coordinator, persistence, Registry/UPM adapters, presentation model, view,
 and window implementation are internal and may evolve without becoming a
