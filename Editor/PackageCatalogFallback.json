@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-08-25",
+  "updatedAt": "2026-09-02",
   "groups": [
     {
       "id": "infrastructure",
@@ -142,7 +142,7 @@
       "displayName": "Viewers",
       "parentGroupId": "templates",
       "sortOrder": 72,
-      "description": "Ready-to-run 3D web viewer templates.",
+      "description": "Shared 3D viewer foundations and platform-specific adapters.",
       "iconKey": "panels-top-left",
       "styleKey": "template"
     }
@@ -319,6 +319,21 @@
       ]
     },
     {
+      "id": "com.deucarian.media",
+      "displayName": "Deucarian Media",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Typed media loading, explicit resource leases, latest-request coordination, and Unity audio/video playback adapters.",
+      "stableUrl": "https://github.com/Deucarian/Media.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Media.git#develop",
+      "dependencies": [
+        "com.deucarian.common"
+      ]
+    },
+    {
       "id": "com.deucarian.theming",
       "displayName": "Deucarian Theming",
       "kind": "Library",
@@ -326,12 +341,13 @@
       "category": "UI",
       "type": "OptionalIntegration",
       "ecosystemGroup": "Experience & Interaction",
-      "description": "Designer-friendly ScriptableObject theming with color role assets, palettes, themes, and Unity component adapters.",
+      "description": "Designer-friendly visual and semantic audio theming with roles, platform profiles, palettes, and Unity component adapters.",
       "stableUrl": "https://github.com/Deucarian/Theming.git#main",
       "developmentUrl": "https://github.com/Deucarian/Theming.git#develop",
       "dependencies": [
         "com.deucarian.editor",
-        "com.deucarian.logging"
+        "com.deucarian.logging",
+        "com.deucarian.media"
       ]
     },
     {
@@ -352,13 +368,13 @@
     },
     {
       "id": "com.deucarian.viewer-navigation",
-      "displayName": "Deucarian Viewer Navigation",
+      "displayName": "Deucarian Viewer Navigation Experience",
       "kind": "Library",
       "groupId": "world-xr-interaction",
       "category": "World",
       "type": "Core",
       "ecosystemGroup": "Experience & Interaction",
-      "description": "Canonical Report Viewer-proven navigation preset, toolbar, Orbit/Fly state, Top Down, Return to Origin, six-face view cube, reference bounds, and input coordination.",
+      "description": "Reusable viewer navigation experience composing canonical Orbit/Fly and top-down state, toolbar, origin, reference bounds, view cube, and input coordination over generic Camera Navigation.",
       "stableUrl": "https://github.com/Deucarian/Viewer-Navigation.git#main",
       "developmentUrl": "https://github.com/Deucarian/Viewer-Navigation.git#develop",
       "dependencies": [
@@ -387,6 +403,55 @@
       "dependencies": [
         "com.deucarian.editor",
         "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.session",
+      "displayName": "Deucarian Session",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable session management for Unity.",
+      "stableUrl": "https://github.com/Deucarian/Session.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Session.git#develop",
+      "dependencies": [
+        "com.deucarian.logging"
+      ]
+    },
+    {
+      "id": "com.deucarian.session.api-integration",
+      "displayName": "Deucarian Session API Integration",
+      "kind": "Integration",
+      "groupId": "runtime-services",
+      "category": "Integration",
+      "type": "Integration",
+      "ecosystemGroup": "Integrations",
+      "description": "Integration package connecting Session authentication to API.",
+      "stableUrl": "https://github.com/Deucarian/Session-API-Integration.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Session-API-Integration.git#develop",
+      "dependencies": [
+        "com.deucarian.session",
+        "com.deucarian.api"
+      ]
+    },
+    {
+      "id": "com.deucarian.authentication",
+      "displayName": "Deucarian Authentication",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Reusable authentication session lifecycle, explicit-target API authentication, secure local persistence, sanitized status, and an optional viewer integration assembly.",
+      "stableUrl": "https://github.com/Deucarian/Viewer-Authentication.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Viewer-Authentication.git#develop",
+      "dependencies": [
+        "com.deucarian.api",
+        "com.deucarian.editor",
+        "com.deucarian.session",
+        "com.deucarian.session.api-integration"
       ]
     },
     {
@@ -435,56 +500,6 @@
       "dependencies": [
         "com.deucarian.api",
         "com.deucarian.object-loading"
-      ]
-    },
-    {
-      "id": "com.deucarian.session",
-      "displayName": "Deucarian Session",
-      "kind": "Library",
-      "groupId": "runtime-services",
-      "category": "Core",
-      "type": "Core",
-      "ecosystemGroup": "Runtime Services",
-      "description": "Reusable session management for Unity.",
-      "stableUrl": "https://github.com/Deucarian/Session.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Session.git#develop",
-      "dependencies": [
-        "com.deucarian.logging"
-      ]
-    },
-    {
-      "id": "com.deucarian.session.api-integration",
-      "displayName": "Deucarian Session API Integration",
-      "kind": "Integration",
-      "groupId": "runtime-services",
-      "category": "Integration",
-      "type": "Integration",
-      "ecosystemGroup": "Integrations",
-      "description": "Integration package connecting Session authentication to API.",
-      "stableUrl": "https://github.com/Deucarian/Session-API-Integration.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Session-API-Integration.git#develop",
-      "dependencies": [
-        "com.deucarian.session",
-        "com.deucarian.api"
-      ]
-    },
-    {
-      "id": "com.deucarian.viewer-authentication",
-      "displayName": "Deucarian Viewer Authentication",
-      "kind": "Library",
-      "groupId": "runtime-services",
-      "category": "Core",
-      "type": "Core",
-      "ecosystemGroup": "Runtime Services",
-      "description": "Reusable viewer session composition, live API authentication, secure auth commands, sanitized status, shared development tooling, and an optional runtime connection-provider seam.",
-      "stableUrl": "https://github.com/Deucarian/Viewer-Authentication.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Viewer-Authentication.git#develop",
-      "dependencies": [
-        "com.deucarian.api",
-        "com.deucarian.command-routing",
-        "com.deucarian.editor",
-        "com.deucarian.session",
-        "com.deucarian.session.api-integration"
       ]
     },
     {
@@ -567,27 +582,26 @@
         "com.deucarian.viewer-navigation",
         "com.deucarian.viewer-rendering",
         "com.deucarian.viewer-shell",
-        "com.deucarian.viewer-authentication",
+        "com.deucarian.authentication",
         "com.deucarian.webgl-template"
       ]
     },
     {
-      "id": "com.deucarian.template.viewer.web",
-      "displayName": "Deucarian Web Viewer Template",
+      "id": "com.deucarian.template.viewer",
+      "displayName": "Deucarian Viewer Template",
       "kind": "Template",
       "groupId": "templates-viewers",
       "category": "Templates",
       "type": "Template",
       "ecosystemGroup": "Templates",
-      "description": "Ready-to-run generic WebGL viewer with Report Viewer-proven navigation defaults, secure browser commands, model loading, diagnostics, a local host harness, and project-owned build profiles.",
-      "stableUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#main",
-      "developmentUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#develop",
+      "description": "Platform-neutral viewer application core with model loading, rendering and navigation composition, selection, authentication, commands, diagnostics, and explicit adapter seams for Web, desktop, and XR builds.",
+      "stableUrl": "https://github.com/Deucarian/Template-Viewer.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Template-Viewer.git#develop",
       "dependencies": [
         "com.deucarian.api",
-        "com.deucarian.build-pipeline",
         "com.deucarian.camera-navigation",
         "com.deucarian.command-routing",
-        "com.deucarian.command-routing.webgl-integration",
+        "com.deucarian.common",
         "com.deucarian.diagnostics",
         "com.deucarian.logging",
         "com.deucarian.object-loading",
@@ -596,11 +610,31 @@
         "com.deucarian.session.api-integration",
         "com.deucarian.theming",
         "com.deucarian.ui",
+        "com.deucarian.authentication",
         "com.deucarian.viewer-navigation",
         "com.deucarian.viewer-rendering",
-        "com.deucarian.viewer-shell",
-        "com.deucarian.viewer-authentication",
-        "com.deucarian.web-viewer-suite",
+        "com.deucarian.viewer-shell"
+      ]
+    },
+    {
+      "id": "com.deucarian.template.viewer.web",
+      "displayName": "Deucarian Web Viewer Adapter",
+      "kind": "Template",
+      "groupId": "templates-viewers",
+      "category": "Templates",
+      "type": "Template",
+      "ecosystemGroup": "Templates",
+      "description": "WebGL adapter for the platform-neutral Viewer Template, with secure browser commands, page lifecycle projection, a local host harness, and one declarative product build workflow.",
+      "stableUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Template-Viewer-Web.git#develop",
+      "dependencies": [
+        "com.deucarian.build-pipeline",
+        "com.deucarian.command-routing",
+        "com.deucarian.command-routing.webgl-integration",
+        "com.deucarian.diagnostics",
+        "com.deucarian.template.viewer",
+        "com.deucarian.theming",
+        "com.deucarian.authentication",
         "com.deucarian.webgl-template"
       ]
     }
