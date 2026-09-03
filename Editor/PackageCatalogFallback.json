@@ -319,6 +319,21 @@
       ]
     },
     {
+      "id": "com.deucarian.media",
+      "displayName": "Deucarian Media",
+      "kind": "Library",
+      "groupId": "runtime-services",
+      "category": "Core",
+      "type": "Core",
+      "ecosystemGroup": "Runtime Services",
+      "description": "Typed media loading, explicit resource leases, latest-request coordination, and Unity audio/video playback adapters.",
+      "stableUrl": "https://github.com/Deucarian/Media.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Media.git#develop",
+      "dependencies": [
+        "com.deucarian.common"
+      ]
+    },
+    {
       "id": "com.deucarian.theming",
       "displayName": "Deucarian Theming",
       "kind": "Library",
@@ -326,12 +341,13 @@
       "category": "UI",
       "type": "OptionalIntegration",
       "ecosystemGroup": "Experience & Interaction",
-      "description": "Designer-friendly ScriptableObject theming with color role assets, palettes, themes, and Unity component adapters.",
+      "description": "Designer-friendly visual and semantic audio theming with roles, platform profiles, palettes, and Unity component adapters.",
       "stableUrl": "https://github.com/Deucarian/Theming.git#main",
       "developmentUrl": "https://github.com/Deucarian/Theming.git#develop",
       "dependencies": [
         "com.deucarian.editor",
-        "com.deucarian.logging"
+        "com.deucarian.logging",
+        "com.deucarian.media"
       ]
     },
     {
