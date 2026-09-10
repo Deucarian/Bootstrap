@@ -14,7 +14,7 @@
 .bootstrap-setup-flow__title {
     margin-top: 3px;
     color: var(--bootstrap-text);
-    font-size: 12px;
+    font-size: 15px;
     -unity-font-style: bold;
     white-space: normal;
 }
@@ -87,7 +87,7 @@
 
 .bootstrap-setup-item__number {
     color: var(--bootstrap-text-muted);
-    font-size: 10px;
+    font-size: 13px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
@@ -124,7 +124,7 @@
 
 .bootstrap-setup-item__role {
     color: var(--bootstrap-text-faint);
-    font-size: 8px;
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.6px;
     white-space: nowrap;
@@ -137,7 +137,7 @@
 .bootstrap-setup-item__title {
     margin-top: 3px;
     color: var(--bootstrap-text);
-    font-size: 12px;
+    font-size: 15px;
     -unity-font-style: bold;
     white-space: normal;
 }
@@ -145,7 +145,7 @@
 .bootstrap-setup-item__detail {
     margin-top: 3px;
     color: var(--bootstrap-text-muted);
-    font-size: 9px;
+    font-size: 12px;
     white-space: normal;
 }
 
@@ -154,7 +154,7 @@
     max-width: 112px;
     margin-left: var(--bootstrap-space-3);
     color: var(--bootstrap-text-muted);
-    font-size: 9px;
+    font-size: 12px;
     -unity-font-style: bold;
     -unity-text-align: middle-right;
     white-space: normal;
@@ -202,7 +202,7 @@
 
 .bootstrap-receipt-item__title {
     color: var(--bootstrap-text);
-    font-size: 10px;
+    font-size: 13px;
     -unity-font-style: bold;
     white-space: normal;
 }
@@ -210,7 +210,7 @@
 .bootstrap-receipt-item__summary {
     margin-top: 2px;
     color: var(--bootstrap-success);
-    font-size: 8px;
+    font-size: 11px;
     white-space: normal;
 }
 
@@ -223,7 +223,7 @@
 .bootstrap-details__foldout {
     min-height: 24px;
     color: var(--bootstrap-text-muted);
-    font-size: 9px;
+    font-size: 12px;
     -unity-font-style: bold;
     white-space: normal;
 }
@@ -258,14 +258,14 @@
 
 .bootstrap-detail-row__label {
     color: var(--bootstrap-text-faint);
-    font-size: 8px;
+    font-size: 11px;
     -unity-font-style: bold;
 }
 
 .bootstrap-detail-row__value {
     margin-top: 2px;
     color: var(--bootstrap-text);
-    font-size: 9px;
+    font-size: 12px;
     white-space: normal;
 }
 
@@ -301,7 +301,7 @@
 .bootstrap-action-bar__passive-text {
     min-width: 0;
     color: var(--bootstrap-text-muted);
-    font-size: 9px;
+    font-size: 12px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     white-space: normal;
@@ -332,10 +332,10 @@
     border-right-color: var(--bootstrap-border);
     border-top-color: var(--bootstrap-border);
     border-bottom-color: var(--bootstrap-border);
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-    border-bottom-left-radius: 6px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
     background-color: transparent;
     color: var(--bootstrap-text);
     -unity-font-style: bold;
