@@ -39,7 +39,7 @@
 
 .bootstrap-header__title {
     color: var(--bootstrap-text);
-    font-size: 13px;
+    font-size: 18px;
     -unity-font-style: bold;
     white-space: nowrap;
     overflow: hidden;
@@ -47,7 +47,7 @@
 
 .bootstrap-channel {
     flex-shrink: 0;
-    min-width: 158px;
+    min-width: 194px;
     margin-left: var(--bootstrap-space-4);
     flex-direction: row;
     align-items: center;
@@ -57,7 +57,7 @@
 .bootstrap-channel__label {
     margin-right: 6px;
     color: var(--bootstrap-text-faint);
-    font-size: 8px;
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -67,14 +67,14 @@
     flex-shrink: 0;
     margin-left: 3px;
     color: var(--bootstrap-text-faint);
-    font-size: 9px;
+    font-size: 12px;
     white-space: nowrap;
 }
 
 .bootstrap-channel .unity-base-popup-field {
     flex-shrink: 0;
-    width: 78px;
-    min-width: 78px;
+    width: 104px;
+    min-width: 104px;
     margin-left: 0;
     margin-right: 0;
     margin-top: 0;
@@ -91,7 +91,7 @@
     border-bottom-width: 0;
     background-color: transparent;
     color: var(--bootstrap-text);
-    font-size: 10px;
+    font-size: 13px;
     -unity-font-style: bold;
 }
 
@@ -212,7 +212,7 @@
 .bootstrap-hero__eyebrow,
 .bootstrap-section-kicker {
     color: var(--bootstrap-accent);
-    font-size: 8px;
+    font-size: 11px;
     -unity-font-style: bold;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -222,7 +222,7 @@
     max-width: 580px;
     margin-top: 6px;
     color: var(--bootstrap-text);
-    font-size: 23px;
+    font-size: 30px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     white-space: normal;
@@ -232,7 +232,7 @@
     max-width: 520px;
     margin-top: 5px;
     color: var(--bootstrap-text-muted);
-    font-size: 11px;
+    font-size: 14px;
     -unity-text-align: middle-center;
     white-space: normal;
 }
@@ -240,7 +240,7 @@
 .bootstrap-progress-meta {
     margin-top: 9px;
     color: var(--bootstrap-info);
-    font-size: 9px;
+    font-size: 12px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     white-space: normal;
@@ -264,7 +264,7 @@
     flex-shrink: 1;
     min-width: 0;
     color: var(--bootstrap-text-muted);
-    font-size: 9px;
+    font-size: 12px;
     -unity-text-align: middle-left;
     white-space: normal;
 }

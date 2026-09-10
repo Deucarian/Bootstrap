@@ -90,7 +90,7 @@
     padding-right: var(--bootstrap-space-3);
 }
 
-.bootstrap-responsive--narrow .bootstrap-summary__title { font-size: 21px; }
+.bootstrap-responsive--narrow .bootstrap-summary__title { font-size: 26px; }
 .bootstrap-responsive--narrow .bootstrap-setup-flow { margin-top: var(--bootstrap-space-3); }
 .bootstrap-responsive--narrow .bootstrap-setup-item { min-height: 80px; }
 
