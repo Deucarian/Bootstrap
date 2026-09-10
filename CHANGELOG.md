@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.12] - 2026-09-10
+## 1.2.12 - 2026-09-10
 
 - Align standalone setup/repair colors, typography and controls with the shared editor design. Preserve the dependency-free bootstrap and responsive action dock.
 
