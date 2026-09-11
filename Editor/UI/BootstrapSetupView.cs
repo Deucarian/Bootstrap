@@ -47,8 +47,7 @@ namespace Deucarian.Bootstrap.Editor
         private BootstrapSetupFlowView _setupFlow;
         private BootstrapCompletionReceiptView _completionReceipt;
         private VisualElement _detailsSection;
-        private VisualElement _detailsRows;
-        private Toggle _startupToggle;
+        private BootstrapSetupDetails _details;
         private Button _refreshButton;
         private VisualElement _actionBar;
         private VisualElement _passiveFooter;
@@ -59,6 +58,12 @@ namespace Deucarian.Bootstrap.Editor
         private Label _primaryLabel;
         private bool _suppressChannelCallback;
         private BootstrapPresentationModel _model;
+        private BootstrapSetupShell _shell;
+        private VisualElement _channel;
+        private VisualElement _content;
+        private bool _repairSelected, _routeChosen;
+        private bool _showDetails;
+        private Button _detailsButton;
 
         public BootstrapSetupView(
             Action<BootstrapChannel> channelChanged,
@@ -84,34 +89,57 @@ namespace Deucarian.Bootstrap.Editor
             _root.AddToClassList("deucarian-bootstrap");
             SetSkin(EditorGUIUtility.isProSkin);
 
-            VisualElement shell = Element("bootstrap-shell", "bootstrap-shell");
-            _root.Add(shell);
-            shell.Add(BuildHeader());
+            _shell = new BootstrapSetupShell(_root, repair => { _routeChosen = true; SelectRoute(repair); Render(_model); });
+            _shell.Select(false);
             VisualElement workArea = Element("bootstrap-work-area", "bootstrap-work-area");
-            shell.Add(workArea);
+            _shell.Body.Add(workArea);
             ContentScroll = new ScrollView(ScrollViewMode.Vertical)
             {
                 name = "bootstrap-content-scroll"
             };
             ContentScroll.AddToClassList("bootstrap-content-scroll");
             workArea.Add(ContentScroll);
-            VisualElement content = Element("bootstrap-content", "bootstrap-content");
-            ContentScroll.Add(content);
-            content.Add(BuildHero());
+            var heading = Element("bootstrap-page-heading", "bootstrap-page-heading");
+            heading.Add(_shell.Title);
+            _detailsButton = BootstrapSetupShell.Button("Details", () =>
+            {
+                _showDetails = !_showDetails;
+                _detailsSection.Q<Foldout>().value = _showDetails;
+                Render(_model);
+                if (_showDetails) _detailsSection.RegisterCallback<GeometryChangedEvent>(RevealDetails);
+            }, "bootstrap-page-details-button");
+            _detailsButton.tooltip = "Show exact sources, revisions and startup preferences.";
+            heading.Add(_detailsButton);
+            ContentScroll.Add(heading);
+            ContentScroll.Add(_shell.Subtitle);
+            _content = Element("bootstrap-content", "bootstrap-content");
+            ContentScroll.Add(_content);
+            _content.Add(BuildHero());
+            _channel = BuildChannel(); _content.Add(_channel);
             _setupFlow = new BootstrapSetupFlowView();
             _setupFlow.Root.style.display = DisplayStyle.None;
-            content.Add(_setupFlow.Root);
+            _content.Add(_setupFlow.Root);
             _completionReceipt = new BootstrapCompletionReceiptView();
             _completionReceipt.Root.style.display = DisplayStyle.None;
-            content.Add(_completionReceipt.Root);
+            _content.Add(_completionReceipt.Root);
 
-            content.Add(BuildDetailsSection());
             _actionBar = BuildActionBar();
-            shell.Add(_actionBar);
+            _content.Add(_actionBar);
+            ContentScroll.Add(BuildDetailsSection());
 
             _root.RegisterCallback<GeometryChangedEvent>(evt =>
                 ApplyResponsiveLayout(evt.newRect.width, evt.newRect.height));
             ApplyResponsiveLayout(_root.resolvedStyle.width, _root.resolvedStyle.height);
+        }
+
+        private void RevealDetails(GeometryChangedEvent evt)
+        {
+            if (evt.newRect.height <= 0) return;
+            _detailsSection.UnregisterCallback<GeometryChangedEvent>(RevealDetails);
+            ContentScroll.schedule.Execute(() =>
+            {
+                if (_showDetails) ContentScroll.ScrollTo(_detailsSection);
+            });
         }
 
         public void Render(BootstrapPresentationModel model)
@@ -122,10 +150,19 @@ namespace Deucarian.Bootstrap.Editor
             }
 
             _model = model;
+            if (!_routeChosen && model.Phase != BootstrapSetupPhase.Loading)
+            {
+                _routeChosen = true;
+                SelectRoute(model.PrimaryAction != BootstrapSetupAction.Install && model.Phase != BootstrapSetupPhase.Healthy);
+            }
             SetSkin(EditorGUIUtility.isProSkin);
             RenderChannel(model);
-            _summaryTitle.text = BootstrapViewContentPolicy.GetHeroTitle(model);
-            _summaryMessage.text = model.StateMessage;
+            _summaryTitle.text = !_repairSelected && model.PrimaryAction == BootstrapSetupAction.Install ? "Package Installer" : BootstrapViewContentPolicy.GetHeroTitle(model);
+            _summaryMessage.text = !_repairSelected && model.PrimaryAction == BootstrapSetupAction.Install ? "Browse and manage Deucarian packages." : model.StateMessage;
+            bool repairReview = _repairSelected && model.Phase == BootstrapSetupPhase.Review && model.PrimaryAction == BootstrapSetupAction.Repair;
+            _root.EnableInClassList("bootstrap-repair-review", repairReview);
+            if (repairReview) _summaryTitle.text = "Setup needs attention";
+            _summaryMessage.style.display = repairReview ? DisplayStyle.None : DisplayStyle.Flex;
             SetIconClass(_summaryIcon, model.IconClass);
             SetToneClass(_hero, "bootstrap-hero--", model.Tone);
             bool showProgress = BootstrapViewContentPolicy.IsBusyPhase(model.Phase) &&
@@ -150,18 +187,16 @@ namespace Deucarian.Bootstrap.Editor
                 : DisplayStyle.None;
             _setupFlow.Render(
                 model.Steps,
-                BootstrapViewContentPolicy.IsBusyPhase(model.Phase));
+                BootstrapViewContentPolicy.IsBusyPhase(model.Phase), _repairSelected);
 
             _completionReceipt.Root.style.display = model.ShowCompletionReceipt
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
             _completionReceipt.Render(model.Receipt);
 
-            _detailsSection.style.display = model.Phase == BootstrapSetupPhase.Loading
-                ? DisplayStyle.None
-                : DisplayStyle.Flex;
-            RenderDetails(model.Details);
-            _startupToggle.SetValueWithoutNotify(BootstrapStartupPreferences.ShouldShow());
+            _detailsSection.style.display = _showDetails && model.Phase != BootstrapSetupPhase.Loading ? DisplayStyle.Flex : DisplayStyle.None;
+            _detailsButton.SetEnabled(model.Phase != BootstrapSetupPhase.Loading);
+            _details.Render(model.Details);
 
             bool showQuietRefresh = model.ChannelEnabled &&
                                     model.PrimaryAction != BootstrapSetupAction.Refresh;
@@ -188,6 +223,16 @@ namespace Deucarian.Bootstrap.Editor
                 BootstrapResponsiveLayout.ShortHeightClassName,
                 layout.IsShortHeight);
             ResponsiveMode = layout.Mode;
+        }
+
+        private void SelectRoute(bool repair)
+        {
+            _repairSelected = repair; _shell.Select(repair);
+            _root.EnableInClassList("bootstrap-repair-page", repair);
+            if (repair) _channel.PlaceInFront(_completionReceipt.Root);
+            else _channel.PlaceBehind(_setupFlow.Root);
+            if (repair) _actionButtons.Insert(0, _refreshButton);
+            else _root.Q("bootstrap-details-controls").Add(_refreshButton);
         }
 
         public void SetSkin(bool dark)
@@ -227,33 +272,21 @@ namespace Deucarian.Bootstrap.Editor
 
             _primaryButton.SetEnabled(showAction);
             _primaryButton.tooltip = model.PrimaryActionTooltip;
-            _primaryLabel.text = model.PrimaryActionLabel;
+            _primaryLabel.text = model.PrimaryAction == BootstrapSetupAction.Install
+                ? "Set up Deucarian" : model.PrimaryAction == BootstrapSetupAction.Repair ? "Repair setup" : model.PrimaryActionLabel;
             SetIconClass(
                 _primaryIcon,
                 BootstrapViewContentPolicy.GetActionIconClass(model.PrimaryAction));
+            if (model.PrimaryAction == BootstrapSetupAction.Install) _primaryIcon.PlaceInFront(_primaryLabel);
+            else _primaryIcon.PlaceBehind(_primaryLabel);
+            _primaryButton.EnableInClassList("bootstrap-install-action", model.PrimaryAction == BootstrapSetupAction.Install);
         }
 
-        private VisualElement BuildHeader()
+        private VisualElement BuildChannel()
         {
-            VisualElement header = Element("bootstrap-header", "bootstrap-header");
-            VisualElement brand = Element("bootstrap-header-brand", "bootstrap-header__brand");
-            header.Add(brand);
-
-            Image logo = new Image
-            {
-                name = "bootstrap-header-logo",
-                image = AssetDatabase.LoadAssetAtPath<Texture2D>(
-                    DeucarianBootstrapPackageConstants.LogoAssetPath),
-                scaleMode = ScaleMode.ScaleToFit,
-                pickingMode = PickingMode.Ignore
-            };
-            logo.AddToClassList("bootstrap-header__logo");
-            brand.Add(logo);
-            brand.Add(Label("Bootstrap", "bootstrap-header__title"));
-
             VisualElement channel = Element("bootstrap-channel", "bootstrap-channel");
             channel.tooltip = "Select the project-wide package-management channel. Changing it never installs packages.";
-            channel.Add(Label("CHANNEL", "bootstrap-channel__label"));
+            channel.Add(Label("Channel", "bootstrap-channel__label"));
             _channelField = new PopupField<string>(
                 new List<string> { "Stable", "Development" },
                 0)
@@ -274,15 +307,13 @@ namespace Deucarian.Bootstrap.Editor
             channel.Add(_channelField);
             _channelDescription = Label(string.Empty, "bootstrap-channel__value");
             channel.Add(_channelDescription);
-            header.Add(channel);
-            return header;
+            return channel;
         }
 
         private VisualElement BuildHero()
         {
             _hero = Element("bootstrap-hero", "bootstrap-hero");
             VisualElement visual = Element("bootstrap-hero-visual", "bootstrap-hero__visual");
-            visual.Add(Element("bootstrap-hero-ambient", "bootstrap-hero__ambient"));
             VisualElement packageIcon = Element(
                 "bootstrap-hero-package-icon",
                 "bootstrap-icon",
@@ -298,7 +329,6 @@ namespace Deucarian.Bootstrap.Editor
             visual.Add(_summaryIcon);
             _hero.Add(visual);
 
-            _hero.Add(Label("PACKAGE INSTALLER SETUP", "bootstrap-hero__eyebrow"));
             _summaryTitle = Label(string.Empty, "bootstrap-summary__title");
             _summaryMessage = Label(string.Empty, "bootstrap-summary__message");
             _hero.Add(_summaryTitle);
@@ -332,42 +362,9 @@ namespace Deucarian.Bootstrap.Editor
 
         private VisualElement BuildDetailsSection()
         {
-            _detailsSection = Element("bootstrap-details", "bootstrap-details");
-            Foldout foldout = new Foldout
-            {
-                name = "bootstrap-details-foldout",
-                text = "Details",
-                value = false,
-                tooltip = "Show exact Git sources, revisions, fallback state, and legacy detection."
-            };
-            foldout.AddToClassList("bootstrap-details__foldout");
-
-            VisualElement content = Element("bootstrap-details-content", "bootstrap-details__content");
-            _detailsRows = Element("bootstrap-details-rows", "bootstrap-details__rows");
-            content.Add(_detailsRows);
-
-            VisualElement controls = Element("bootstrap-details-controls", "bootstrap-details__controls");
-            _startupToggle = new Toggle("Show Bootstrap on startup")
-            {
-                name = "bootstrap-startup-toggle",
-                tooltip = "Opens this read-only setup window on startup. It never installs packages automatically."
-            };
-            _startupToggle.RegisterValueChangedCallback(
-                evt => _startupPreferenceChanged?.Invoke(evt.newValue));
-            controls.Add(_startupToggle);
-
-            _refreshButton = new Button(() => _refreshInvoked?.Invoke())
-            {
-                name = "bootstrap-refresh-button",
-                text = "Refresh status",
-                tooltip = "Refresh package, source, and revision status without changing packages."
-            };
-            _refreshButton.AddToClassList("bootstrap-button");
-            _refreshButton.AddToClassList("bootstrap-button--quiet");
-            controls.Add(_refreshButton);
-            content.Add(controls);
-            foldout.Add(content);
-            _detailsSection.Add(foldout);
+            _details = new BootstrapSetupDetails(_refreshInvoked, _startupPreferenceChanged);
+            _detailsSection = _details.Root;
+            _refreshButton = _details.RefreshButton;
             return _detailsSection;
         }
 
@@ -412,21 +409,6 @@ namespace Deucarian.Bootstrap.Editor
             return bar;
         }
 
-        private void RenderDetails(IReadOnlyList<BootstrapDetailPresentation> details)
-        {
-            _detailsRows.Clear();
-            foreach (BootstrapDetailPresentation detail in
-                     details ?? Array.Empty<BootstrapDetailPresentation>())
-            {
-                VisualElement row = Element(null, "bootstrap-detail-row");
-                row.Add(Label(detail.Label, "bootstrap-detail-row__label"));
-                Label value = Label(detail.Value, "bootstrap-detail-row__value");
-                value.tooltip = detail.Value;
-                row.Add(value);
-                _detailsRows.Add(row);
-            }
-        }
-
         private static void LoadStyleSheets(VisualElement root)
         {
             string[] paths =
@@ -434,7 +416,8 @@ namespace Deucarian.Bootstrap.Editor
                 DeucarianBootstrapPackageConstants.StyleTokensAssetPath,
                 DeucarianBootstrapPackageConstants.StyleShellAssetPath,
                 DeucarianBootstrapPackageConstants.StyleComponentsAssetPath,
-                DeucarianBootstrapPackageConstants.StyleResponsiveAssetPath
+                DeucarianBootstrapPackageConstants.StyleResponsiveAssetPath,
+                "Packages/com.deucarian.bootstrap/Editor/Assets/Styles/DeucarianBootstrapFidelity.uss"
             };
 
             foreach (string path in paths)

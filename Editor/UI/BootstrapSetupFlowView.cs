@@ -30,7 +30,7 @@ namespace Deucarian.Bootstrap.Editor
 
         public void Render(
             IReadOnlyList<BootstrapStepPresentation> steps,
-            bool busy)
+            bool busy, bool repair = false)
         {
             Root.EnableInClassList("bootstrap-setup-flow--busy", busy);
             _items.Clear();
@@ -38,11 +38,12 @@ namespace Deucarian.Bootstrap.Editor
             foreach (BootstrapStepPresentation step in
                      steps ?? Array.Empty<BootstrapStepPresentation>())
             {
-                _items.Add(BuildItem(step));
+                _items.Add(BuildItem(step, repair));
             }
+            if (_items.childCount > 0) _items[_items.childCount - 1].AddToClassList("bootstrap-setup-item--last");
         }
 
-        private static VisualElement BuildItem(BootstrapStepPresentation step)
+        private static VisualElement BuildItem(BootstrapStepPresentation step, bool repair)
         {
             VisualElement item = Element(
                 "bootstrap-setup-item-" + step.Number,
@@ -65,6 +66,7 @@ namespace Deucarian.Bootstrap.Editor
                 IconClass(step.State));
             stateIcon.pickingMode = PickingMode.Ignore;
             marker.Add(stateIcon);
+            if (!repair) marker.Insert(0, Element(null, "bootstrap-step-connector"));
             item.Add(marker);
 
             VisualElement copy = Element(
@@ -80,6 +82,7 @@ namespace Deucarian.Bootstrap.Editor
             Label state = Label(step.Label, "bootstrap-setup-item__state");
             state.tooltip = step.TechnicalDetail;
             item.Add(state);
+            if (repair) copy.PlaceBehind(marker);
             return item;
         }
 
