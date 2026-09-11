@@ -285,6 +285,7 @@
       "developmentUrl": "https://github.com/Deucarian/Camera-Navigation.git#develop",
       "dependencies": [
         "com.deucarian.common",
+        "com.deucarian.diagnostics",
         "com.deucarian.editor"
       ]
     },
@@ -401,6 +402,7 @@
       "stableUrl": "https://github.com/Deucarian/API.git#main",
       "developmentUrl": "https://github.com/Deucarian/API.git#develop",
       "dependencies": [
+        "com.deucarian.diagnostics",
         "com.deucarian.editor",
         "com.deucarian.logging"
       ]
@@ -483,6 +485,7 @@
       "developmentUrl": "https://github.com/Deucarian/Object-Loading.git#develop",
       "dependencies": [
         "com.deucarian.common",
+        "com.deucarian.editor",
         "com.deucarian.logging"
       ]
     },
