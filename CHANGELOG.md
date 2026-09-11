@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Center repair warning icons and setup-state markers independently of generic icon margins; add scale-aware geometry coverage.
+
 ## 1.2.13 - 2026-09-11
 
 - Match setup and repair to the shared visual language with a self-contained native shell, bundled typography/icons, responsive controls and a stationary scale dock.
