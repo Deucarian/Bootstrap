@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.14] - 2026-09-11
+
+- Refresh the fallback dependency catalog for definition authoring and align the embedded setup identity.
+- Align declared package dependencies with the definition-authoring development wave.
+
+
 ## 1.2.13 - 2026-09-11
 
 - Match setup and repair to the shared visual language with a self-contained native shell, bundled typography/icons, responsive controls and a stationary scale dock.
