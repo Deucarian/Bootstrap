@@ -14,8 +14,8 @@ namespace Deucarian.Bootstrap.Editor
 
         internal const float MinWindowWidth = 480f;
         internal const float MinWindowHeight = 460f;
-        internal const float PreferredWindowWidth = 560f;
-        internal const float PreferredWindowHeight = 820f;
+        internal const float PreferredWindowWidth = 1400f;
+        internal const float PreferredWindowHeight = 900f;
 
         private BootstrapSetupCoordinator _coordinator;
         private BootstrapPackageInstallerHandoff _handoff;

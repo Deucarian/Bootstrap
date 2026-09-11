@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.13 - 2026-09-11
+
+- Match setup and repair to the shared visual language with a self-contained native shell, bundled typography/icons, responsive controls and a stationary scale dock.
+- Keep first-time installation self-contained; no Editor or domain dependency is added.
+
 ## 1.2.12 - 2026-09-10
 
 - Align standalone setup/repair colors, typography and controls with the shared editor design. Preserve the dependency-free bootstrap and responsive action dock.

@@ -4,7 +4,7 @@ namespace Deucarian.Bootstrap.Editor
     {
         public const string PackageName = "com.deucarian.bootstrap";
         public const string DisplayName = "Deucarian Bootstrap";
-        public const string Version = "1.2.12";
+        public const string Version = "1.2.13";
         public const string MenuPath = "Tools/Deucarian/Set Up or Repair...";
         public const string PackageInstallerMenuPath =
             "Tools/Deucarian/Package Installer...";

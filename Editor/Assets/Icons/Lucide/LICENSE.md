@@ -10,10 +10,14 @@ The PNG files in this directory are package-local, tint-neutral raster derivativ
 - `wrench`
 - `external-link`
 - `package-open`
+- `cog`
+- `chevron-down`
+- `package-plus`
+- `arrow-right`
 
 Source: <https://github.com/lucide-icons/lucide/tree/main/icons>
 
-The source artwork was normalized to a 24 by 24 coordinate system, rendered as a white two-unit rounded stroke, and rasterized onto a transparent 96 by 96 canvas for dependency-free Unity 2021.3 UI Toolkit use. Both the Lucide ISC license and the Feather MIT notice are reproduced because part of the selected Lucide artwork derives from Feather.
+The source artwork uses a 24 by 24 coordinate system and a white two-unit rounded stroke. Raster assets use a transparent 128 by 128 canvas (circle-check-big retains its 96 by 96 source) for dependency-free Unity 2021.3 UI Toolkit use. Both the Lucide ISC license and the Feather MIT notice are reproduced because part of the selected Lucide artwork derives from Feather.
 
 ## Lucide ISC License
 
