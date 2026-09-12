@@ -88,7 +88,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             AssertAll(() =>
             {
-                StringAssert.Contains("## " + package.version, changelog);
+                string escapedVersion = Regex.Escape(package.version);
+                StringAssert.IsMatch(
+                    @"(?m)^##[ \t]+(?:" + escapedVersion + @"|\[" + escapedVersion + @"\])(?=[ \t\r\n]|$)",
+                    changelog);
                 Assert.That(DeucarianBootstrapPackageConstants.PackageName,
                     Is.EqualTo("com.deucarian.bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.DisplayName,
