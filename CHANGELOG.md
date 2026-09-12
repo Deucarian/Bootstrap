@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.15] - 2026-09-12
+
+- Align fallback dependency catalog with package-owned capture lifetimes and shared XR control styling.
+
 ## [1.2.14] - Unreleased
 
 - Refresh the fallback dependency catalog for definition authoring and align the embedded setup identity.
