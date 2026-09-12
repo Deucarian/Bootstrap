@@ -1,9 +1,11 @@
 # Changelog
 
-## [1.2.14] - 2026-09-11
+## [1.2.14] - Unreleased
 
 - Refresh the fallback dependency catalog for definition authoring and align the embedded setup identity.
 - Align declared package dependencies with the definition-authoring development wave.
+
+- Center repair warning icons and setup-state markers independently of generic icon margins; add scale-aware geometry coverage.
 
 
 ## 1.2.13 - 2026-09-11

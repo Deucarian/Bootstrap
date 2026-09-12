@@ -60,7 +60,15 @@
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-items { flex-direction: column; flex-wrap: nowrap; }
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item { width: 100%; min-height: 90px; padding: 16px 0; border-width: 0; background-color: transparent; }
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__marker { width: 30px; height: 30px; min-width: 30px; margin: 0 24px 0 0; border-width: 2px; border-color: var(--bootstrap-text-muted); border-radius: 15px; background-color: transparent; }
-.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__state-icon { width: 26px; height: 26px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__state-icon {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    align-self: center;
+}
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__copy { flex-grow: 1; min-width: 0; margin: 0; }
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__title { font-size: 22px; -unity-font: url("../Fonts/DINish-SemiBold.otf"); white-space: normal; }
 .deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__detail { font-size: 18px; margin-top: 6px; white-space: normal; }
@@ -104,7 +112,7 @@
 .bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__title { font-size: 20px; -unity-font-style: normal; }
 .bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__state { flex-grow: 1; -unity-text-align: middle-left; }
 .deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-hero__package-icon { display: none; }
-.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-summary__icon { display: flex; position: relative; left: 0; top: 0; width: 60px; height: 60px; border-width: 0; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-summary__icon { display: flex; position: relative; left: 0; top: 0; width: 60px; height: 60px; flex-shrink: 0; margin: 0; padding: 0; border-width: 0; background-color: transparent; }
 .deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-review .bootstrap-summary__icon { width: 40px; height: 40px; -unity-background-image-tint-color: #ffb03f; }
 .bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-workspace-main { flex-direction: column; }
 .bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-workspace-rail { flex-direction: row; width: auto; min-width: 0; border-right-width: 0; padding: 6px 12px; }
