@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.16] - 2026-09-12
+
+- Include the Viewer Template's direct Pointer Capture dependency in the generated setup catalog.
+
 ## [1.2.15] - 2026-09-12
 
 - Align fallback dependency catalog with package-owned capture lifetimes and shared XR control styling.
