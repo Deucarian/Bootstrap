@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.19 - Unreleased
+
+- Refresh the API fallback dependency graph for cancellation-safe browser texture ownership.
+
 ## 1.2.18 - Unreleased
 
 - Refresh the generated fallback graph after Viewer Shell stopped using Common for its removed Ready toast.
