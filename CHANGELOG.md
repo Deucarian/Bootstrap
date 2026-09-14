@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.18 - Unreleased
+
+- Refresh the generated fallback graph after Viewer Shell stopped using Common for its removed Ready toast.
+
 ## [1.2.17] - 2026-09-14
 
 - Include Tweens visibility ownership and the UI dependency in the generated setup catalog.
