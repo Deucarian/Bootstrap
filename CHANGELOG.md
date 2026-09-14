@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.17] - 2026-09-14
+
+- Include Tweens visibility ownership and the UI dependency in the generated setup catalog.
+
 ## [1.2.16] - 2026-09-12
 
 - Include the Viewer Template's direct Pointer Capture dependency in the generated setup catalog.
