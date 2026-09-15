@@ -377,7 +377,7 @@ namespace Deucarian.Bootstrap.Editor
                     DeucarianBootstrapPackageConstants.EditorPackageId,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return "Shared editor foundation required by Package Installer.";
+                return "Install the Deucarian Editor.";
             }
 
             if (string.Equals(
@@ -385,10 +385,10 @@ namespace Deucarian.Bootstrap.Editor
                     DeucarianBootstrapPackageConstants.LoggingPackageId,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return "Setup diagnostics required by Package Installer.";
+                return "Set up logging for diagnostics.";
             }
 
-            return "Your destination for ongoing Deucarian package management.";
+            return "Install and configure the package installer.";
         }
 
         private static string GetAttentionLabel(BootstrapSetupSnapshot state)

@@ -1,0 +1,123 @@
+.deucarian-bootstrap.bootstrap-fidelity { --bootstrap-bg: #1b282c; --bootstrap-accent: #00ccdf; --bootstrap-text: #eff2f4; --bootstrap-text-muted: #b6c3cc; --bootstrap-border: #35484c; font-size: 18px; -unity-font: url("../Fonts/DINish-Regular.otf"); }
+.bootstrap-fidelity .bootstrap-viewport { flex-grow: 1; min-height: 0; overflow: hidden; }
+.bootstrap-fidelity .bootstrap-canvas { position: absolute; left: 0; top: 0; }
+.bootstrap-fidelity .bootstrap-workspace-header { height: 68px; min-height: 68px; flex-direction: row; align-items: center; padding: 10px 24px; border-bottom-width: 1px; border-bottom-color: var(--bootstrap-border); }
+.bootstrap-fidelity .bootstrap-brand-icon { width: 44px; height: 44px; margin-right: 12px; }
+.bootstrap-fidelity .bootstrap-brand-name { font-size: 30px; -unity-font: url("../Fonts/DINish-SemiBold.otf"); }
+.bootstrap-fidelity .bootstrap-project-name { min-width: 248px; height: 42px; padding: 8px 18px; margin-left: 64px; border-width: 1px; border-color: var(--bootstrap-border); border-radius: 4px; }
+.bootstrap-fidelity .bootstrap-workspace-main { flex-direction: row; flex-grow: 1; min-height: 0; }
+.bootstrap-fidelity .bootstrap-workspace-rail { width: 310px; min-width: 310px; border-right-width: 1px; border-right-color: var(--bootstrap-border); padding: 18px 14px; }
+.bootstrap-fidelity .bootstrap-workspace-body { flex-grow: 1; flex-basis: 0; min-width: 0; padding: 26px 48px 30px; }
+.bootstrap-fidelity .bootstrap-page-title { font-size: 38px; -unity-font: url("../Fonts/DINish-SemiBold.otf"); margin-bottom: 4px; }
+.bootstrap-fidelity .bootstrap-page-heading { flex-direction: row; align-items: center; flex-shrink: 0; min-width: 0; }
+.bootstrap-fidelity .bootstrap-page-heading .bootstrap-page-title { flex-grow: 1; min-width: 0; flex-shrink: 1; white-space: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-page-details-button { min-width: 0; border-width: 0; color: var(--bootstrap-text-muted); padding: 0 8px; margin-left: 20px; }
+.bootstrap-fidelity .bootstrap-page-subtitle { font-size: 21px; color: var(--bootstrap-text-muted); margin-bottom: 26px; white-space: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-button { height: 48px; min-height: 48px; font-size: 18px; border-width: 1px; border-color: var(--bootstrap-border); background-color: transparent; color: var(--bootstrap-text); border-radius: 4px; padding: 8px 24px; margin: 0; -unity-font-style: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-button:hover { background-color: rgba(0,204,223,.12); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-button:focus { border-color: var(--bootstrap-accent); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-nav-item { width: 100%; height: 52px; min-height: 52px; border-width: 0; border-left-width: 5px; border-left-color: transparent; -unity-text-align: middle-left; margin-bottom: 12px; padding-left: 18px; }
+.bootstrap-fidelity .bootstrap-nav-icon { width: 30px; height: 30px; margin-right: 25px; -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: var(--bootstrap-text); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-nav-item { flex-direction: row; align-items: center; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar__actions { flex-wrap: wrap; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar__actions > #bootstrap-refresh-button { margin-right: 20px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-refresh-icon { width: 24px; height: 24px; margin-right: 14px; background-image: url("../Icons/Lucide/refresh-cw.png"); -unity-background-image-tint-color: var(--bootstrap-text); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar { max-height: none; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar__passive-text { flex-shrink: 1; flex-basis: 0; flex-grow: 1; font-size: 16px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel__label { display: flex; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-hero__visual { min-width: 64px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-completion-receipt { margin-top: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-receipt-items { flex-direction: column; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-receipt-item { width: 100%; min-height: 72px; border-right-width: 0; font-size: 18px; }
+.bootstrap-fidelity .bootstrap-brand-name, .bootstrap-fidelity .bootstrap-page-title { -unity-font-style: bold; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-nav-item { justify-content: flex-start; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar__actions { flex-grow: 1; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-hero__package-icon { background-image: url("../Icons/Lucide/package-plus.png"); -unity-background-image-tint-color: var(--bootstrap-text); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-install-action .bootstrap-icon { background-image: url("../Icons/Lucide/arrow-right.png"); margin: 0 0 0 20px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__state { -unity-font-style: normal; }
+.bootstrap-fidelity .bootstrap-setup-item--pending .bootstrap-setup-item__state { visibility: hidden; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item--pending .bootstrap-setup-item__state { visibility: visible; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel { margin-bottom: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-install-action { min-width: 324px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-install-action { min-width: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-nav-selected { border-left-color: var(--bootstrap-accent); background-color: rgba(0,204,223,.25); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-content { width: 100%; max-width: none; flex-grow: 0; border-width: 1px; border-color: var(--bootstrap-border); border-radius: 5px; padding: 32px 40px 24px; align-self: stretch; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-work-area, .deucarian-bootstrap.bootstrap-fidelity .bootstrap-content-scroll { padding: 0; flex-grow: 1; min-height: 0; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-hero { min-height: 0; padding: 0 0 20px 92px; align-items: stretch; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-hero__visual { position: absolute; left: 0; top: 4px; width: 64px; height: 64px; margin: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-hero__package-icon { width: 54px; height: 54px; left: 0; top: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-summary__icon, .bootstrap-fidelity .bootstrap-hero__eyebrow, .bootstrap-fidelity .bootstrap-hero__ambient { display: none; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-summary__title { font-size: 25px; -unity-font: url("../Fonts/DINish-SemiBold.otf"); -unity-text-align: middle-left; margin: 0 0 8px; white-space: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-summary__message { font-size: 18px; -unity-text-align: middle-left; max-width: none; white-space: normal; margin: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel { flex-direction: row; align-items: center; justify-content: flex-start; margin: 8px 0 0; padding: 10px 0 12px; min-width: 0; border-bottom-width: 1px; border-bottom-color: var(--bootstrap-border); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel__label { width: 256px; flex-grow: 0; flex-shrink: 0; font-size: 18px; -unity-text-align: middle-left; -unity-font-style: normal; color: var(--bootstrap-text); letter-spacing: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel__value { display: none; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel .unity-base-popup-field { width: auto; min-width: 0; flex-grow: 1; flex-shrink: 1; margin: 0; height: 48px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-channel .unity-base-popup-field__input { height: 48px; min-height: 48px; padding: 10px 16px; border-width: 1px; border-color: var(--bootstrap-border); border-radius: 4px; background-color: rgba(29,43,47,.8); font-size: 18px; -unity-font-style: normal; }
+.bootstrap-fidelity .bootstrap-channel .unity-base-popup-field__arrow { width: 22px; height: 22px; background-image: url("../Icons/Lucide/chevron-down.png"); -unity-background-image-tint-color: var(--bootstrap-text); }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-flow__heading, .bootstrap-fidelity .bootstrap-setup-item__role, .bootstrap-fidelity .bootstrap-setup-item__number { display: none; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-flow { margin: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-items { flex-direction: column; flex-wrap: nowrap; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item { width: 100%; min-height: 90px; padding: 16px 0; border-width: 0; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__marker { width: 30px; height: 30px; min-width: 30px; margin: 0 24px 0 0; border-width: 2px; border-color: var(--bootstrap-text-muted); border-radius: 15px; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__state-icon {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    align-self: center;
+}
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__copy { flex-grow: 1; min-width: 0; margin: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__title { font-size: 22px; -unity-font: url("../Fonts/DINish-SemiBold.otf"); white-space: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__detail { font-size: 18px; margin-top: 6px; white-space: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-setup-item__state { font-size: 18px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar { padding: 18px 0 6px; margin: 16px 0 0; border-width: 0; background-color: transparent; min-height: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-action-bar__actions { justify-content: flex-start; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-button--primary { min-width: 280px; width: auto; height: 54px; background-color: var(--bootstrap-accent); border-color: var(--bootstrap-accent); color: #071f25; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-button__label { font-size: 18px; -unity-font-style: normal; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-details { max-width: none; margin-top: 16px; padding: 0; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-details__foldout > .unity-toggle { font-size: 18px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-detail-row__label, .deucarian-bootstrap.bootstrap-fidelity .bootstrap-detail-row__value { font-size: 16px; }
+.bootstrap-fidelity .bootstrap-scale-footer { flex-direction: row; align-items: center; justify-content: flex-end; height: 70px; min-height: 70px; padding: 0 26px; border-top-width: 1px; border-top-color: var(--bootstrap-border); }
+.bootstrap-fidelity .bootstrap-scale-label { font-size: 16px; margin-right: 20px; }
+.deucarian-bootstrap.bootstrap-fidelity .bootstrap-scale-reset { width: 72px; min-width: 72px; min-height: 40px; height: 40px; margin-left: 20px; padding: 0; font-size: 16px; }
+.bootstrap-fidelity #bootstrap-scale-slider { width: 168px; height: 40px; margin: 0; }
+.bootstrap-fidelity #bootstrap-scale-slider .unity-base-slider__tracker { position: absolute; top: 50%; left: 0; right: 0; height: 6px; margin-top: -3px; border-radius: 3px; background-color: #506067; }
+.bootstrap-fidelity #bootstrap-scale-slider .unity-base-slider__dragger { position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 9px; background-color: #ffffff; border-width: 0; }
+.bootstrap-fidelity .bootstrap-scale-fill { height: 6px; background-color: var(--bootstrap-accent); border-radius: 3px; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item { min-height: 92px; border-top-width: 1px; border-top-color: var(--bootstrap-border); }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__detail { display: none; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-channel { border-top-width: 1px; border-top-color: var(--bootstrap-border); border-bottom-width: 0; padding-top: 24px; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-action-bar__actions { justify-content: flex-end; }
+.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-button--primary { min-width: 204px; height: 50px; }
+.bootstrap-fidelity.bootstrap-repair-review .bootstrap-hero { min-height: 94px; justify-content: center; padding-bottom: 28px; }
+.bootstrap-fidelity.bootstrap-repair-review .bootstrap-hero__visual { border-width: 3px; border-color: #ffb03f; border-radius: 34px; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-channel .unity-base-popup-field { max-width: 572px; }
+.bootstrap-fidelity .bootstrap-setup-item--complete .bootstrap-setup-item__marker, .bootstrap-fidelity .bootstrap-setup-item--ready .bootstrap-setup-item__marker { border-width: 0; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-workspace-rail { width: 150px; min-width: 150px; padding: 14px 8px; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-workspace-body { padding: 22px 18px; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-project-name { display: none; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-content { padding: 22px; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-channel { flex-direction: column; align-items: stretch; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-channel__label { width: auto; margin-bottom: 8px; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-hero { padding-left: 0; padding-top: 80px; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-setup-item { flex-wrap: wrap; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-button--primary { min-width: 0; width: 100%; }
+.bootstrap-fidelity .bootstrap-shell-narrow .bootstrap-nav-icon { display: none; }
+.bootstrap-fidelity .bootstrap-step-connector { position: absolute; left: 12px; top: 30px; width: 2px; height: 58px; background-color: var(--bootstrap-border); }
+.bootstrap-fidelity .bootstrap-setup-item--last .bootstrap-step-connector { display: none; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__copy { flex-grow: 0; width: 25%; min-width: 150px; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__title { font-size: 20px; -unity-font-style: normal; }
+.bootstrap-fidelity.bootstrap-repair-page .bootstrap-setup-item__state { flex-grow: 1; -unity-text-align: middle-left; }
+.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-hero__package-icon { display: none; }
+.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-page .bootstrap-summary__icon { display: flex; position: relative; left: 0; top: 0; width: 60px; height: 60px; flex-shrink: 0; margin: 0; padding: 0; border-width: 0; background-color: transparent; }
+.deucarian-bootstrap.bootstrap-fidelity.bootstrap-repair-review .bootstrap-summary__icon { width: 40px; height: 40px; -unity-background-image-tint-color: #ffb03f; }
+.bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-workspace-main { flex-direction: column; }
+.bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-workspace-rail { flex-direction: row; width: auto; min-width: 0; border-right-width: 0; padding: 6px 12px; }
+.bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-nav-item { width: auto; flex-grow: 1; flex-basis: 0; margin: 0 5px; }
+.bootstrap-fidelity .bootstrap-shell-tiny .bootstrap-page-title { font-size: 30px; }
+.deucarian-bootstrap.bootstrap-fidelity.deucarian-bootstrap--light { --bootstrap-bg: #e9eff2; --bootstrap-text: #1f2b32; --bootstrap-text-muted: #53636d; --bootstrap-border: #9baeb5; --bootstrap-accent: #006d7a; }
+.deucarian-bootstrap.bootstrap-fidelity.deucarian-bootstrap--light .bootstrap-channel .unity-base-popup-field__input { background-color: #f5f8fa; }
+.deucarian-bootstrap.bootstrap-fidelity.deucarian-bootstrap--light .bootstrap-button--primary { color: #ffffff; }

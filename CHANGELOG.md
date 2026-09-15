@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.2.19 - Unreleased
+
+- Refresh the API fallback dependency graph for cancellation-safe browser texture ownership.
+
+## 1.2.18 - Unreleased
+
+- Refresh the generated fallback graph after Viewer Shell stopped using Common for its removed Ready toast.
+
+## [1.2.17] - 2026-09-14
+
+- Include Tweens visibility ownership and the UI dependency in the generated setup catalog.
+
+## [1.2.16] - 2026-09-12
+
+- Include the Viewer Template's direct Pointer Capture dependency in the generated setup catalog.
+
+## [1.2.15] - 2026-09-12
+
+- Align fallback dependency catalog with package-owned capture lifetimes and shared XR control styling.
+
+## [1.2.14] - Unreleased
+
+- Refresh the fallback dependency catalog for definition authoring and align the embedded setup identity.
+- Align declared package dependencies with the definition-authoring development wave.
+
+- Center repair warning icons and setup-state markers independently of generic icon margins; add scale-aware geometry coverage.
+
+
+## 1.2.13 - 2026-09-11
+
+- Match setup and repair to the shared visual language with a self-contained native shell, bundled typography/icons, responsive controls and a stationary scale dock.
+- Keep first-time installation self-contained; no Editor or domain dependency is added.
+
+## 1.2.12 - 2026-09-10
+
+- Align standalone setup/repair colors, typography and controls with the shared editor design. Preserve the dependency-free bootstrap and responsive action dock.
+
 ## 1.2.11 - 2026-09-02
 
 - Regenerated the dependency-first offline fallback catalog for the audited

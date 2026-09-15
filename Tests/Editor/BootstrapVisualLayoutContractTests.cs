@@ -16,6 +16,32 @@ namespace Deucarian.Bootstrap.Editor.Tests
         private static readonly IReadOnlyList<LayoutCase> Cases = BuildCases();
 
         [UnityTest]
+        public IEnumerator TechnicalDetailsRemainReachableWithoutOccupyingTheInitialPage()
+        {
+            int originalScale = EditorPrefs.GetInt(BootstrapSetupShell.ScaleKey, 100);
+            var window = ScriptableObject.CreateInstance<BootstrapLayoutHostWindow>();
+            try
+            {
+                window.Configure(new LayoutCase("Details interaction", VisualState.Review, 820, 650, true,
+                    BootstrapResponsiveMode.Narrow, false, 150));
+                yield return null; yield return null;
+                var root = window.rootVisualElement;
+                var details = root.Q("bootstrap-details");
+                var button = root.Q<Button>(className: "bootstrap-page-details-button");
+                Assert.That(details.resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
+                button.Focus();
+                using (var submit = NavigationSubmitEvent.GetPooled()) { submit.target = button; button.SendEvent(submit); }
+                for (int i = 0; i < 8; i++) yield return null;
+                Assert.That(details.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex));
+                Assert.That(root.Q<Foldout>("bootstrap-details-foldout").value, Is.True);
+                Assert.That(root.Q<Toggle>("bootstrap-startup-toggle"), Is.Not.Null);
+                Assert.That(details.worldBound.yMin, Is.LessThan(window.View.ContentScroll.contentViewport.worldBound.yMax));
+                Assert.That(window.View.PrimaryButton.enabledInHierarchy, Is.True, "Showing details does not start an operation.");
+            }
+            finally { EditorPrefs.SetInt(BootstrapSetupShell.ScaleKey, originalScale); window.Close(); }
+        }
+
+        [UnityTest]
         public IEnumerator DestinationFirstStatesRemainContainedAndNonOverlapping()
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
@@ -23,6 +49,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Assert.Ignore("UI Toolkit window geometry requires a graphics device.");
             }
 
+            int originalScale = EditorPrefs.GetInt(BootstrapSetupShell.ScaleKey, 100);
+            try
+            {
             foreach (LayoutCase layoutCase in Cases)
             {
                 BootstrapLayoutHostWindow window =
@@ -40,6 +69,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     window.Close();
                 }
             }
+            }
+            finally { EditorPrefs.SetInt(BootstrapSetupShell.ScaleKey, originalScale); }
         }
 
         private static void AssertLayout(
@@ -47,9 +78,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
             LayoutCase layoutCase)
         {
             VisualElement root = window.rootVisualElement;
-            VisualElement shell = Required(root, "bootstrap-shell", layoutCase);
-            VisualElement header = Required(root, "bootstrap-header", layoutCase);
-            VisualElement brand = Required(root, "bootstrap-header-brand", layoutCase);
+            VisualElement shell = Required(root, "bootstrap-canvas", layoutCase);
+            VisualElement header = Required(root, "bootstrap-workspace-header", layoutCase);
+            VisualElement brand = Required(root, "bootstrap-brand-icon", layoutCase);
             VisualElement channel = Required(root, "bootstrap-channel", layoutCase);
             ScrollView scroll = root.Q<ScrollView>("bootstrap-content-scroll");
             Assert.That(scroll, Is.Not.Null, layoutCase.Name);
@@ -58,6 +89,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
             VisualElement hero = Required(root, "bootstrap-hero", layoutCase);
             VisualElement details = Required(root, "bootstrap-details", layoutCase);
             VisualElement actionBar = Required(root, "bootstrap-action-bar", layoutCase);
+            VisualElement scaleFooter = Required(root, "bootstrap-scale-footer", layoutCase);
 
             AssertAll(() =>
             {
@@ -76,26 +108,19 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 AssertContained(shell.worldBound, root.worldBound, layoutCase, "shell");
                 AssertContained(header.worldBound, shell.worldBound, layoutCase, "header");
                 AssertContained(brand.worldBound, header.worldBound, layoutCase, "brand");
-                AssertContained(channel.worldBound, header.worldBound, layoutCase, "channel");
-                Assert.That(brand.worldBound.Overlaps(channel.worldBound), Is.False,
-                    layoutCase.Name + " header controls overlap");
+                AssertHorizontallyContained(channel.worldBound, content.worldBound, layoutCase, "channel");
                 AssertContained(scroll.worldBound, shell.worldBound, layoutCase, "scroll");
-                AssertContained(actionBar.worldBound, shell.worldBound, layoutCase, "footer");
+                AssertHorizontallyContained(actionBar.worldBound, content.worldBound, layoutCase, "actions");
+                AssertContained(scaleFooter.worldBound, root.worldBound, layoutCase, "scale footer");
                 Assert.That(scroll.worldBound.yMax,
-                    Is.LessThanOrEqualTo(actionBar.worldBound.yMin + 0.5f),
+                    Is.LessThanOrEqualTo(scaleFooter.worldBound.yMin + 0.5f),
                     layoutCase.Name + " scrolling body overlaps fixed footer");
-                Assert.That(actionBar.worldBound.height,
-                    Is.GreaterThanOrEqualTo(
-                        BootstrapResponsiveLayout.Calculate(
-                            layoutCase.Width,
-                            layoutCase.Height).ActionBarMinimumHeight),
-                    layoutCase.Name);
+                Assert.That(scaleFooter.worldBound.height, Is.EqualTo(70f).Within(0.5f), layoutCase.Name);
                 AssertHorizontallyContained(content.worldBound, viewport.worldBound,
                     layoutCase, "content");
                 AssertHorizontallyContained(hero.worldBound, viewport.worldBound,
                     layoutCase, "hero");
-                AssertHorizontallyContained(details.worldBound, viewport.worldBound,
-                    layoutCase, "details");
+                AssertNotDisplayed(details, layoutCase);
             });
 
             switch (layoutCase.State)
@@ -125,9 +150,9 @@ namespace Deucarian.Bootstrap.Editor.Tests
             AssertNotDisplayed(Required(root, "bootstrap-completion-receipt", layoutCase),
                 layoutCase);
             AssertFlowGeometry(root, viewport, flow, false, layoutCase);
-            AssertActionGeometry(root, actionBar, "Install Package Installer", layoutCase);
-            AssertOrderedSections(new[] { hero, flow, details }, layoutCase);
-            AssertInitialContentVisibility(viewport, new[] { hero, flow, details }, layoutCase);
+            AssertActionGeometry(root, actionBar, "Set up Deucarian", layoutCase);
+            AssertOrderedSections(new[] { hero, flow }, layoutCase);
+            AssertInitialContentVisibility(viewport, new[] { hero, flow, actionBar }, layoutCase);
         }
 
         private static void AssertInstalling(
@@ -146,8 +171,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 layoutCase);
             AssertFlowGeometry(root, viewport, flow, true, layoutCase);
             AssertPassiveGeometry(root, actionBar, layoutCase);
-            AssertOrderedSections(new[] { hero, flow, details }, layoutCase);
-            AssertInitialContentVisibility(viewport, new[] { hero, flow, details }, layoutCase);
+            AssertOrderedSections(new[] { hero, flow }, layoutCase);
+            AssertInitialContentVisibility(viewport, new[] { hero, flow, actionBar }, layoutCase);
         }
 
         private static void AssertHealthy(
@@ -166,8 +191,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
             AssertDisplayed(receipt, layoutCase);
             AssertReceiptGeometry(root, viewport, receipt, layoutCase);
             AssertActionGeometry(root, actionBar, "Open Package Installer", layoutCase);
-            AssertOrderedSections(new[] { hero, receipt, details }, layoutCase);
-            AssertInitialContentVisibility(viewport, new[] { hero, receipt, details }, layoutCase);
+            AssertOrderedSections(new[] { hero, receipt }, layoutCase);
+            AssertInitialContentVisibility(viewport, new[] { hero, receipt, actionBar }, layoutCase);
         }
 
         private static void AssertFlowGeometry(
@@ -336,7 +361,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
             VisualElement[] sections,
             LayoutCase layoutCase)
         {
-            if (layoutCase.IsMinimum)
+            if (layoutCase.Width < 1280 || layoutCase.Height < 900 || layoutCase.Scale > 100)
             {
                 return;
             }
@@ -468,6 +493,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
                     BootstrapResponsiveMode.Compact, false);
                 AddSkins(cases, state, "Wide", 1280f, 720f,
                     BootstrapResponsiveMode.Wide, false);
+                AddSkins(cases, state, "Reference", 1586f, 940f,
+                    BootstrapResponsiveMode.Wide, false);
                 AddSkins(cases, state, "Minimum", 480f, 460f,
                     BootstrapResponsiveMode.Narrow, true);
             }
@@ -484,6 +511,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
             BootstrapResponsiveMode mode,
             bool minimum)
         {
+            foreach (int scale in new[] { 75, 100, 125, 150 })
+            {
             cases.Add(new LayoutCase(
                 state + " " + sizeName + " Light",
                 state,
@@ -491,7 +520,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 height,
                 false,
                 mode,
-                minimum));
+                minimum, scale));
             cases.Add(new LayoutCase(
                 state + " " + sizeName + " Dark",
                 state,
@@ -499,7 +528,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 height,
                 true,
                 mode,
-                minimum));
+                minimum, scale));
+            }
         }
 
         private enum VisualState
@@ -518,15 +548,16 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 float height,
                 bool dark,
                 BootstrapResponsiveMode mode,
-                bool isMinimum)
+                bool isMinimum, int scale)
             {
-                Name = name;
+                Name = name + " " + scale + "%";
                 State = state;
                 Width = width;
                 Height = height;
                 Dark = dark;
                 Mode = mode;
                 IsMinimum = isMinimum;
+                Scale = scale;
             }
 
             public string Name { get; }
@@ -536,6 +567,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
             public bool Dark { get; }
             public BootstrapResponsiveMode Mode { get; }
             public bool IsMinimum { get; }
+            public int Scale { get; }
 
             public BootstrapSetupSnapshot Snapshot()
             {
@@ -557,6 +589,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             internal void Configure(LayoutCase layoutCase)
             {
+                EditorPrefs.SetInt(BootstrapSetupShell.ScaleKey, layoutCase.Scale);
                 titleContent = new GUIContent(layoutCase.Name);
                 position = new Rect(40f, 40f, layoutCase.Width, layoutCase.Height);
                 minSize = new Vector2(layoutCase.Width, layoutCase.Height);

@@ -285,6 +285,7 @@
       "developmentUrl": "https://github.com/Deucarian/Camera-Navigation.git#develop",
       "dependencies": [
         "com.deucarian.common",
+        "com.deucarian.diagnostics",
         "com.deucarian.editor"
       ]
     },
@@ -315,6 +316,8 @@
       "stableUrl": "https://github.com/Deucarian/Pointer-Capture.git#main",
       "developmentUrl": "https://github.com/Deucarian/Pointer-Capture.git#develop",
       "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.diagnostics",
         "com.deucarian.editor"
       ]
     },
@@ -330,7 +333,8 @@
       "stableUrl": "https://github.com/Deucarian/Media.git#main",
       "developmentUrl": "https://github.com/Deucarian/Media.git#develop",
       "dependencies": [
-        "com.deucarian.common"
+        "com.deucarian.common",
+        "com.deucarian.editor"
       ]
     },
     {
@@ -351,6 +355,23 @@
       ]
     },
     {
+      "id": "com.deucarian.tweens",
+      "displayName": "Deucarian Tweens",
+      "kind": "Library",
+      "groupId": "ui-presentation",
+      "category": "UI",
+      "type": "Core",
+      "ecosystemGroup": "Experience & Interaction",
+      "description": "Shared active-only visibility tween scheduling, lifecycle adapters, profiles and isolated previews.",
+      "stableUrl": "https://github.com/Deucarian/Tweens.git#main",
+      "developmentUrl": "https://github.com/Deucarian/Tweens.git#develop",
+      "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.diagnostics",
+        "com.deucarian.editor"
+      ]
+    },
+    {
       "id": "com.deucarian.ui",
       "displayName": "Deucarian UI",
       "kind": "Library",
@@ -363,7 +384,8 @@
       "developmentUrl": "https://github.com/Deucarian/UI.git#develop",
       "dependencies": [
         "com.deucarian.common",
-        "com.deucarian.theming"
+        "com.deucarian.theming",
+        "com.deucarian.tweens"
       ]
     },
     {
@@ -401,6 +423,8 @@
       "stableUrl": "https://github.com/Deucarian/API.git#main",
       "developmentUrl": "https://github.com/Deucarian/API.git#develop",
       "dependencies": [
+        "com.deucarian.common",
+        "com.deucarian.diagnostics",
         "com.deucarian.editor",
         "com.deucarian.logging"
       ]
@@ -483,6 +507,7 @@
       "developmentUrl": "https://github.com/Deucarian/Object-Loading.git#develop",
       "dependencies": [
         "com.deucarian.common",
+        "com.deucarian.editor",
         "com.deucarian.logging"
       ]
     },
@@ -532,7 +557,6 @@
       "stableUrl": "https://github.com/Deucarian/Viewer-Shell.git#main",
       "developmentUrl": "https://github.com/Deucarian/Viewer-Shell.git#develop",
       "dependencies": [
-        "com.deucarian.common",
         "com.deucarian.theming",
         "com.deucarian.ui",
         "com.deucarian.viewer-rendering"
@@ -606,6 +630,7 @@
         "com.deucarian.logging",
         "com.deucarian.object-loading",
         "com.deucarian.object-loading.api-integration",
+        "com.deucarian.pointer-capture",
         "com.deucarian.session",
         "com.deucarian.session.api-integration",
         "com.deucarian.theming",

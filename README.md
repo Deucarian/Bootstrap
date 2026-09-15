@@ -9,7 +9,7 @@ dependencies. It exists because a clean direct Git installation of
 `com.deucarian.package-installer` cannot resolve its Git-distributed Deucarian
 Editor and Logging dependencies transitively.
 
-Current package version: `1.2.11`.
+Current package version: `1.2.19`.
 
 ## Responsibilities
 
@@ -279,3 +279,9 @@ Canonical architecture and capability ownership are maintained in the
 
 See [LICENSE.md](LICENSE.md). Third-party icon attribution is recorded beside
 the vendored icon assets.
+
+## Definition authoring integration
+
+The package catalog includes the direct editor and runtime dependencies needed by the definition-authoring workflow. Use a coherent set of package development versions when trying the new samples.
+
+See the [shared authoring walkthrough](https://github.com/Deucarian/Editor/blob/develop/Documentation~/DefinitionAuthoring.md). Runtime packages expose their **Definition Workflow** sample through Package Manager.

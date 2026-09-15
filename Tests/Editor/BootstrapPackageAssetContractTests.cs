@@ -13,8 +13,6 @@ namespace Deucarian.Bootstrap.Editor.Tests
     [TestFixture]
     internal sealed class BootstrapPackageAssetContractTests
     {
-        private const string ExpectedPackageVersion = "1.2.11";
-
         [Serializable]
         private sealed class PackageManifestDto
         {
@@ -59,8 +57,6 @@ namespace Deucarian.Bootstrap.Editor.Tests
             {
                 Assert.That(package.name, Is.EqualTo("com.deucarian.bootstrap"));
                 Assert.That(package.displayName, Is.EqualTo("Deucarian Bootstrap"));
-                Assert.That(package.version, Is.EqualTo(ExpectedPackageVersion),
-                    "The generated catalog synchronization is a patch release from 1.2.0.");
                 Assert.That(package.version, Is.EqualTo(DeucarianBootstrapPackageConstants.Version));
                 Assert.That(package.unity, Is.EqualTo("2021.3"));
                 Assert.That(ExtractObjectBody(packageJson, "dependencies"), Is.Empty,
@@ -86,17 +82,22 @@ namespace Deucarian.Bootstrap.Editor.Tests
         public void VersionReferences_AgreeAcrossManifestConstantsAndChangelog()
         {
             string packageRoot = GetPackageRoot();
+            PackageManifestDto package = JsonUtility.FromJson<PackageManifestDto>(
+                File.ReadAllText(Path.Combine(packageRoot, "package.json")));
             string changelog = File.ReadAllText(Path.Combine(packageRoot, "CHANGELOG.md"));
 
             AssertAll(() =>
             {
-                StringAssert.Contains("## " + ExpectedPackageVersion, changelog);
+                string escapedVersion = Regex.Escape(package.version);
+                StringAssert.IsMatch(
+                    @"(?m)^##[ \t]+(?:" + escapedVersion + @"|\[" + escapedVersion + @"\])(?=[ \t\r\n]|$)",
+                    changelog);
                 Assert.That(DeucarianBootstrapPackageConstants.PackageName,
                     Is.EqualTo("com.deucarian.bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.DisplayName,
                     Is.EqualTo("Deucarian Bootstrap"));
                 Assert.That(DeucarianBootstrapPackageConstants.Version,
-                    Is.EqualTo(ExpectedPackageVersion));
+                    Is.EqualTo(package.version));
             });
         }
 

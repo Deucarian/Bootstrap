@@ -456,12 +456,12 @@ namespace Deucarian.Bootstrap.Editor.Tests
     internal sealed class BootstrapResponsiveLayoutContractTests
     {
         [Test]
-        public void WindowFootprintDefaultsToNarrowAndKeepsAUsableMinimum()
+        public void WindowFootprintMatchesWorkspaceAndKeepsAUsableMinimum()
         {
             AssertAll(() =>
             {
-                Assert.That(DeucarianBootstrapWindow.PreferredWindowWidth, Is.EqualTo(560f));
-                Assert.That(DeucarianBootstrapWindow.PreferredWindowHeight, Is.EqualTo(820f));
+                Assert.That(DeucarianBootstrapWindow.PreferredWindowWidth, Is.EqualTo(1400f));
+                Assert.That(DeucarianBootstrapWindow.PreferredWindowHeight, Is.EqualTo(900f));
                 Assert.That(DeucarianBootstrapWindow.MinWindowWidth, Is.EqualTo(480f));
                 Assert.That(DeucarianBootstrapWindow.MinWindowHeight, Is.EqualTo(460f));
                 Assert.That(BootstrapResponsiveLayout.ResolveMode(560f),
@@ -525,7 +525,10 @@ namespace Deucarian.Bootstrap.Editor.Tests
 
             AssertAll(() =>
             {
-                Assert.That(root.Q<VisualElement>("bootstrap-shell"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("bootstrap-canvas"), Is.Not.Null);
+                Assert.That(root.Q<VisualElement>("bootstrap-scale-footer").parent, Is.SameAs(root));
+                Assert.That(IsDescendantOf(actionBar, root.Q("bootstrap-content")), Is.True);
+                Assert.That(IsDescendantOf(channel, root.Q("bootstrap-content")), Is.True);
                 Assert.That(root.Q<ScrollView>("bootstrap-content-scroll"), Is.Not.Null);
                 Assert.That(hero, Is.Not.Null);
                 Assert.That(hero.ClassListContains("bootstrap-surface"), Is.False);
@@ -613,7 +616,8 @@ namespace Deucarian.Bootstrap.Editor.Tests
             {
                 AssertVisible(rendered.Root, "bootstrap-setup-flow");
                 AssertHidden(rendered.Root, "bootstrap-completion-receipt");
-                AssertVisible(rendered.Root, "bootstrap-details");
+                AssertHidden(rendered.Root, "bootstrap-details");
+                Assert.That(rendered.Root.Q<Button>(className: "bootstrap-page-details-button").enabledInHierarchy, Is.True);
                 AssertVisible(rendered.Root, "bootstrap-action-actions");
                 AssertHidden(rendered.Root, "bootstrap-passive-footer");
                 Assert.That(requirementOne.ClassListContains(
@@ -625,7 +629,7 @@ namespace Deucarian.Bootstrap.Editor.Tests
                 Assert.That(CountNamedElements(rendered.Root,
                     "bootstrap-primary-action"), Is.EqualTo(1));
                 Assert.That(PrimaryLabel(rendered.Root),
-                    Is.EqualTo("Install Package Installer"));
+                    Is.EqualTo("Set up Deucarian"));
             });
         }
 
